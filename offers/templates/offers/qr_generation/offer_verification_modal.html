@@ -1,0 +1,374 @@
+{# offers/qr_generation/offer_verification_modal.html #}
+
+<style>
+  /* hide by default */
+  #offerVerificationModal[aria-hidden="true"]{ display:none !important; }
+
+  #offerVerificationModal{
+    position:fixed;
+    inset:0;
+    z-index:10050; /* QR modal (9999) paina */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    background:rgba(0,0,0,.45);
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+
+  #offerVerificationModal .ovCard{
+    width:min(420px, 96vw);
+    background: #fff;
+    color:#1b2249;
+    border:1px solid #e3e9ff;
+    border-radius:16px;
+    box-shadow:0 20px 60px rgba(27,34,73,.18);
+    overflow:hidden;
+  }
+
+  #offerVerificationModal .ovHead{
+    padding:12px 14px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    border-bottom:1px solid #e3e9ff;
+    background:#fff;
+  }
+
+  #offerVerificationModal .ovTitle{
+    font-weight:950;
+    font-size:14px;
+    line-height:1.1;
+  }
+  #offerVerificationModal .ovSub{
+    margin-top:4px;
+    font-size:12px;
+    color:#5b6285;
+    line-height:1.35;
+  }
+
+  #offerVerificationModal .ovClose{
+    appearance:none;
+    border:none;
+    background:transparent;
+    cursor:pointer;
+    font-size:18px;
+    line-height:1;
+    padding:6px 8px;
+    border-radius:10px;
+  }
+  #offerVerificationModal .ovClose:hover{ background:#f2f5ff; }
+
+  #offerVerificationModal .ovBody{
+    padding:14px;
+  }
+
+  .ovPinRow{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin:10px 0 6px;
+  }
+  .ovPin{
+    width:54px;
+    height:54px;
+    border-radius:14px;
+    border:1px solid #d6defc;
+    background:#f8faff;
+    text-align:center;
+    font-size:20px;
+    font-weight:900;
+    letter-spacing:.02em;
+    outline:none;
+  }
+  .ovPin:focus{
+    border-color:#4c74ff;
+    box-shadow:0 0 0 3px rgba(76,116,255,.18);
+    background:#fff;
+  }
+
+  .ovHint{
+    text-align:center;
+    font-size:12px;
+    color:#6b7280;
+    margin:6px 0 0;
+  }
+
+  .ovStatus{
+    margin-top:12px;
+    display:none;
+    padding:10px 10px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:800;
+    border:1px solid #e3e9ff;
+    background:#f7f9ff;
+    color:#47507a;
+  }
+  .ovStatus.good{
+    display:block;
+    border-color: rgba(34,197,94,.35);
+    background: rgba(34,197,94,.10);
+    color:#11653a;
+  }
+  .ovStatus.bad{
+    display:block;
+    border-color: rgba(255,76,106,.35);
+    background: rgba(255,76,106,.10);
+    color:#8a0f22;
+  }
+  .ovStatus.neutral{ display:block; }
+
+  .ovActions{
+    display:flex;
+    gap:10px;
+    margin-top:12px;
+  }
+  .ovBtn{
+    flex:1;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid #d6defc;
+    background:#fff;
+    color:#1b2249;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .ovBtnPrimary{
+    background:#4c74ff;
+    border-color:#3e63e6;
+    color:#fff;
+    box-shadow:0 10px 22px rgba(76,116,255,.20);
+  }
+  .ovBtn:active{ transform:translateY(1px); }
+  .ovBtn[disabled]{ opacity:.6; cursor:not-allowed; }
+
+  @media (max-width:420px){
+    .ovPin{ width:50px; height:50px; }
+  }
+</style>
+
+<div id="offerVerificationModal" class="oz-modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="ovCard" role="document">
+    <div class="ovHead">
+      <div>
+        <div class="ovTitle">Verify Offer PIN</div>
+        <div class="ovSub">Enter the 4-digit PIN shared by the customer and click Verify.</div>      </div>
+      <button type="button" class="ovClose" data-close aria-label="Close">✕</button>
+    </div>
+
+    <div class="ovBody">
+      <div class="ovPinRow">
+        <input id="ov1" class="ovPin" maxlength="1" inputmode="numeric" autocomplete="one-time-code" />
+        <input id="ov2" class="ovPin" maxlength="1" inputmode="numeric" />
+        <input id="ov3" class="ovPin" maxlength="1" inputmode="numeric" />
+        <input id="ov4" class="ovPin" maxlength="1" inputmode="numeric" />
+      </div>
+
+      <div class="ovHint">Tip: paste 4 digits (1234) also works</div>
+
+      <div id="ovStatus" class="ovStatus neutral"></div>
+
+      <div class="ovActions">
+        <button type="button" class="ovBtn" data-close>Close</button>
+        <button type="button" class="ovBtn ovBtnPrimary" id="ovVerifyBtn">Verify</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById("offerVerificationModal");
+  const btn = document.getElementById("ovVerifyBtn");
+  const statusEl = document.getElementById("ovStatus");
+  const ids = ["ov1","ov2","ov3","ov4"];
+  const boxes = ids.map(id => document.getElementById(id)).filter(Boolean);
+
+  function getCookie(name){
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+
+  function setStatus(msg, type){
+    if(!statusEl) return;
+    statusEl.className = "ovStatus " + (type || "neutral");
+    statusEl.textContent = msg || "";
+    statusEl.style.display = msg ? "block" : "none";
+  }
+
+  function getPin(){
+    return ids.map(id => (document.getElementById(id)?.value || "").replace(/\D/g,"").slice(0,1)).join("");
+  }
+
+  function clearPin(){
+    boxes.forEach(b => b.value = "");
+    setStatus("", "neutral");
+    boxes[0]?.focus();
+  }
+
+  function closeModal(){
+    modal?.classList.remove("is-open");
+    modal?.setAttribute("aria-hidden","true");
+  }
+
+  function openModal(){
+    modal?.classList.add("is-open");
+    modal?.setAttribute("aria-hidden","false");
+    setTimeout(() => boxes[0]?.focus(), 50);
+  }
+
+  // ✅ if you already have generic data-open/data-close system, this won't break it.
+  // But we ensure close works even if generic handler not present.
+  function wireCloseButtons(){
+    modal?.querySelectorAll("[data-close]").forEach(el => {
+      el.addEventListener("click", () => {
+        closeModal();
+        clearPin();
+      });
+    });
+
+    // click outside card to close
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal){
+        closeModal();
+        clearPin();
+      }
+    });
+  }
+
+  function wirePinBoxes(){
+    boxes.forEach((box, i) => {
+      box.addEventListener("input", () => {
+        box.value = (box.value || "").replace(/\D/g,"").slice(0,1);
+        if(box.value && i < boxes.length - 1) boxes[i+1].focus();
+      });
+
+      box.addEventListener("keydown", (e) => {
+        if(e.key === "Backspace" && !box.value && i > 0){
+          boxes[i-1].focus();
+          boxes[i-1].value = "";
+          e.preventDefault();
+          return;
+        }
+        if(e.key === "Enter"){
+          e.preventDefault();
+          verify();
+        }
+        if(e.key === "Escape"){
+          e.preventDefault();
+          closeModal();
+          clearPin();
+        }
+      });
+
+      // paste support
+      box.addEventListener("paste", (e) => {
+        const t = (e.clipboardData?.getData("text") || "").replace(/\D/g,"").slice(0,4);
+        if(!t) return;
+        e.preventDefault();
+        for(let k=0;k<4;k++){
+          if(boxes[k]) boxes[k].value = t[k] || "";
+        }
+        boxes[Math.min(3, t.length-1)]?.focus();
+      });
+    });
+  }
+
+  async function verify(){
+    const pin = getPin();
+    if(pin.length !== 4){
+      setStatus("Please enter a valid 4-digit PIN.", "bad");
+      return;
+    }
+
+    btn.disabled = true;
+    setStatus("Verifying…", "neutral");
+
+    try{
+      const res = await fetch("{% url 'offers:branch_verify_offer_pin' %}", {
+        method:"POST",
+        credentials:"same-origin",
+        headers:{
+          "Content-Type":"application/json",
+          "Accept":"application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+          "X-Requested-With":"XMLHttpRequest",
+        },
+        body: JSON.stringify({ pin }),
+      });
+
+      const data = await res.json().catch(()=>({}));
+
+      if(!res.ok || !data.ok){
+        const err = data?.error || ("http_" + res.status);
+        throw new Error(err);
+      }
+
+      // ✅ handle already-claimed-today (new server behavior)
+      if (data.already_claimed_today){
+        setStatus("Already counted today ✅ (PIN consumed)", "good");
+      } else {
+        setStatus("Verified ✅ Visit recorded", "good");
+      }
+
+      setTimeout(() => {
+        closeModal();
+        clearPin();
+        // optional: refresh page counters if you show counts on branch screen
+        // window.location.reload();
+      }, 650);
+
+    }
+    catch(e){
+      console.error("[OfferVerify]", e);
+
+      const code = String(e?.message || "").trim();
+
+      const errorMap = {
+        invalid_pin: "Please enter a valid 4-digit PIN.",
+        pin_not_found_or_expired: "Offer PIN is invalid or expired.",
+        already_used_or_expired: "Offer PIN is already used or expired.",
+        qr_not_found: "Related QR was not found. Please scan again.",
+        qr_expired: "QR has expired. Please scan again.",
+        qr_already_used: "This QR has already been used.",
+        qr_pin_expired: "QR PIN has expired. Please generate a new one.",
+        qr_pin_already_used: "This QR PIN has already been used.",
+        missing_qr_token: "QR token is missing. Please scan again.",
+        branch_login_required: "Branch login is required.",
+        http_400: "Invalid request. Please try again.",
+        http_401: "Branch session expired. Please log in again.",
+        http_404: "PIN not found or expired.",
+        http_409: "This visit is already completed or already used.",
+      };
+
+      setStatus(
+        errorMap[code] || `Verification failed (${code || "unknown_error"})`,
+        "bad"
+      );
+    }
+
+    finally{
+      btn.disabled = false;
+    }
+  }
+
+  btn?.addEventListener("click", verify);
+
+  // autofocus on open (supports class/aria opens)
+  const obs = new MutationObserver(() => {
+    const open = modal?.classList.contains("is-open") && modal?.getAttribute("aria-hidden") === "false";
+    if(open) setTimeout(() => boxes[0]?.focus(), 50);
+  });
+  if(modal) obs.observe(modal, { attributes:true, attributeFilter:["class","aria-hidden"] });
+
+  wirePinBoxes();
+  wireCloseButtons();
+
+  // expose helpers if needed
+  window.OfferVerifyModal = { open: openModal, close: closeModal, clear: clearPin };
+})();
+</script>

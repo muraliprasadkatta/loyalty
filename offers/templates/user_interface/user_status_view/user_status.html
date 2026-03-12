@@ -1,0 +1,541 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Status • OfferZone</title>
+
+  <style>
+    :root{
+      --bg:#f6f8ff;
+      --card:#ffffff;
+      --card2:#fbfcff;
+      --border:rgba(15,23,42,0.12);
+      --text:#0f172a;
+      --muted:#64748b;
+
+      --prim:#4c74ff;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+
+      --chip:#f1f5ff;
+      --chipBorder:rgba(76,116,255,.20);
+
+      --shadow: 0 14px 40px rgba(15,23,42,0.10);
+      --shadow2: 0 10px 24px rgba(15,23,42,0.08);
+    }
+
+    *{ box-sizing:border-box }
+    body{
+      margin:0;
+      font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      font-weight:400;
+      line-height:1.35;
+    }
+    a{ color:var(--prim); text-decoration:none }
+    a:hover{ opacity:.9 }
+
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      background:var(--card);
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:10;
+      box-shadow:0 8px 22px rgba(15,23,42,0.06);
+    }
+    header .brand{ font-weight:700; letter-spacing:.2px }
+    header .right{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:9px 12px; border-radius:12px;
+      border:1px solid rgba(76,116,255,.18);
+      background:var(--prim);
+      color:#fff;
+      font-weight:600;
+      cursor:pointer;
+      font-size:13px;
+      box-shadow:0 10px 20px rgba(76,116,255,.14);
+    }
+    .btn.outline{
+      background:transparent;
+      color:var(--text);
+      border:1px solid var(--border);
+      box-shadow:none;
+    }
+    .btn.small{ padding:7px 10px; border-radius:10px; font-size:12px; font-weight:600; }
+
+    .wrap{ max-width:980px; margin:16px auto; padding:0 14px 22px; }
+
+    .card{
+      background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:12px;
+      box-shadow:var(--shadow);
+    }
+
+    .title-row{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .h1{ font-size:18px; font-weight:700; margin:0; }
+    .sub{ color:var(--muted); font-size:12px; margin-top:4px; font-weight:400; }
+
+    .kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+    @media (min-width:760px){
+      .kpi-grid{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+    }
+    .kpi{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:10px;
+      box-shadow:var(--shadow2);
+    }
+    .kpi .kpi-label{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      font-weight:500;
+    }
+    .kpi .kpi-val{
+      font-size:20px;
+      font-weight:700;
+      margin-top:6px;
+      color:#0b1225;
+      line-height:1.05;
+    }
+    .kpi .kpi-sub{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:4px;
+      font-weight:400;
+    }
+
+    .sec{ margin-top:14px; }
+    .sec-head{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; flex-wrap:wrap; margin-bottom:10px;
+      padding-inline:2px;
+    }
+    .sec-title{ font-size:13px; font-weight:700; }
+    .sec-hint{ color:var(--muted); font-size:12px; font-weight:400; }
+
+    .badge{
+      display:inline-flex; align-items:center;
+      padding:4px 9px; border-radius:999px;
+      border:1px solid var(--border);
+      font-size:11px;
+      font-weight:600;
+      background:#fff;
+      color:var(--muted);
+      white-space:nowrap;
+      box-shadow:0 6px 16px rgba(15,23,42,0.05);
+    }
+    .badge.ok{ border-color:rgba(34,197,94,.28); color:#0f7a3b; background:rgba(34,197,94,.10); }
+    .badge.warn{ border-color:rgba(245,158,11,.28); color:#8a5600; background:rgba(245,158,11,.12); }
+    .badge.bad{ border-color:rgba(239,68,68,.28); color:#a11212; background:rgba(239,68,68,.10); }
+
+    .pending-list{ display:grid; gap:10px; }
+    .pending-card{
+      border:1px solid rgba(245,158,11,.28);
+      background:linear-gradient(180deg, rgba(245,158,11,.10), rgba(255,255,255,1));
+      border-radius:16px;
+      padding:10px;
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:10px; flex-wrap:wrap;
+      box-shadow:var(--shadow2);
+    }
+    .pending-left{ display:flex; flex-direction:column; gap:6px; min-width:220px; flex:1; }
+    .pending-title{ font-weight:700; }
+    .pending-meta{
+      display:flex; gap:8px; flex-wrap:wrap;
+      color:var(--muted); font-size:12px; font-weight:400;
+    }
+    .pending-actions{
+      display:flex;
+      gap:8px;
+      flex-direction:column;
+      align-items:flex-end;
+      min-width:220px;
+    }
+
+    .offer-grid{ display:grid; gap:10px; }
+    @media (min-width:760px){
+      .offer-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    }
+    .offer-card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:10px;
+      display:flex; flex-direction:column; gap:8px;
+      box-shadow:var(--shadow2);
+    }
+    .offer-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .offer-title{ font-weight:700; }
+    .offer-sub{ color:var(--muted); font-size:12px; font-weight:400; }
+
+    .bar{
+      height:10px; border-radius:999px;
+      background:rgba(15,23,42,.06);
+      border:1px solid rgba(15,23,42,.08);
+      overflow:hidden;
+    }
+    .bar > span{
+      display:block; height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(245,158,11,.92), rgba(76,116,255,.92));
+    }
+    .offer-foot{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+    .offer-ratio{ color:var(--muted); font-size:12px; font-weight:400; }
+
+    .acc{ display:grid; gap:10px; }
+    details.branch{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:var(--shadow2);
+    }
+    details.branch > summary{
+      list-style:none;
+      cursor:pointer;
+      padding:10px 10px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    details.branch > summary::-webkit-details-marker{ display:none; }
+    .br-name{ font-weight:700; }
+    .br-mini{ color:var(--muted); font-size:12px; display:flex; gap:10px; flex-wrap:wrap; font-weight:400; }
+    .br-body{ padding:0 10px 10px; display:grid; gap:8px; }
+    .br-row{ display:flex; gap:8px; flex-wrap:wrap; color:var(--muted); font-size:12px; font-weight:400; }
+
+    .tl{ display:grid; gap:12px; }
+    .tl-day{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:var(--shadow2);
+    }
+    .tl-head{
+      padding:9px 10px;
+      border-bottom:1px solid rgba(15,23,42,0.08);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      background:rgba(76,116,255,.06);
+    }
+    .tl-date{ font-weight:700; }
+    .tl-count{ color:var(--muted); font-size:12px; font-weight:400; }
+
+    .tl-items{ padding:10px; display:grid; gap:10px; }
+    .tl-item{
+      border:1px solid rgba(15,23,42,0.10);
+      background:linear-gradient(180deg, rgba(15,23,42,.02), rgba(255,255,255,1));
+      border-radius:14px;
+      padding:10px;
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+    .tl-left{ display:flex; flex-direction:column; gap:4px; min-width:220px; flex:1; }
+    .tl-topline{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .tl-time{ font-weight:700; }
+    .tl-branch{ font-weight:600; }
+    .tl-meta{ color:var(--muted); font-size:12px; display:flex; gap:10px; flex-wrap:wrap; font-weight:400; }
+    .tl-right{ display:flex; gap:8px; align-items:flex-start; }
+
+    footer.nav{
+      position:sticky; bottom:0;
+      background:var(--card);
+      border-top:1px solid var(--border);
+      z-index:20;
+      box-shadow:0 -10px 24px rgba(15,23,42,0.06);
+    }
+    .tabs{ display:grid; grid-template-columns:repeat(4,1fr); }
+    .tab{
+      padding:10px 8px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:600;
+    }
+    .tab.active{ color:var(--text); border-bottom:2px solid var(--prim) }
+
+    @media (max-width:420px){
+      .wrap{ padding:0 12px 20px; }
+      .kpi .kpi-val{ font-size:18px; }
+      .badge{ padding:4px 8px; }
+      .btn{ padding:8px 10px; }
+      .btn.small{ padding:7px 9px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">OfferZone</div>
+    <div class="right">
+      <a class="btn outline" href="{% url 'offers:user_home' %}">Home</a>
+      <a class="btn outline" href="{% url 'offers:user_logout' %}">Sign out</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- TOP -->
+    <section class="card">
+      <div class="title-row">
+        <div>
+          <h1 class="h1">Your Status</h1>
+          <div class="sub">Visits, eligibility & history — light report view.</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span class="badge">Branch: {{ branch_name|default:"All" }}</span>
+          <span class="badge">Today: {{ today_total_all|default:"0" }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Today visits</div>
+          <div class="kpi-val">{{ today_total_all|default:"0" }}</div>
+          <div class="kpi-sub">Across all branches</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi-label">Total visits</div>
+          <div class="kpi-val">{{ total_all|default:"0" }}</div>
+          <div class="kpi-sub">Overall visits</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi-label">Last visit</div>
+          <div class="kpi-val" style="font-size:14px; margin-top:10px; font-weight:600;">
+            {{ last_visit_anywhere|default:"—" }}
+          </div>
+          <div class="kpi-sub">Most recent activity</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi-label">Offers claimed</div>
+          <div class="kpi-val">{{ offers_claimed_total|default:"0" }}</div>
+          <div class="kpi-sub">Dummy (connect later)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PENDING -->
+    <section class="sec">
+      <div class="sec-head">
+        <div class="sec-title">Pending actions ({{ pending_items|length }})</div>
+        <div class="sec-hint">Scan/PIN started but not confirmed</div>
+      </div>
+
+      {% if pending_items %}
+        <div class="pending-list">
+          {% for p in pending_items %}
+            <div class="pending-card">
+              <div class="pending-left">
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  <div class="pending-title">{{ p.branch_name }}</div>
+                  <span class="badge warn">PENDING</span>
+                  {% if p.state_label %}
+                    <span class="badge warn">{{ p.state_label }}</span>
+                  {% endif %}
+                </div>
+
+                <div class="pending-meta">
+                  <span>Started: {{ p.started_at|date:"d M, h:i A" }}</span>
+                  {% if p.desk %}<span>Desk: {{ p.desk }}</span>{% endif %}
+                  {% if p.method_label %}<span>Method: {{ p.method_label }}</span>{% endif %}
+                  {% if p.branch_id %}<span>Branch ID: {{ p.branch_id }}</span>{% endif %}
+                </div>
+
+                {% if p.note %}
+                  <div style="color:var(--muted); font-size:12px;">
+                    {{ p.note }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="pending-actions">
+                <span class="badge warn">{{ p.state_label|default:"Verification incomplete" }}</span>
+                <div style="color:var(--muted); font-size:12px; text-align:right; max-width:240px;">
+                  {% if p.state == "awaiting_branch" %}
+                    Please complete verification at the branch.
+                  {% else %}
+                    Please scan again at branch to complete the process.
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card" style="padding:12px; background:#fff; border-color:var(--border); box-shadow:var(--shadow2);">
+          <span class="badge ok">No pending</span>
+          <div style="margin-top:6px; color:var(--muted); font-size:12px;">All visits confirmed.</div>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- OFFER ELIGIBILITY -->
+    <section class="sec">
+      <div class="sec-head">
+        <div class="sec-title">Offer eligibility</div>
+        <div class="sec-hint">Eligible / Almost / Locked</div>
+      </div>
+
+      {% if offer_progress %}
+        <div class="offer-grid">
+          {% for o in offer_progress %}
+            <div class="offer-card">
+              <div class="offer-top">
+                <div>
+                  <div class="offer-title">{{ o.title }}</div>
+                  <div class="offer-sub">{{ o.subtitle|default:"" }}</div>
+                </div>
+
+                {% if o.status == "eligible" %}
+                  <span class="badge ok">ELIGIBLE</span>
+                {% elif o.status == "near" %}
+                  <span class="badge warn">ALMOST</span>
+                {% else %}
+                  <span class="badge">LOCKED</span>
+                {% endif %}
+              </div>
+
+              <div class="bar"><span style="width: {{ o.pct|default:'0' }}%;"></span></div>
+
+              <div class="offer-foot">
+                <div class="offer-ratio">
+                  {{ o.current|default:"0" }} / {{ o.target|default:"—" }}
+                  {% if o.remaining is not None %} · {{ o.remaining }} left{% endif %}
+                </div>
+
+                {% if o.status == "eligible" and o.claim_url %}
+                  <a class="btn small" href="{{ o.claim_url }}">Claim</a>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card" style="padding:12px; background:#fff; border-color:var(--border); box-shadow:var(--shadow2);">
+          <div style="color:var(--muted); font-size:12px;">No offer progress data yet.</div>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- BRANCH BREAKDOWN -->
+    <section class="sec">
+      <div class="sec-head">
+        <div class="sec-title">Today branch breakdown</div>
+        <div class="sec-hint">Tap to expand</div>
+      </div>
+
+      {% if per_branch_today %}
+        <div class="acc">
+          {% for b in per_branch_today %}
+            <details class="branch">
+              <summary>
+                <div>
+                  <div class="br-name">{{ b.branch__name }}</div>
+                  <div class="br-mini">
+                    <span>Today: {{ b.today_visits }}</span>
+                    <span>Last: {{ b.last_visit|date:"d M, h:i A" }}</span>
+                  </div>
+                </div>
+                <span class="badge">▼</span>
+              </summary>
+
+              <div class="br-body">
+                <div class="br-row">
+                  <span class="badge">Branch ID: {{ b.branch_id }}</span>
+                  <a class="btn outline small" href="{% url 'offers:branch_offers_in_userinterface' b.branch_id %}">Open offers</a>
+                </div>
+              </div>
+            </details>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card" style="padding:12px; background:#fff; border-color:var(--border); box-shadow:var(--shadow2);">
+          <div style="color:var(--muted); font-size:12px;">No visits today.</div>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- VISIT HISTORY -->
+    <section class="sec">
+      <div class="sec-head">
+        <div class="sec-title">Visit history</div>
+        <div class="sec-hint">Date-wise timeline</div>
+      </div>
+
+      {% if history_days %}
+        <div class="tl">
+          {% for day in history_days %}
+            <div class="tl-day">
+              <div class="tl-head">
+                <div class="tl-date">{{ day.date|date:"d M Y" }}</div>
+                <div class="tl-count">{{ day.count }} visits</div>
+              </div>
+
+              <div class="tl-items">
+                {% for e in day.items %}
+                  <div class="tl-item">
+                    <div class="tl-left">
+                      <div class="tl-topline">
+                        <span class="tl-time">{{ e.created_at|date:"h:i A" }}</span>
+                        <span class="tl-branch">· {{ e.branch_name }}</span>
+                        <span class="badge ok">DONE</span>
+                      </div>
+
+                      <div class="tl-meta">
+                        {% if e.desk %}<span>Desk: {{ e.desk }}</span>{% endif %}
+                        {% if e.visit_method_label %}<span>Method: {{ e.visit_method_label }}</span>{% endif %}
+                        {% if e.staff_name or e.staff_code %}
+                          <span>Staff: {{ e.staff_name }} {{ e.staff_code }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <div class="tl-right">
+                      {% if e.branch_id %}
+                        <a class="btn outline small" href="{% url 'offers:branch_offers_in_userinterface' e.branch_id %}">Branch</a>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card" style="padding:12px; background:#fff; border-color:var(--border); box-shadow:var(--shadow2);">
+          <div style="color:var(--muted); font-size:12px;">No visit history yet.</div>
+        </div>
+      {% endif %}
+    </section>
+
+  </main>
+
+  <footer class="nav">
+    <div class="tabs">
+      <a class="tab" href="{% url 'offers:user_home' %}">Home</a>
+      <a class="tab active" href="{% url 'offers:user_status' %}">Status</a>
+      <a class="tab" href="#">Offers</a>
+      <a class="tab" href="#">Account</a>
+    </div>
+  </footer>
+
+</body>
+</html>

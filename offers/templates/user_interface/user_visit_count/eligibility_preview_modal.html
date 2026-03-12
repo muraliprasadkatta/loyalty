@@ -1,0 +1,524 @@
+{# user_interface/user_visit_count/eligibility_preview_modal.html #}
+
+<style>
+  :root{
+    --ep-bg:#0b1020;
+    --ep-card:#11183a;
+    --ep-border:#273164;
+    --ep-text:#e8ecff;
+    --ep-muted:#b9c4ff;
+    --ep-prim:#4c74ff;
+    --ep-good:#22c55e;
+    --ep-bad:#ff4c6a;
+  }
+
+  #eligibilityPreviewOverlay{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--ep-text);
+    padding:16px;
+
+    background:
+      radial-gradient(900px 500px at 30% 20%, rgba(76,116,255,.28), transparent 60%),
+      radial-gradient(800px 420px at 80% 70%, rgba(106,161,255,.20), transparent 55%),
+      linear-gradient(180deg, #0b1020 0%, #090d1a 100%);
+  }
+  #eligibilityPreviewOverlay.is-open{ display:flex; }
+
+  .epCard{
+    width:min(460px, 96vw);
+    background:
+      radial-gradient(120% 80% at 50% 0%,
+        rgba(120,150,255,.18),
+        rgba(17,24,58,.92) 60%),
+      linear-gradient(180deg,
+        rgba(25,35,85,.95),
+        rgba(12,18,48,.95));
+    border: 1px solid rgba(170,200,255,.28);
+    border-radius: 22px;
+    box-shadow:
+      0 30px 70px rgba(0,0,0,.55),
+      0 0 0 1px rgba(255,255,255,.06) inset,
+      0 0 90px rgba(76,116,255,.25);
+    padding:18px;
+    position:relative;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .epHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .epLeft{ display:flex; align-items:center; gap:10px; }
+
+  .epEmoji{
+    width:42px; height:42px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(255,255,255,.08);
+    border:1px solid rgba(190,220,255,.20);
+    box-shadow: 0 8px 22px rgba(0,0,0,.25);
+    font-size:22px;
+  }
+
+  .epTitle{ font-weight:950; font-size:16px; line-height:1.1; }
+  .epSub{
+    margin-top:3px; font-size:12px;
+    color: rgba(185,196,255,.92);
+    line-height:1.35;
+  }
+
+  .epBadge{
+    padding:8px 12px; border-radius:999px;
+    font-weight:950; font-size:12px;
+    background: rgba(34,197,94,.15);
+    border:1px solid rgba(34,197,94,.35);
+    color:#bbf7d0;
+    white-space:nowrap;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+
+  .epPills{
+    margin-top:12px;
+    display:flex; gap:10px;
+    justify-content:flex-start;
+    flex-wrap:wrap;
+  }
+  .epPill{
+    padding:8px 12px; border-radius:999px;
+    font-weight:900; font-size:12px;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(190,220,255,.20);
+    color: rgba(232,236,255,.95);
+  }
+
+  .epNote{
+    margin-top:12px;
+    padding:12px 12px;
+    border-radius:16px;
+    background: rgba(255,255,255,.06);
+    border:1px dashed rgba(190,220,255,.28);
+    color: rgba(232,236,255,.90);
+    font-size:12px;
+    line-height:1.45;
+    text-align:left;
+  }
+
+  .epPinBox{
+    margin-top:12px;
+    padding:12px 12px;
+    border-radius:18px;
+    background: rgba(255,255,255,.05);
+    border:1px solid rgba(190,220,255,.18);
+  }
+
+  .epPinHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .epPinTitle{ font-size:12px; font-weight:950; color: rgba(232,236,255,.95); }
+  .epPinTtl{ font-size:11px; font-weight:900; color: rgba(185,196,255,.92); }
+
+  .epPinRow{
+    margin-top:8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .epPinDisplay{
+    min-width:160px;
+    text-align:center;
+    padding:12px 14px;
+    border-radius:16px;
+    border:1px solid rgba(190,220,255,.22);
+    background: rgba(255,255,255,.06);
+    font-size:26px;
+    font-weight:950;
+    letter-spacing:0.35em;
+  }
+  .epPinMeta{
+    flex:1;
+    font-size:11px;
+    color: rgba(185,196,255,.92);
+    font-weight:800;
+    line-height:1.35;
+  }
+
+  .epPinHint{
+    margin-top:10px;
+    font-size:11px;
+    color: rgba(185,196,255,.9);
+    font-weight:700;
+  }
+
+  .epPinErr{
+    margin-top:10px;
+    font-size:11px;
+    font-weight:900;
+    color: rgba(255,212,220,.95);
+    background: rgba(255,76,106,.12);
+    border: 1px solid rgba(255,76,106,.28);
+    padding:10px 10px;
+    border-radius:14px;
+    display:none;
+  }
+
+  .epLoading{
+    margin-top:12px;
+    font-size:12px;
+    color: rgba(185,196,255,.92);
+    text-align:left;
+    display:none;
+  }
+
+  .epActions{ margin-top:14px; display:flex; gap:12px; }
+  .epBtn{
+    flex:1;
+    padding:12px 14px;
+    border-radius:18px;
+    border:1px solid rgba(190,220,255,.22);
+    background: rgba(255,255,255,.06);
+    color:#fff;
+    font-size:14px;
+    font-weight:950;
+    cursor:pointer;
+  }
+  .epBtn:active{ transform:translateY(1px); }
+  .epBtn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+  .epBtnPrimary{
+    border:1px solid rgba(39,49,100,.95);
+    background: var(--ep-prim);
+    box-shadow:0 10px 26px rgba(76,116,255,.22);
+  }
+
+  @media (max-width: 420px){
+    .epCard{ padding:16px; }
+    .epBtn{ padding:12px 12px; font-size:14px; }
+    .epPinDisplay{ min-width:150px; }
+  }
+</style>
+
+<div id="eligibilityPreviewOverlay" aria-hidden="true">
+  <div class="epCard" role="dialog" aria-modal="true" aria-labelledby="epTitle">
+
+    <div class="epHeader">
+      <div class="epLeft">
+        <div class="epEmoji" id="epEmoji">🎁</div>
+        <div>
+          <div class="epTitle" id="epTitle">Offer Day PIN</div>
+          <div class="epSub" id="epSub">PIN auto-generate avthundi mava…</div>
+        </div>
+      </div>
+
+      <div class="epBadge" id="epBadge">✅ ELIGIBLE</div>
+    </div>
+
+    <div class="epPills" id="epPills">
+      <div class="epPill" id="epVisitText">Visit: —</div>
+      <div class="epPill" id="epRuleText">—</div>
+    </div>
+
+    <div class="epNote" id="epNote">
+      Ee PIN ni branch staff ki cheppandi. Staff verify ayyaka ne complimentary count add avthundi.
+      <br><br>
+      <strong>Note:</strong> Staff verify chesaka app automatically Status page ki vellipothundi ✅
+    </div>
+
+    <!-- Offer PIN -->
+    <div class="epPinBox" id="epPinBox"
+         data-offer-pin-api="{% url 'offers:user_generate_offer_pin' %}"
+         data-offer-pin-status-api="{% url 'offers:user_offer_pin_status' 0 %}">
+      <div class="epPinHead">
+        <div class="epPinTitle">Offer PIN</div>
+        <div class="epPinTtl" id="epOfferPinTTL">TTL: —</div>
+      </div>
+
+      <div class="epPinRow">
+        <div class="epPinDisplay" id="epOfferPinDisplay">----</div>
+        <div class="epPinMeta" id="epOfferPinMeta">Ready…</div>
+      </div>
+
+      <div class="epPinHint" id="epOfferPinHint">
+        PIN expire ayyaka malli open cheste new PIN generate avthundi.
+      </div>
+
+      <div class="epPinErr" id="epOfferPinErr"></div>
+    </div>
+
+    <div class="epLoading" id="epLoading">Loading…</div>
+
+    <div class="epActions">
+      <button type="button" class="epBtn" id="epCloseBtn">Close</button>
+      <button type="button" class="epBtn epBtnPrimary" id="epCopyBtn" disabled>Copy PIN</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCookie(name){
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return '';
+}
+</script>
+
+<script>
+/* ✅ Modal controller */
+(function(){
+  const overlay = document.getElementById('eligibilityPreviewOverlay');
+  const closeBtn = document.getElementById('epCloseBtn');
+  const copyBtn  = document.getElementById('epCopyBtn');
+  const pinDisp  = document.getElementById("epOfferPinDisplay");
+
+  function open(){
+    if (!overlay) return;
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden','false');
+    window.OfferPin?.autoGenerate?.();
+  }
+
+  function close(){
+    if (!overlay) return;
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden','true');
+
+    // ✅ Close press chesina kuda status page ki (same visit-pin style)
+    window.location.replace("{% url 'offers:user_status' %}");
+  }
+
+  closeBtn?.addEventListener('click', close);
+  overlay?.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  copyBtn?.addEventListener('click', async () => {
+    const pin = (pinDisp?.textContent || "").trim();
+    if (!pin || pin === "----") return;
+    try{
+      await navigator.clipboard.writeText(pin);
+      copyBtn.textContent = "Copied ✅";
+      setTimeout(() => (copyBtn.textContent = "Copy PIN"), 900);
+    }catch(e){}
+  });
+
+  window.EligibilityPreviewModal = { open, close };
+})();
+</script>
+
+<script>
+/*
+  ✅ Offer Day PIN client + STATUS POLLING
+  - open -> generate pin
+  - store offer_pin_id
+  - poll status endpoint; when used=true => redirect to user_status
+*/
+(function(){
+  let generating = false;
+  let ttlTimer = null;
+  let pollTimer = null;
+
+  function qs(id){ return document.getElementById(id); }
+
+  function apiUrl(){
+    const box = qs("epPinBox");
+    return box?.getAttribute("data-offer-pin-api") || "/offers/offer-pin/generate/";
+  }
+
+  function statusUrl(pinId){
+    const box = qs("epPinBox");
+    const templ = box?.getAttribute("data-offer-pin-status-api") || "/offers/offer-pin/status/0/";
+    return templ.replace("/0/", `/${pinId}/`);
+  }
+
+  function setErr(msg){
+    const err = qs("epOfferPinErr");
+    if (!err) return;
+    if (!msg){
+      err.style.display = "none";
+      err.textContent = "";
+      return;
+    }
+    err.style.display = "block";
+    err.textContent = msg;
+  }
+
+  function setPin(pin){
+    const el = qs("epOfferPinDisplay");
+    if (el) el.textContent = pin || "----";
+    const copyBtn = qs("epCopyBtn");
+    if (copyBtn) copyBtn.disabled = !(pin && pin !== "----");
+  }
+
+  function setMeta(msg){
+    const el = qs("epOfferPinMeta");
+    if (el) el.textContent = msg || "";
+  }
+
+  function setTTL(sec){
+    const el = qs("epOfferPinTTL");
+    if (!el) return;
+    if (sec == null) el.textContent = "TTL: —";
+    else el.textContent = `TTL: ${String(sec).padStart(2,"0")}s`;
+  }
+
+  function stopTTL(){
+    if (ttlTimer) clearInterval(ttlTimer);
+    ttlTimer = null;
+  }
+
+  function stopPolling(){
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  }
+
+  function startTTL(seconds){
+    stopTTL();
+    let left = Math.max(0, parseInt(seconds || 0, 10) || 0);
+    setTTL(left);
+
+    ttlTimer = setInterval(() => {
+      left -= 1;
+      if (left <= 0){
+        setTTL(0);
+        stopTTL();
+        setMeta("Expired. Modal malli open cheste new PIN generate avthundi.");
+        stopPolling();
+        return;
+      }
+      setTTL(left);
+    }, 1000);
+  }
+
+  function humanError(code){
+    switch(code){
+      case "login_required":
+        return "Login avvali mava. Page refresh chesi try chey.";
+      case "no_pending_qr":
+        return "Scan pending ledu mava. Mundu QR scan cheyali.";
+      case "branch_not_found":
+        return "Branch dorakaledu. Malli scan chey.";
+      case "no_active_offer":
+        return "Ippudu active offer ledu mava.";
+      case "not_eligible":
+        return "Ippudu eligible kaadu mava.";
+      case "csrf_failed":
+        return "Security (CSRF) issue. Page refresh chesi try chey.";
+      default:
+        return "Offer PIN generate avvaledu. (Pending QR / Eligibility / Login check avvali)";
+    }
+  }
+
+  async function pollStatus(pinId){
+    try{
+      const res = await fetch(statusUrl(pinId), {
+        method:"GET",
+        credentials:"same-origin",
+        headers:{
+          "Accept":"application/json",
+          "X-Requested-With":"XMLHttpRequest",
+        }
+      });
+
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok || !data.ok) return;
+
+      if(data.used){
+        stopPolling();
+        setMeta("Verified by staff ✅ Redirecting to Status…");
+        setTimeout(() => {
+          window.location.replace(data.redirect_url || "{% url 'offers:user_status' %}");
+        }, 700);
+      }
+    }catch(e){
+      // silent (network)
+    }
+  }
+
+  function startPolling(pinId){
+    stopPolling();
+    // every 2 sec check
+    pollTimer = setInterval(() => pollStatus(pinId), 2000);
+    // also immediate one check
+    pollStatus(pinId);
+  }
+
+  async function autoGenerate(){
+    if (generating) return;
+    generating = true;
+
+    setErr("");
+    setPin("----");
+    setTTL(null);
+    setMeta("Generating…");
+    stopPolling();
+
+    try{
+      const res = await fetch(apiUrl(), {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({}),
+      });
+
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      let data = {};
+      if (ct.includes("application/json")){
+        data = await res.json().catch(() => ({}));
+      } else {
+        data = {};
+      }
+
+      if (!res.ok || !data.ok){
+        const errCode = data?.error || (res.status === 403 ? "csrf_failed" : ("http_" + res.status));
+        throw new Error(errCode);
+      }
+
+      setPin(data.pin);
+      setMeta(
+        (`Share this PIN with staff` +
+         (data.branch_name ? (" • Branch: " + data.branch_name) : "") +
+         (data.desk ? (" • Desk: " + data.desk) : "") +
+         " • Waiting for staff verify…"
+        ).trim()
+      );
+
+      startTTL(data.expires_in || 120);
+
+      // ✅ START POLLING using offer_pin_id
+      if (data.offer_pin_id){
+        startPolling(data.offer_pin_id);
+      }
+
+    }catch(e){
+      console.error("[OfferDayPin]", e);
+      const code = (e && e.message) ? String(e.message) : "offer_pin_failed";
+      setMeta("PIN generate avvaledu mava 😕");
+      setErr(humanError(code));
+      stopTTL();
+      setTTL(null);
+      setPin("----");
+      stopPolling();
+    }finally{
+      generating = false;
+    }
+  }
+
+  window.OfferPin = { autoGenerate };
+})();
+</script>
