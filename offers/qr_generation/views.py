@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 
 from offers.models import Branch, QRToken, YashPin
-from offers.qr_token_utils import mint_qr_token, parse_qr_token
+from offers.services.qr.qr_token_utils import mint_qr_token, parse_qr_token
 
 
 

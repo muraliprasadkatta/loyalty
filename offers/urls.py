@@ -4,7 +4,8 @@ from . import user_views  as uviews
 from . import branch_views as bviews
 from .views_root import root_router   # ← Option B use chesthe: from .view import root_router
 from django.urls import include, path
-from . import qr_pin_service 
+# from . import qr_pin_service 
+from .services.qr import qr_pin_service
 from offers.services.offer_pin.offer_pin_service import user_generate_offer_pin
 from offers.services.offer_pin.offer_pin_verify_service import branch_verify_offer_pin
 from offers.services.offer_pin import offer_pin_status_service as opst

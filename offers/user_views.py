@@ -26,8 +26,7 @@ from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
-
-from offers.qr_token_utils import parse_qr_token as verify_qr_token
+from offers.services.qr.qr_token_utils import parse_qr_token as verify_qr_token
 from offers.services.offer_eligibility.offer_eligibility_service import build_offer_eligibility_context
 import offers.services.offer_eligibility.offers_progress_modal_helper as progress_helper
 
@@ -64,7 +63,7 @@ from offers.services.pending_visit_attempt.pending_visit_attempt_service import 
 
 
 
-from .otp_utils import (
+from offers.services.auth.otp_utils import (
     normalize_email,
     valid_email,
     gen_code,

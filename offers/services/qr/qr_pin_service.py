@@ -10,7 +10,7 @@ from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
-from .models import Branch, BranchGenerateVisitPin
+from offers.models import Branch, BranchGenerateVisitPin
 
 VISIT_CONFIRM_PIN_TTL = getattr(settings, "VISIT_CONFIRM_PIN_TTL", 60)  # seconds
 

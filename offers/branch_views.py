@@ -3,7 +3,6 @@
 import json
 import re
 from datetime import timedelta
-from random import randint
 from functools import wraps
 
 from django.conf import settings
@@ -22,6 +21,8 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
 from offers.models import ComplementaryOffer
+from offers.services.auth.otp_utils import normalize_email, gen_code, now
+from offers.services.qr.qr_token_utils import mint_qr_token
 
 from .models import (
     Branch,
@@ -33,8 +34,6 @@ from .models import (
     Profile,
     LoginVisit,
 )
-from .qr_token_utils import mint_qr_token
-
 
 # ===== Config =====
 
@@ -97,14 +96,6 @@ def get_branch_from_session(request):
 
 # ===== Helpers =====
 
-def _now():
-    return timezone.now()
-
-
-def _code6() -> str:
-    return f"{randint(0, 999999):06d}"
-
-
 def _json(req: HttpRequest):
     try:
         return json.loads(req.body.decode("utf-8") or "{}")
@@ -114,10 +105,6 @@ def _json(req: HttpRequest):
 
 def _clean_branch(v: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (v or "").strip().lower())
-
-
-def _normalize_email(v: str) -> str:
-    return (v or "").strip().lower()
 
 
 def _find_branch_by_input(raw_value: str):
@@ -161,16 +148,16 @@ def _resolve_branch_and_identifier(data):
         return None, None, None, JsonResponse({"ok": False, "error": "Branch not found."}, status=404)
 
     if raw_identifier:
-        identifier = _normalize_email(raw_identifier)
+        identifier = normalize_email(raw_identifier)
     else:
         if not branch.email:
             return None, None, None, JsonResponse(
                 {"ok": False, "error": "No email configured for this branch."},
                 status=400,
             )
-        identifier = _normalize_email(branch.email)
+        identifier = normalize_email(branch.email)
 
-    branch_email = _normalize_email(branch.email)
+    branch_email = normalize_email(branch.email)
     staff_obj = None
 
     if branch_email and identifier == branch_email:
@@ -269,35 +256,33 @@ def branch_otp_send(request: HttpRequest):
     if error:
         return error
 
-    now = _now()
+    now_ts = now()
 
-    # Cooldown per normalized email identifier
     recent = (
         BranchOTP.objects
         .filter(
             identifier=identifier,
-            created_at__gte=now - timedelta(seconds=RESEND_COOLDOWN_SEC),
+            created_at__gte=now_ts - timedelta(seconds=RESEND_COOLDOWN_SEC),
         )
         .order_by("-created_at")
         .first()
     )
     if recent:
-        remaining = RESEND_COOLDOWN_SEC - int((now - recent.created_at).total_seconds())
+        remaining = RESEND_COOLDOWN_SEC - int((now_ts - recent.created_at).total_seconds())
         return JsonResponse(
             {"ok": False, "error": f"Please wait {max(1, remaining)}s before requesting again."},
             status=429,
         )
 
-    # Window cap per normalized email identifier
-    since = now - timedelta(minutes=RESEND_WINDOW_MINS)
+    since = now_ts - timedelta(minutes=RESEND_WINDOW_MINS)
     if BranchOTP.objects.filter(identifier=identifier, created_at__gte=since).count() >= RESEND_WINDOW_MAX:
         return JsonResponse({"ok": False, "error": "Too many requests. Try later."}, status=429)
 
-    code = _code6()
+    code = gen_code()
     row = BranchOTP.objects.create(
         identifier=identifier,
         code_hash=make_password(code),
-        expires_at=now + timedelta(seconds=OTP_TTL_SECS),
+        expires_at=now_ts + timedelta(seconds=OTP_TTL_SECS),
         attempts=0,
         used=False,
         sent_count=1,
@@ -344,11 +329,11 @@ def branch_otp_verify(request: HttpRequest):
     if error:
         return error
 
-    now = _now()
+    now_ts = now()
 
     row = (
         BranchOTP.objects
-        .filter(identifier=identifier, used=False, expires_at__gte=now)
+        .filter(identifier=identifier, used=False, expires_at__gte=now_ts)
         .order_by("-created_at")
         .first()
     )
@@ -386,13 +371,13 @@ def branch_home_view(request):
         pk=bid,
     )
 
-    now = timezone.localtime(timezone.now())
+    now_ts = timezone.localtime(timezone.now())
 
     base = (
         ComplementaryOffer.objects
         .filter(kind="complementary_offer", is_active=True)
-        .filter(start_at__lte=now)
-        .filter(models.Q(end_at__isnull=True) | models.Q(end_at__gte=now))
+        .filter(start_at__lte=now_ts)
+        .filter(models.Q(end_at__isnull=True) | models.Q(end_at__gte=now_ts))
         .only("id", "visit_unit", "all_branches", "start_at")
     )
 
@@ -442,7 +427,7 @@ def branch_staff_create_view(request):
     data = _json(request)
 
     raw_name = (data.get("staff_name") or "").strip()
-    email = _normalize_email(data.get("staff_email") or "")
+    email = normalize_email(data.get("staff_email") or "")
     raw_staff_id = (data.get("staff_id") or "").strip()
 
     if not raw_name or not email or not raw_staff_id:
