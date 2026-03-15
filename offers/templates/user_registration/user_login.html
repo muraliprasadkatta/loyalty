@@ -40,6 +40,8 @@
 
     --hint:#6f7ea8;
     --danger:#cf4767;
+    --danger-border:#e25b77;
+    --danger-bg:#fff4f6;
   }
 
   html, body{
@@ -189,24 +191,16 @@
     background:var(--chip-bg);
     color:var(--chip-text);
     font-size:14px;
-    font-weight:400;
+    font-weight:700;
     position:relative;
     z-index:1;
-  }
-
-  .step-title.step-title--plain{
-    background:transparent;
-    color:var(--text-soft);
-    font-weight:700;
-    padding:0;
-    min-height:auto;
   }
 
   .field{
     display:flex;
     flex-direction:column;
     gap:8px;
-    margin:14px 0 16px;
+    margin:10px 0 8px;
     position:relative;
     z-index:1;
   }
@@ -232,10 +226,12 @@
     stroke-width:2;
     fill:none;
     pointer-events:none;
+    transition:stroke .18s ease;
   }
 
   input[type="email"],
-  input[type="text"]{
+  input[type="text"],
+  input[type="tel"]{
     width:100%;
     height:54px;
     padding:0 16px 0 46px;
@@ -246,7 +242,7 @@
     outline:none;
     font-size:15px;
     font-weight:500;
-    transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    transition:border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
   }
 
   input[type="email"]::placeholder,
@@ -263,7 +259,7 @@
 
   .btn{
     width:100%;
-    min-height:58px;
+    min-height:18px;
     padding:14px 18px;
     border:0;
     border-radius:18px;
@@ -312,7 +308,6 @@
     border:1px solid #d6e3ff !important;
   }
 
-  /* OTP */
   .otp-box{
     --g:10px;
     display:grid;
@@ -328,6 +323,8 @@
     max-width:48px;
     aspect-ratio:1 / 1;
     min-width:0;
+    min-height:auto;
+    height:auto;
     padding:0;
     text-align:center;
     font-size:20px;
@@ -343,6 +340,9 @@
     font-feature-settings:"tnum" 1, "lnum" 1;
     direction:ltr;
     box-shadow:0 4px 10px rgba(107,130,175,.04);
+    transition:border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    caret-color:transparent;
+    user-select:none;
   }
 
   .otp-box input:focus{
@@ -402,23 +402,25 @@
   .divider{
     border:0;
     border-top:1px solid var(--line);
-    margin:18px 0 16px;
+    margin:5px 0 10px;
     opacity:1;
+    transition:opacity .18s ease, transform .18s ease;
   }
 
   .links{
     display:grid;
-    gap:12px;
+    gap:8px;
     margin-top:4px;
     position:relative;
     z-index:1;
+    transition:opacity .18s ease, transform .18s ease;
   }
 
   .links a{
     color:var(--text-strong);
     text-decoration:none;
     font-size:17px;
-    font-weight:800;
+    font-weight:500;
     background:var(--link-card-bg);
     border:1px solid var(--link-card-border);
     border-radius:18px;
@@ -427,7 +429,7 @@
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    padding:0 16px;
+    padding:0 10px;
     box-shadow:0 8px 18px rgba(99,129,186,.07);
     transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
   }
@@ -471,7 +473,48 @@
     height:19px;
   }
 
-  .hidden{ display:none; }
+  .hidden{ display:none !important; }
+
+  .field-error{
+    display:none;
+    margin-top:2px;
+    color:var(--danger);
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .field-error.show{
+    display:block;
+  }
+
+  .input-invalid input{
+    border-color:var(--danger-border) !important;
+    background:var(--danger-bg) !important;
+    box-shadow:0 0 0 4px rgba(226,91,119,.12) !important;
+  }
+
+  .input-invalid svg{
+    stroke:var(--danger-border) !important;
+  }
+
+  .otp-box.otp-invalid input{
+    border-color:var(--danger-border) !important;
+    background:var(--danger-bg) !important;
+    box-shadow:0 0 0 3px rgba(226,91,119,.10) !important;
+  }
+
+  .shake{
+    animation:ozShake .36s ease;
+  }
+
+  @keyframes ozShake{
+    0%{ transform:translateX(0); }
+    20%{ transform:translateX(-6px); }
+    40%{ transform:translateX(6px); }
+    60%{ transform:translateX(-4px); }
+    80%{ transform:translateX(4px); }
+    100%{ transform:translateX(0); }
+  }
 
   @media (max-width: 380px){
     .wrap{ padding:18px 14px; }
@@ -500,7 +543,7 @@
 </head>
 <body>
   <div class="wrap">
-    <form class="card" id="user-otp-form" method="post" action="#" onsubmit="return false;">
+    <form class="card" id="user-otp-form" method="post" action="#" onsubmit="return false;" novalidate>
       {% csrf_token %}
 
       {% if messages %}
@@ -531,13 +574,23 @@
         <div class="field">
           <label for="id_email">Email address</label>
 
-          <div class="input-shell">
+          <div class="input-shell" id="email-shell">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 6h16v12H4z"></path>
               <path d="m4 7 8 6 8-6"></path>
             </svg>
-            <input id="id_email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
+            <input
+              id="id_email"
+              name="email"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              required
+            >
           </div>
+
+          <div id="email-error" class="field-error">Please enter a valid email address.</div>
         </div>
 
         <button class="btn" id="btn-send-otp" type="button">
@@ -562,7 +615,7 @@
         <div class="header-row">
           <div class="header-copy">
             <h1>User sign in</h1>
-            <div class="step-title step-title--plain">Step 2 of 2</div>
+            <div class="step-title">Step 2 of 2</div>
           </div>
 
           <div class="hero-badge" aria-hidden="true">
@@ -591,6 +644,7 @@
             <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 5">
             <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 6">
           </div>
+          <div id="otp-error" class="field-error">Enter the 6-digit code.</div>
         </div>
 
         <div class="row">
@@ -607,9 +661,9 @@
         </div>
       </div>
 
-      <hr class="divider">
+      <hr class="divider" id="auth-divider">
 
-      <div class="links">
+      <div class="links" id="auth-links">
         <a href="{% url 'offers:admin_login' %}">
           <span class="link-left">
             <span class="link-icon-wrap">
@@ -661,37 +715,124 @@
 
 <script>
   (function(){
-    const form = document.getElementById("user-otp-form");
     const stepEmail = document.getElementById("step-email");
     const stepOtp = document.getElementById("step-otp");
     const emailInput = document.getElementById("id_email");
+    const emailShell = document.getElementById("email-shell");
+    const emailError = document.getElementById("email-error");
+
     const btnSend = document.getElementById("btn-send-otp");
     const btnVerify = document.getElementById("btn-verify");
     const btnChange = document.getElementById("btn-change");
     const btnResend = document.getElementById("btn-resend");
     const timerEl = document.getElementById("resend-timer");
+
+    const authDivider = document.getElementById("auth-divider");
+    const authLinks = document.getElementById("auth-links");
+
+    const otpBox = document.getElementById("otp-box");
+    const otpError = document.getElementById("otp-error");
     const otpInputs = Array.from(document.querySelectorAll("#otp-box input"));
 
     let countdown = 0;
     let timerId = null;
+
+    const OTP_STEP_KEY = "userOtpStep";
+    const OTP_EMAIL_KEY = "userOtpEmail";
+    const OTP_RELOAD_FLAG_KEY = "userOtpStayOnReload";
 
     function setSendLoading(isLoading){
       btnSend.classList.toggle("oz-btn-loading", isLoading);
       btnSend.disabled = isLoading;
     }
 
-    function showOtpStep(){
+    function animateShake(el){
+      if (!el) return;
+      el.classList.remove("shake");
+      void el.offsetWidth;
+      el.classList.add("shake");
+    }
+
+    function isValidEmail(value){
+      const v = (value || "").trim();
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+
+    function markEmailInvalid(message){
+      emailShell.classList.add("input-invalid");
+      emailError.textContent = message || "Please enter a valid email address.";
+      emailError.classList.add("show");
+      animateShake(emailShell);
+      emailInput.focus();
+    }
+
+    function clearEmailInvalid(){
+      emailShell.classList.remove("input-invalid");
+      emailError.classList.remove("show");
+    }
+
+    function markOtpInvalid(message){
+      otpBox.classList.add("otp-invalid");
+      otpError.textContent = message || "Enter the 6-digit code.";
+      otpError.classList.add("show");
+      animateShake(otpBox);
+
+      const firstEmpty = getFirstEmptyIndex();
+      focusOtpAt(firstEmpty === -1 ? otpInputs.length - 1 : firstEmpty);
+    }
+
+    function clearOtpInvalid(){
+      otpBox.classList.remove("otp-invalid");
+      otpError.classList.remove("show");
+    }
+
+    function setFooterVisibility(show){
+      authDivider.classList.toggle("hidden", !show);
+      authLinks.classList.toggle("hidden", !show);
+    }
+
+    function clearOtpDraftState(){
+      sessionStorage.removeItem(OTP_STEP_KEY);
+      sessionStorage.removeItem(OTP_EMAIL_KEY);
+      sessionStorage.removeItem(OTP_RELOAD_FLAG_KEY);
+    }
+
+    function markOtpReloadAllowed(){
+      sessionStorage.setItem(OTP_RELOAD_FLAG_KEY, "1");
+    }
+
+    function unmarkOtpReloadAllowed(){
+      sessionStorage.removeItem(OTP_RELOAD_FLAG_KEY);
+    }
+
+    function showOtpStep(options = {}){
+      const {
+        preserveInputs = false,
+        restartTimer = true,
+      } = options;
+
       stepEmail.classList.add("hidden");
       stepOtp.classList.remove("hidden");
       stepOtp.setAttribute("aria-hidden", "false");
 
-      otpInputs.forEach(i => i.value = "");
-      otpInputs[0].focus();
+      setFooterVisibility(false);
+      clearOtpInvalid();
 
-      startResendTimer(30);
+      if (!preserveInputs) {
+        otpInputs.forEach(i => i.value = "");
+        focusOtpAt(0);
+      } else {
+        const firstEmpty = getFirstEmptyIndex();
+        focusOtpAt(firstEmpty === -1 ? otpInputs.length - 1 : firstEmpty);
+      }
 
-      sessionStorage.setItem("userOtpStep", "otp");
-      sessionStorage.setItem("userOtpEmail", emailInput.value.trim());
+      if (restartTimer) {
+        startResendTimer(30);
+      }
+
+      sessionStorage.setItem(OTP_STEP_KEY, "otp");
+      sessionStorage.setItem(OTP_EMAIL_KEY, emailInput.value.trim());
+      markOtpReloadAllowed();
     }
 
     function showEmailStep(){
@@ -699,14 +840,15 @@
       stepOtp.setAttribute("aria-hidden", "true");
       stepEmail.classList.remove("hidden");
 
+      setFooterVisibility(true);
       stopTimer();
       timerEl.textContent = "";
       setSendLoading(false);
+      clearOtpInvalid();
 
       emailInput.focus();
 
-      sessionStorage.removeItem("userOtpStep");
-      sessionStorage.removeItem("userOtpEmail");
+      clearOtpDraftState();
     }
 
     function startResendTimer(sec){
@@ -738,46 +880,253 @@
       timerEl.textContent = ` (wait ${countdown}s)`;
     }
 
-    otpInputs.forEach((inp, idx) => {
-      inp.addEventListener("input", (e) => {
-        const v = (e.target.value || "").replace(/[^0-9]/g, "").slice(0, 1);
-        e.target.value = v;
-
-        if (v && idx < otpInputs.length - 1) {
-          otpInputs[idx + 1].focus();
-        }
-      });
-
-      inp.addEventListener("keydown", (e) => {
-        if (e.key === "Backspace" && !e.target.value && idx > 0) {
-          otpInputs[idx - 1].focus();
-        }
-      });
-
-      inp.addEventListener("paste", (e) => {
-        const t = (e.clipboardData.getData("text") || "").replace(/[^0-9]/g, "");
-        if (!t) return;
-
-        e.preventDefault();
-
-        [...t.slice(0, 6)].forEach((ch, i) => {
-          if (otpInputs[idx + i]) otpInputs[idx + i].value = ch;
-        });
-
-        const next = Math.min(idx + t.length, otpInputs.length - 1);
-        otpInputs[next].focus();
-      });
-    });
-
     function getCsrf(){
       return document.querySelector('input[name=csrfmiddlewaretoken]')?.value || "";
     }
 
+    function getCode(){
+      return otpInputs.map(i => i.value).join("");
+    }
+
+    function getFirstEmptyIndex(){
+      return otpInputs.findIndex(i => !i.value);
+    }
+
+    function focusOtpAt(index){
+      const safeIndex = Math.max(0, Math.min(index, otpInputs.length - 1));
+      const input = otpInputs[safeIndex];
+      input.focus({ preventScroll: true });
+
+      requestAnimationFrame(() => {
+        try {
+          const len = input.value.length;
+          input.setSelectionRange(len, len);
+        } catch (e) {}
+      });
+    }
+
+    function normalizeOtpTargetIndex(requestedIndex){
+      const firstEmpty = getFirstEmptyIndex();
+
+      if (firstEmpty === -1) {
+        return Math.max(0, Math.min(requestedIndex, otpInputs.length - 1));
+      }
+
+      if (requestedIndex > firstEmpty) {
+        return firstEmpty;
+      }
+
+      return requestedIndex;
+    }
+
+    function clearOtpFrom(index){
+      for (let i = index; i < otpInputs.length; i++) {
+        otpInputs[i].value = "";
+      }
+    }
+
+    emailInput.addEventListener("input", clearEmailInvalid);
+
+    emailInput.addEventListener("blur", () => {
+      const email = emailInput.value.trim();
+      if (!email) {
+        clearEmailInvalid();
+        return;
+      }
+      if (!isValidEmail(email)) {
+        markEmailInvalid("Please enter a valid email address.");
+      }
+    });
+
+    otpInputs.forEach((inp, idx) => {
+      inp.addEventListener("focus", () => {
+        const allowedIndex = normalizeOtpTargetIndex(idx);
+        if (allowedIndex !== idx) {
+          focusOtpAt(allowedIndex);
+          return;
+        }
+
+        requestAnimationFrame(() => {
+          try {
+            const len = inp.value.length;
+            inp.setSelectionRange(len, len);
+          } catch (e) {}
+        });
+      });
+
+      inp.addEventListener("click", (e) => {
+        const allowedIndex = normalizeOtpTargetIndex(idx);
+        if (allowedIndex !== idx) {
+          e.preventDefault();
+          focusOtpAt(allowedIndex);
+          return;
+        }
+
+        requestAnimationFrame(() => {
+          try {
+            const len = inp.value.length;
+            inp.setSelectionRange(len, len);
+          } catch (e) {}
+        });
+      });
+
+      inp.addEventListener("mousedown", (e) => {
+        const allowedIndex = normalizeOtpTargetIndex(idx);
+        if (allowedIndex !== idx) {
+          e.preventDefault();
+          focusOtpAt(allowedIndex);
+        }
+      });
+
+      inp.addEventListener("touchstart", (e) => {
+        const allowedIndex = normalizeOtpTargetIndex(idx);
+        if (allowedIndex !== idx) {
+          e.preventDefault();
+          focusOtpAt(allowedIndex);
+        }
+      }, { passive:false });
+
+      inp.addEventListener("input", (e) => {
+        let v = (e.target.value || "").replace(/[^0-9]/g, "");
+
+        if (!v) {
+          e.target.value = "";
+          return;
+        }
+
+        clearOtpInvalid();
+
+        const allowedIndex = normalizeOtpTargetIndex(idx);
+        if (allowedIndex !== idx) {
+          focusOtpAt(allowedIndex);
+          return;
+        }
+
+        const digit = v.slice(-1);
+        e.target.value = digit;
+
+        if (idx < otpInputs.length - 1) {
+          focusOtpAt(idx + 1);
+        } else {
+          focusOtpAt(idx);
+        }
+      });
+
+      inp.addEventListener("keydown", (e) => {
+        const key = e.key;
+
+        if (key === "Tab") return;
+
+        if (key === "ArrowLeft" || key === "ArrowRight" || key === "ArrowUp" || key === "ArrowDown") {
+          e.preventDefault();
+          return;
+        }
+
+        if (key === " " || key === "Spacebar") {
+          e.preventDefault();
+          return;
+        }
+
+        if (key === "Backspace") {
+          e.preventDefault();
+          clearOtpInvalid();
+
+          if (inp.value) {
+            inp.value = "";
+            focusOtpAt(idx);
+            return;
+          }
+
+          if (idx > 0) {
+            otpInputs[idx - 1].value = "";
+            focusOtpAt(idx - 1);
+          }
+          return;
+        }
+
+        if (key === "Delete") {
+          e.preventDefault();
+          inp.value = "";
+          focusOtpAt(idx);
+          return;
+        }
+
+        if (/^\d$/.test(key)) {
+          e.preventDefault();
+
+          const otpComplete = otpInputs.every(i => i.value);
+
+          if (otpComplete) {
+            return;
+          }
+
+          const allowedIndex = normalizeOtpTargetIndex(idx);
+          if (allowedIndex !== idx) {
+            otpInputs[allowedIndex].value = key;
+            clearOtpFrom(allowedIndex + 1);
+            clearOtpInvalid();
+
+            if (allowedIndex < otpInputs.length - 1) {
+              focusOtpAt(allowedIndex + 1);
+            } else {
+              focusOtpAt(allowedIndex);
+            }
+            return;
+          }
+
+          inp.value = key;
+          clearOtpInvalid();
+
+          if (idx < otpInputs.length - 1) {
+            focusOtpAt(idx + 1);
+          } else {
+            focusOtpAt(idx);
+          }
+          return;
+        }
+
+        if (key.length === 1) {
+          e.preventDefault();
+        }
+      });
+
+      inp.addEventListener("paste", (e) => {
+        const text = (e.clipboardData.getData("text") || "").replace(/[^0-9]/g, "");
+        if (!text) return;
+
+        e.preventDefault();
+        clearOtpInvalid();
+
+        const startIndex = normalizeOtpTargetIndex(idx);
+        const chars = text.slice(0, otpInputs.length - startIndex).split("");
+
+        chars.forEach((ch, offset) => {
+          otpInputs[startIndex + offset].value = ch;
+        });
+
+        const filledUntil = startIndex + chars.length;
+        clearOtpFrom(filledUntil);
+
+        if (filledUntil >= otpInputs.length) {
+          focusOtpAt(otpInputs.length - 1);
+        } else {
+          focusOtpAt(filledUntil);
+        }
+      });
+    });
+
     btnSend.addEventListener("click", async () => {
       const email = emailInput.value.trim();
 
+      clearEmailInvalid();
+
       if (!email) {
-        alert("Please enter your email.");
+        markEmailInvalid("Please enter your email.");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        markEmailInvalid("Please enter a valid email address.");
         return;
       }
 
@@ -802,7 +1151,7 @@
 
         showOtpStep();
       }catch(err){
-        alert("Send failed: " + err.message);
+        markEmailInvalid(err.message || "Failed to send OTP.");
       }finally{
         setSendLoading(false);
       }
@@ -810,15 +1159,25 @@
 
     btnVerify.addEventListener("click", async () => {
       const email = emailInput.value.trim();
-      const code = otpInputs.map(i => i.value).join("");
+      const code = getCode();
+
+      clearEmailInvalid();
+      clearOtpInvalid();
 
       if (!email) {
-        alert("Missing email");
+        showEmailStep();
+        markEmailInvalid("Please enter your email.");
         return;
       }
 
-      if (code.length !== 6) {
-        alert("Enter the 6-digit code.");
+      if (!isValidEmail(email)) {
+        showEmailStep();
+        markEmailInvalid("Please enter a valid email address.");
+        return;
+      }
+
+      if (code.length !== 6 || otpInputs.some(i => !i.value)) {
+        markOtpInvalid("Enter the full 6-digit code.");
         return;
       }
 
@@ -845,12 +1204,10 @@
           throw new Error(data.error || `HTTP ${res.status}`);
         }
 
-        sessionStorage.removeItem("userOtpStep");
-        sessionStorage.removeItem("userOtpEmail");
-
+        clearOtpDraftState();
         window.location.replace(data.next || "{% url 'offers:user_home' %}");
       }catch(err){
-        alert("Verify failed: " + err.message);
+        markOtpInvalid(err.message || "Verify failed.");
       }finally{
         btnVerify.disabled = false;
       }
@@ -862,8 +1219,18 @@
       if (btnResend.disabled) return;
 
       const email = emailInput.value.trim();
+      clearEmailInvalid();
+      clearOtpInvalid();
+
       if (!email) {
-        alert("Missing email");
+        showEmailStep();
+        markEmailInvalid("Please enter your email.");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showEmailStep();
+        markEmailInvalid("Please enter a valid email address.");
         return;
       }
 
@@ -887,28 +1254,48 @@
         }
 
         otpInputs.forEach(i => i.value = "");
-        otpInputs[0].focus();
+        focusOtpAt(0);
 
-        sessionStorage.setItem("userOtpStep", "otp");
-        sessionStorage.setItem("userOtpEmail", email);
+        sessionStorage.setItem(OTP_STEP_KEY, "otp");
+        sessionStorage.setItem(OTP_EMAIL_KEY, email);
+        markOtpReloadAllowed();
 
         startResendTimer(30);
       }catch(err){
-        alert("Resend failed: " + err.message);
+        markOtpInvalid(err.message || "Resend failed.");
         btnResend.disabled = false;
       }
     });
 
-    const savedStep = sessionStorage.getItem("userOtpStep");
-    const savedEmail = sessionStorage.getItem("userOtpEmail");
+    window.addEventListener("beforeunload", () => {
+      if (!stepOtp.classList.contains("hidden")) {
+        markOtpReloadAllowed();
+      }
+    });
+
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        clearOtpDraftState();
+        showEmailStep();
+      }
+    });
+
+    const savedStep = sessionStorage.getItem(OTP_STEP_KEY);
+    const savedEmail = sessionStorage.getItem(OTP_EMAIL_KEY);
+    const allowReloadRestore = sessionStorage.getItem(OTP_RELOAD_FLAG_KEY) === "1";
+
+    const navEntry = performance.getEntriesByType("navigation")[0];
+    const isReload = navEntry && navEntry.type === "reload";
 
     if (savedEmail) {
       emailInput.value = savedEmail;
     }
 
-    if (savedStep === "otp" && savedEmail) {
-      showOtpStep();
+    if (savedStep === "otp" && savedEmail && isReload && allowReloadRestore) {
+      unmarkOtpReloadAllowed();
+      showOtpStep({ preserveInputs: false, restartTimer: true });
     } else {
+      clearOtpDraftState();
       showEmailStep();
     }
   })();
