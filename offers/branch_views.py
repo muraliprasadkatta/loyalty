@@ -7,9 +7,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
-from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.core.validators import validate_email
 from django.db import models
 from django.db.models import Max
 from django.http import HttpRequest, JsonResponse, HttpResponseRedirect
@@ -21,8 +19,21 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
 from offers.models import ComplementaryOffer
-from offers.services.auth.otp_utils import normalize_email, gen_code, now
 from offers.services.qr.qr_token_utils import mint_qr_token
+
+
+from offers.services.auth.otp_utils import (
+    normalize_email,
+    valid_email,
+    gen_code,
+    now,
+    in_cooldown,
+    OTP_TTL_MINUTES,
+    RESEND_COOLDOWN_SECONDS,
+    RESEND_WINDOW_MINUTES,
+    MAX_RESENDS_PER_15M,
+    MAX_VERIFY_ATTEMPTS,
+)
 
 from .models import (
     Branch,
@@ -37,12 +48,7 @@ from .models import (
 
 # ===== Config =====
 
-OTP_TTL_SECS = 5 * 60           # 5 minutes
-RESEND_COOLDOWN_SEC = 60        # 60s cooldown between sends
-RESEND_WINDOW_MINS = 15         # lookback window
-RESEND_WINDOW_MAX = 3           # max sends in window
-MAX_VERIFY_ATTEMPTS = 5         # max wrong tries for a single OTP
-NEXT_URL_AFTER_LOGIN = "/branch_home/"
+
 
 
 # ===== Guard: branch/admin access =====
@@ -262,27 +268,28 @@ def branch_otp_send(request: HttpRequest):
         BranchOTP.objects
         .filter(
             identifier=identifier,
-            created_at__gte=now_ts - timedelta(seconds=RESEND_COOLDOWN_SEC),
+            created_at__gte=now_ts - timedelta(seconds=RESEND_COOLDOWN_SECONDS),
         )
         .order_by("-created_at")
         .first()
     )
     if recent:
-        remaining = RESEND_COOLDOWN_SEC - int((now_ts - recent.created_at).total_seconds())
-        return JsonResponse(
-            {"ok": False, "error": f"Please wait {max(1, remaining)}s before requesting again."},
-            status=429,
-        )
+        cooling, wait = in_cooldown(recent.created_at)
+        if cooling:
+            return JsonResponse(
+                {"ok": False, "error": f"Please wait {max(1, wait)}s before requesting again."},
+                status=429,
+            )
 
-    since = now_ts - timedelta(minutes=RESEND_WINDOW_MINS)
-    if BranchOTP.objects.filter(identifier=identifier, created_at__gte=since).count() >= RESEND_WINDOW_MAX:
+    since = now_ts - timedelta(minutes=RESEND_WINDOW_MINUTES)
+    if BranchOTP.objects.filter(identifier=identifier, created_at__gte=since).count() >= MAX_RESENDS_PER_15M:
         return JsonResponse({"ok": False, "error": "Too many requests. Try later."}, status=429)
 
     code = gen_code()
     row = BranchOTP.objects.create(
         identifier=identifier,
         code_hash=make_password(code),
-        expires_at=now_ts + timedelta(seconds=OTP_TTL_SECS),
+        expires_at=now_ts + timedelta(minutes=OTP_TTL_MINUTES),
         attempts=0,
         used=False,
         sent_count=1,
@@ -447,13 +454,8 @@ def branch_staff_create_view(request):
             status=400,
         )
 
-    try:
-        validate_email(email)
-    except ValidationError:
-        return JsonResponse(
-            {"ok": False, "error": "Invalid email address."},
-            status=400,
-        )
+    if not valid_email(email):
+        return JsonResponse({"ok": False, "error": "Invalid email address."}, status=400)
 
     if BranchStaff.objects.filter(branch_id=branch_id, staff_id=staff_id).exists():
         return JsonResponse({"ok": False, "error": "Staff ID already exists in this branch."}, status=400)

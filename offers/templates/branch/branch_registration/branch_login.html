@@ -5,6 +5,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Branch · OTP Login</title>
+  <script src="{% static 'offers/js/api-guard.js' %}"></script>
+  
   <style>
     :root{ --bg:#0b1020; --card:#11183a; --border:#273164; --text:#e8ecff; --muted:#b9c4ff; --prim:#4c74ff; --ok:#a7ffb5; --err:#ffb3b3; }
     *{box-sizing:border-box} body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -110,7 +112,6 @@
       <label for="lgLoginFor">Login for</label>
       <select id="lgLoginFor" name="login_for">
         <option value="branch" selected>Branch main account</option>
-        <option value="staff" disabled>Branch staff (coming soon)</option>
       </select>
     </div>
 
@@ -155,9 +156,10 @@
 
     <div id="lgMsg" class="lg-msg" role="status" aria-live="polite"></div>
 
+  <div style="margin-top:12px; display:flex; justify-content:space-between; gap:12px;">
     <a href="{% url 'offers:user_login' %}" id="link-user">User Login</a>
     <a href="{% url 'offers:admin_login' %}" id="link-admin">Admin sign-in</a>
-    
+  </div>
     {# {% csrf_token %} #}
   </form>
   
@@ -174,13 +176,11 @@
 
 <script>
 (() => {
-  // Endpoints
   const OTP_SEND_URL     = "{% url 'offers:branch_otp_send' %}";
   const OTP_VERIFY_URL   = "{% url 'offers:branch_otp_verify' %}";
   const BRANCH_CHECK_URL = "{% url 'offers:branch_check' %}";
-  const COOLDOWN_SECS    = 30;
+  const COOLDOWN_SECS    = 60;
 
-  // DOM
   const form       = document.getElementById('lgBranchOtpForm');
   const branchEl   = document.getElementById('lgBranchName');
   const idEl       = document.getElementById('lgIdentifier');
@@ -191,8 +191,6 @@
   const branchChip = document.getElementById('lgBranchChip');
   const branchMsg  = document.getElementById('lgBranchMsg');
   const loginForEl = document.getElementById('lgLoginFor');
-
-  // ===== Helpers =====
 
   const sanitizeBranch = v =>
     (v || '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
@@ -228,16 +226,15 @@
     return '......' + keep + '@' + domain;
   }
 
-  function lockEmail(email, lock = true) {
-    if (lock && email) {
+  function lockEmail(email) {
+    if (email) {
       idEl.dataset.real = email;
       idEl.value = maskEmail(email);
-      idEl.readOnly = true;
     } else {
       idEl.dataset.real = '';
       idEl.value = '';
-      idEl.readOnly = true;
     }
+    idEl.readOnly = true;
   }
 
   function populateLoginFor(staffList, branchEmail) {
@@ -270,6 +267,18 @@
     }
   }
 
+  function showMsg(text, type = ''){
+    msgEl.textContent = text;
+    msgEl.className = 'lg-msg ' + (type || '');
+  }
+
+  function setOtpInputEnabled(enabled){
+    otpEl.disabled = !enabled;
+    if (!enabled) {
+      otpEl.blur();
+    }
+  }
+
   function isBranchReady(){
     return branchChip.textContent === 'Branch found' && !!idEl.dataset.real;
   }
@@ -277,29 +286,43 @@
   function updateVerifyButtonState(){
     const branchOk = isBranchReady();
     const otpOk = /^\d{6}$/.test(sanitizeOtp(otpEl.value));
-    verifyBtn.disabled = !(branchOk && otpOk);
+
+    verifyBtn.disabled = !(
+      branchOk &&
+      otpSent &&
+      !otpRequestInFlight &&
+      !verifyRequestInFlight &&
+      otpOk
+    );
   }
 
   function resetOtpUi(){
+    otpSent = false;
+    otpRequestInFlight = false;
+    verifyRequestInFlight = false;
     otpEl.value = '';
+    setOtpInputEnabled(false);
     setBtnLoading(verifyBtn, false);
     updateVerifyButtonState();
   }
+
+  setOtpInputEnabled(false);
 
   if (loginForEl) {
     loginForEl.addEventListener('change', () => {
       const opt = loginForEl.options[loginForEl.selectedIndex];
       const email = opt?.dataset.email || "";
+
       if (email) {
-        lockEmail(email, true);
+        lockEmail(email);
       } else {
-        lockEmail('', false);
+        lockEmail('');
       }
+
       resetOtpUi();
+      showMsg('');
     });
   }
-
-  // ========= OTP input hard validation =========
 
   otpEl.addEventListener('input', () => {
     otpEl.value = sanitizeOtp(otpEl.value);
@@ -320,7 +343,9 @@
     e.preventDefault();
   });
 
-  // ========= Live branch check =========
+  let otpRequestInFlight = false;
+  let verifyRequestInFlight = false;
+  let otpSent = false;
 
   let checkTimer = null;
   let activeBranchQuery = '';
@@ -337,7 +362,7 @@
 
     activeBranchQuery = after;
     clearCooldown();
-    lockEmail('', false);
+    lockEmail('');
     setBtnLoading(getBtn, false);
     setBtnLoading(verifyBtn, false);
     getBtn.disabled = true;
@@ -349,6 +374,7 @@
       setBranchState('idle');
       return;
     }
+
     if (!validBranch(after)) {
       setBranchState('format_err');
       return;
@@ -372,6 +398,7 @@
       setBranchState('idle');
       return;
     }
+
     if (!validBranch(q)) {
       setBranchState('format_err');
       return;
@@ -383,47 +410,44 @@
       return;
     }
 
-    try {
-      const r = await fetch(
-        BRANCH_CHECK_URL + "?name=" + encodeURIComponent(q),
-        { headers: { "Accept": "application/json" } }
-      );
-
-      let data = null;
-      try {
-        data = await r.json();
-      } catch (e) {
-        data = null;
+    const resData = await ApiGuard.get(
+      BRANCH_CHECK_URL + "?name=" + encodeURIComponent(q),
+      {
+        headers: { "Accept": "application/json" },
+        suppressGlobalError: true,
+        autoRedirect: false
       }
+    );
 
-      const res = {
-        ok: !!(data && data.ok && data.exists),
-        email: data?.email || "",
-        staff: Array.isArray(data?.staff) ? data.staff : []
-      };
+    if (activeBranchQuery !== q) return;
 
-      cache.set(q, res);
-
-      if (activeBranchQuery !== q) return;
-      applyBranchResult(res);
-    } catch (err) {
-      console.error(err);
-      if (activeBranchQuery !== q) return;
+    if (!resData || resData.ok === false) {
       setBranchState('net_err');
+      return;
     }
+
+    const res = {
+      ok: !!(resData.ok && resData.exists),
+      email: resData.email || "",
+      staff: Array.isArray(resData.staff) ? resData.staff : []
+    };
+
+    cache.set(q, res);
+    applyBranchResult(res);
   }
 
   function applyBranchResult(res) {
     if (res.ok) {
-      lockEmail(res.email, true);
+      lockEmail(res.email);
       populateLoginFor(res.staff, res.email);
       setBranchState('ok', res.email);
       getBtn.disabled = false;
     } else {
-      lockEmail('', false);
+      lockEmail('');
       populateLoginFor([], "");
       setBranchState('not_found');
       getBtn.disabled = true;
+      resetOtpUi();
     }
     updateVerifyButtonState();
   }
@@ -469,8 +493,6 @@
     updateVerifyButtonState();
   }
 
-  // ===== OTP send / verify =====
-
   let cooldownTimer = null;
   let remaining = 0;
 
@@ -499,37 +521,9 @@
     }
   }
 
-  async function postJSON(url, data){
-    const headers = {
-      "Content-Type": "application/json",
-      "Accept": "application/json"
-    };
-
-    const m = document.cookie.match(/csrftoken=([^;]+)/);
-    if (m) headers["X-CSRFToken"] = m[1];
-
-    const r = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(data)
-    });
-
-    let payload = null;
-    try {
-      payload = await r.json();
-    } catch (e) {
-      payload = { ok: false, error: `HTTP ${r.status}` };
-    }
-
-    if (!r.ok && !payload?.error) {
-      payload.error = `HTTP ${r.status}`;
-    }
-
-    return payload;
-  }
-
-  // 🔹 Send OTP click
   getBtn.addEventListener('click', async () => {
+    if (otpRequestInFlight) return;
+
     const branch = sanitizeBranch(branchEl.value);
     const codeTo = idEl.dataset.real || '';
 
@@ -538,42 +532,70 @@
       branchEl.focus();
       return;
     }
+
     if (!codeTo){
       showMsg('No email on file for this branch/staff.', 'lg-err');
       return;
     }
 
-    try {
-      showMsg('Sending OTP…');
-      setBtnLoading(getBtn, true);
+    otpRequestInFlight = true;
+    otpSent = false;
+    otpEl.value = '';
+    setOtpInputEnabled(false);
+    updateVerifyButtonState();
 
-      const res = await postJSON(OTP_SEND_URL, {
+    showMsg('Sending OTP…');
+    setBtnLoading(getBtn, true);
+
+    const res = await ApiGuard.postJson(
+      OTP_SEND_URL,
+      {
         branch,
         identifier: codeTo,
         target: "email"
-      });
-
-      if (res && res.ok){
-        showMsg('OTP sent to selected email.', 'lg-ok');
-        setBtnLoading(getBtn, false);
-        startCooldown();
-        otpEl.focus();
-      } else {
-        setBtnLoading(getBtn, false);
-        getBtn.disabled = !isBranchReady();
-        showMsg(res?.error || 'Failed to send OTP.', 'lg-err');
+      },
+      {
+        suppressGlobalError: true,
+        autoRedirect: false
       }
-    } catch (err) {
-      console.error(err);
-      setBtnLoading(getBtn, false);
-      getBtn.disabled = !isBranchReady();
-      showMsg('Network error while sending.', 'lg-err');
+    );
+
+    otpRequestInFlight = false;
+    setBtnLoading(getBtn, false);
+
+    if (res && res.ok){
+      otpSent = true;
+      setOtpInputEnabled(true);
+      showMsg(res.message || 'OTP sent to selected email.', 'lg-ok');
+      startCooldown();
+      updateVerifyButtonState();
+      otpEl.focus();
+      return;
+    }
+
+    otpSent = false;
+    setOtpInputEnabled(false);
+    getBtn.disabled = !isBranchReady();
+    updateVerifyButtonState();
+
+    if (res?.error_code === 'offline') {
+      showMsg('No internet connection. Please check your network.', 'lg-err');
+    } else if (res?.error_code === 'timeout') {
+      showMsg('Request timed out. Please try again.', 'lg-err');
+    } else {
+      showMsg(
+        res?.error ||
+        res?.message ||
+        'Failed to send OTP.',
+        'lg-err'
+      );
     }
   });
 
-  // 🔹 Verify submit
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    if (verifyRequestInFlight) return;
 
     const branch = sanitizeBranch(branchEl.value);
     const codeTo = idEl.dataset.real || '';
@@ -585,57 +607,76 @@
       branchEl.focus();
       return;
     }
+
     if (!codeTo){
       showMsg('No email on file for this branch/staff.', 'lg-err');
       return;
     }
+
+    if (!otpSent) {
+      showMsg('Please get OTP first.', 'lg-err');
+      getBtn.focus();
+      return;
+    }
+
     if (!/^\d{6}$/.test(code)){
       showMsg('Enter a valid 6-digit OTP.', 'lg-err');
       otpEl.focus();
       return;
     }
 
-    try {
-      showMsg('Verifying…');
-      setBtnLoading(verifyBtn, true);
+    verifyRequestInFlight = true;
+    showMsg('Verifying…');
+    setBtnLoading(verifyBtn, true);
+    updateVerifyButtonState();
 
-      const res = await postJSON(OTP_VERIFY_URL, {
+    const res = await ApiGuard.postJson(
+      OTP_VERIFY_URL,
+      {
         branch,
         otp: code,
         identifier: codeTo
-      });
-
-      if (res && res.ok){
-        showMsg('Verified. Redirecting…', 'lg-ok');
-        window.location.replace(res.next || '/');
-      } else {
-        setBtnLoading(verifyBtn, false);
-        updateVerifyButtonState();
-        showMsg(res?.error || 'Invalid OTP. Try again.', 'lg-err');
+      },
+      {
+        suppressGlobalError: true,
+        autoRedirect: false
       }
-    } catch (err) {
-      console.error(err);
-      setBtnLoading(verifyBtn, false);
-      updateVerifyButtonState();
-      showMsg('Network error while verifying.', 'lg-err');
+    );
+
+    verifyRequestInFlight = false;
+    setBtnLoading(verifyBtn, false);
+    updateVerifyButtonState();
+
+    if (res && res.ok){
+      showMsg(res.message || 'Verified. Redirecting…', 'lg-ok');
+      window.location.replace(res.next || res.redirect_url || '/');
+      return;
+    }
+
+    if (res?.error_code === 'offline') {
+      showMsg('No internet connection. Please check your network.', 'lg-err');
+    } else if (res?.error_code === 'timeout') {
+      showMsg('Request timed out. Please try again.', 'lg-err');
+    } else {
+      showMsg(
+        res?.error ||
+        res?.message ||
+        'Invalid OTP. Try again.',
+        'lg-err'
+      );
     }
   });
 
-  // Prefill (?b=...)
   const pre = new URLSearchParams(location.search).get('b');
   if (pre){
     branchEl.value = sanitizeBranch(pre);
   }
+
   if (branchEl.value){
     const v = sanitizeBranch(branchEl.value);
     if (v) checkBranch(v);
   } else {
     updateVerifyButtonState();
-  }
-
-  function showMsg(text, type = ''){
-    msgEl.textContent = text;
-    msgEl.className = 'lg-msg ' + (type || '');
   }
 })();
 </script>
