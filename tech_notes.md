@@ -172,3 +172,27 @@ Future lo API request validation / request safety / common fetch guard places lo
 Currently branch login flow lo matrame connected undi.
 
 still pendingto connectto another form like user login form
+
+
+---------------------------------------------------------------
+
+Added shared button loading stylesheet at:
+_________________________________________________
+
+offers/static/offers/css/ui/button_loading.css
+_________________________________________________
+
+e file commog ga rasi spinner ga anniki temple lo kiattach chestunnam 
+Purpose:
+This file contains reusable CSS for button loading states across auth/login flows.
+It is used to show spinner-based loading feedback, hide/show button text properly,
+and keep loading buttons visually consistent across pages.
+
+Currently linked / intended for:
+- User login
+- Branch login
+- Admin login
+
+Reason:
+Instead of duplicating spinner/loading button CSS inside each template, a common UI stylesheet
+is used so all login pages follow the same behavior and appearance.

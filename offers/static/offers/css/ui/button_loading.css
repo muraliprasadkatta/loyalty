@@ -1,0 +1,32 @@
+.oz-btn-inline-flex{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.oz-btn__content{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.oz-btn__loading{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.oz-btn__loading[hidden]{
+  display:none !important;
+}
+
+.oz-btn-loading .oz-btn__content{
+  display:none !important;
+}
+
+.oz-btn-loading .oz-btn__loading{
+  display:inline-flex !important;
+}

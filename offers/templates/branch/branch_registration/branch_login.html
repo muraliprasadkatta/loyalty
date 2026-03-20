@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Branch · OTP Login</title>
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
   
   <style>
     :root{ --bg:#0b1020; --card:#11183a; --border:#273164; --text:#e8ecff; --muted:#b9c4ff; --prim:#4c74ff; --ok:#a7ffb5; --err:#ffb3b3; }
@@ -48,47 +49,6 @@
     /* ellipsis for long emails */
     #lgIdentifier{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   </style>
-
-  <style>
-  .oz-btn-spinner-wrap{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    line-height:1;
-  }
-
-  .oz-btn-spinner{
-    width:16px;
-    height:16px;
-    display:inline-block;
-    border:2px solid rgba(255,255,255,.35);
-    border-top-color:#fff;
-    border-radius:50%;
-    animation:oz-btn-spin .7s linear infinite;
-    vertical-align:middle;
-  }
-
-  @keyframes oz-btn-spin{
-    to{ transform:rotate(360deg); }
-  }
-
-  .oz-btn-loading{
-    pointer-events:none;
-    opacity:.92;
-  }
-
-  .oz-btn-loading .oz-btn__content{
-    display:none !important;
-  }
-
-  .oz-btn-loading .oz-btn__loading{
-    display:inline-flex !important;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-  }
-</style>
-
 
 </head>
 <body>
@@ -137,22 +97,22 @@
     <label for="lgOtp" style="margin-top:8px">OTP</label>
     <div class="lg-otp-row">
       <input id="lgOtp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter OTP" maxlength="6" required>
-      <button type="button" id="lgBtnGetOtp" class="lg-btn" disabled>
-      <span class="oz-btn__content">Get OTP</span>
-      <span class="oz-btn__loading" style="display:none;">
-        {% include "ui_states/spinners/button_spinner.html" %}
-        <span>Sending...</span>
-      </span>
-    </button>
+      <button type="button" id="lgBtnGetOtp" class="lg-btn oz-btn-inline-flex" disabled>
+        <span class="oz-btn__content">Get OTP</span>
+        <span class="oz-btn__loading">
+          {% include "ui_states/spinners/button_spinner.html" %}
+          <span>Sending...</span>
+        </span>
+      </button>
     </div>
 
-    <button type="submit" id="lgBtnVerify" class="lg-btn" style="margin-top:10px" disabled>
-      <span class="oz-btn__content">Verify &amp; Continue</span>
-      <span class="oz-btn__loading" style="display:none;">
-        {% include "ui_states/spinners/button_spinner.html" %}
-        <span>Verifying...</span>
-      </span>
-    </button>
+  <button type="submit" id="lgBtnVerify" class="lg-btn oz-btn-inline-flex" style="margin-top:10px" disabled>
+    <span class="oz-btn__content">Verify &amp; Continue</span>
+    <span class="oz-btn__loading">
+      {% include "ui_states/spinners/button_spinner.html" %}
+      <span>Verifying...</span>
+    </span>
+  </button>
 
     <div id="lgMsg" class="lg-msg" role="status" aria-live="polite"></div>
 
@@ -166,12 +126,29 @@
 </div>
 
 <script>
-  function navReplace(e){
-    e.preventDefault();
-    location.replace(this.href);  // ← no history entry
-  }
-  document.getElementById('link-user')?.addEventListener('click', navReplace);
-  document.getElementById('link-admin')?.addEventListener('click', navReplace);
+  (function () {
+    function showOfflineNavMessage() {
+      if (window.ApiGuard && typeof window.ApiGuard.presentError === "function") {
+        window.ApiGuard.presentError("You are offline. Please reconnect to continue.");
+        return;
+      }
+      alert("You are offline. Please reconnect to continue.");
+    }
+
+    function navReplace(e){
+      e.preventDefault();
+
+      if (!navigator.onLine) {
+        showOfflineNavMessage();
+        return;
+      }
+
+      location.replace(this.href);
+    }
+
+    document.getElementById('link-user')?.addEventListener('click', navReplace);
+    document.getElementById('link-admin')?.addEventListener('click', navReplace);
+  })();
 </script>
 
 <script>

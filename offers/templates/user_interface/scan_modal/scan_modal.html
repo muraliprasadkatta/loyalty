@@ -1,203 +1,588 @@
+{% load static %}
 
-<!-- Scan Modal (re-usable include) -->
+<!-- Scan-specific styles only -->
+
+
 <style>
-  /* ===== Scan-specific styles only ===== */
-  /* (pulled from your page; unchanged) */
 
   /* html5-qrcode overrides */
-  #qr-reader{width:100%;max-width:none!important;margin:0;height:100%;}
-  #qr-reader video{width:100%!important;height:100%!important;display:block;object-fit:cover;border-radius:0!important;filter:contrast(1.06) saturate(1.05);}
-  #qr-reader .qr-shaded-region{background:rgba(11,16,32,.55)!important}
-  #qr-reader .qr-canvas-holder .scan-region-highlight{border-color:#e6f0ff!important}
-  #qr-reader .html5-qrcode-container{padding:0!important}
+  #qr-reader{
+    width:100%;
+    max-width:none !important;
+    margin:0;
+    height:100%;
+  }
 
-  .ozm{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;overscroll-behavior:contain}
-  .ozm.show{display:flex}
-  .ozm__dialog{  position: relative;max-height:92vh;display:flex;flex-direction:column;width:min(720px,94vw);background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden}
-  .ozm__head{z-index: 20;top: 0;position: sticky;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border)}
-  .ozm__close{pointer-events: auto;background:transparent;border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:10px;cursor:pointer}
-  .ozm__body{padding:0;overflow:hidden;flex:1 1 auto;display:flex;flex-direction:column}
-  .qr-edge{width:100%;flex:1 1 auto;max-height:clamp(260px,58vh,700px);overflow:hidden;background:#9a9595;position:relative}
-  .qr-form{flex:0 0 auto;padding:14px;border-top:1px solid var(--border)}
-  .oz-label{display:block;margin:8px 0 6px;color:var(--muted);font-size:12px}
-  .oz-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#f7f7f7;color:var(--text);font-weight:600}
-  .oz-sep{opacity:.6;text-align:center;margin:10px 0}
-  .oz-status{padding:.6rem .8rem;border-radius:8px;font-size:.95rem}
-  .oz-status.ok{background:#0d2914;color:#b7f3c7;border:1px solid #1f7a33}
-  .oz-status.err{background:#2a0d0d;color:#f3b7b7;border:1px solid #7a1f1f}
+  #qr-reader video{
+    width:100% !important;
+    height:100% !important;
+    display:block;
+    object-fit:cover;
+    border-radius:0 !important;
+    filter:contrast(1.06) saturate(1.05);
+  }
+
+  #qr-reader .qr-shaded-region{
+    background:rgba(11,16,32,.55) !important;
+  }
+
+  #qr-reader .qr-canvas-holder .scan-region-highlight{
+    border-color:#e6f0ff !important;
+  }
+
+  #qr-reader .html5-qrcode-container{
+    padding:0 !important;
+  }
+
+  .ozm{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+    overscroll-behavior:contain;
+  }
+
+  .ozm.show{
+    display:flex;
+  }
+
+  .ozm__dialog{
+    position:relative;
+    max-height:92vh;
+    display:flex;
+    flex-direction:column;
+    width:min(720px,94vw);
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 20px 50px rgba(0,0,0,.45);
+    overflow:hidden;
+  }
+
+  .ozm__head{
+    z-index:20;
+    top:0;
+    position:sticky;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+  }
+
+  .ozm__close{
+    pointer-events:auto;
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+
+  .ozm__body{
+    padding:0;
+    overflow:hidden;
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .qr-edge{
+    width:100%;
+    flex:1 1 auto;
+    max-height:clamp(260px,58vh,700px);
+    overflow:hidden;
+    background:#9a9595;
+    position:relative;
+  }
+
+  .qr-form{
+    flex:0 0 auto;
+    padding:14px;
+    border-top:1px solid var(--border);
+  }
+
+  .oz-label{
+    display:block;
+    margin:8px 0 6px;
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  .oz-input{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#f7f7f7;
+    color:var(--text);
+    font-weight:600;
+  }
+
+  .oz-sep{
+    opacity:.6;
+    text-align:center;
+    margin:10px 0;
+  }
+
+  .oz-status{
+    padding:.6rem .8rem;
+    border-radius:8px;
+    font-size:.95rem;
+  }
+
+  .oz-status.ok{
+    background:#0d2914;
+    color:#b7f3c7;
+    border:1px solid #1f7a33;
+  }
+
+  .oz-status.err{
+    background:#2a0d0d;
+    color:#f3b7b7;
+    border:1px solid #7a1f1f;
+  }
 
   /* allow interaction on controls even though .scan-panel has pointer-events:none */
-.scan-panel .zoom-ctrl,
-.scan-panel .scan-title {
-  pointer-events: auto;
-}
-
+  .scan-panel .zoom-ctrl,
+  .scan-panel .scan-title{
+    pointer-events:auto;
+  }
 
   /* overlay frame + dimmer + scan line + zoom controls */
-  .scan-panel{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:1}
-  .scan-panel .frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(520px,86%);aspect-ratio:16/9;border-radius:16px;--padv:8%;--padh:5%;--lineH:2px}
-  .scan-panel .frame::before{content:"";position:absolute;inset:0;border-radius:inherit;--c:#10e129;background:
-    linear-gradient(var(--c),var(--c)) left top/42px 10px no-repeat,
-    linear-gradient(var(--c),var(--c)) left top/10px 42px no-repeat,
-    linear-gradient(var(--c),var(--c)) right top/42px 10px no-repeat,
-    linear-gradient(var(--c),var(--c)) right top/10px 42px no-repeat,
-    linear-gradient(var(--c),var(--c)) left bottom/42px 10px no-repeat,
-    linear-gradient(var(--c),var(--c)) left bottom/10px 42px no-repeat,
-    linear-gradient(var(--c),var(--c)) right bottom/42px 10px no-repeat,
-    linear-gradient(var(--c),var(--c)) right bottom/10px 42px no-repeat}
-  .scan-panel .dim-hole{position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:0 0 0 200vmax rgba(0,0,0,.65)}
-  .scan-panel .frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);pointer-events:none}
-  .scan-panel .scan-scope{position:absolute;top:var(--padv);bottom:var(--padv);left:var(--padh);right:var(--padh);border-radius:12px;overflow:hidden;z-index:1}
-  .scan-panel .scan-scope::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 120% at 50% 50%,rgba(255,255,255,.06),rgba(255,255,255,0) 70%);pointer-events:none}
-  .scan-panel .scan-line{position:absolute;left:0;right:0;top:0;height:var(--lineH);background:linear-gradient(90deg,rgba(150,210,255,0),rgba(180,235,255,1),rgba(150,210,255,0));box-shadow:0 0 12px rgba(180,235,255,.65),0 0 26px rgba(180,235,255,.45);animation:sweepY 2.6s ease-in-out infinite;will-change:top}
-  @keyframes sweepY{0%{top:0}50%{top:calc(100% - var(--lineH))}100%{top:0}}
-  .scan-title{position:absolute;left:50%;top:16px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;color:#cfe1ff;padding:8px 12px;z-index:6;min-width:220px;}
-  .scan-title__brand{font-weight:700;letter-spacing:.2px;font-size:13px}
-  .scan-title__sub{font-size:12px;opacity:.9}
-  .zoom-ctrl{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;z-index:6;display:flex;align-items:center;gap:10px;background:rgba(17,24,58,.9);border:1px solid var(--border);border-radius:12px;padding:8px 12px;width:min(420px,86%);box-shadow:0 8px 30px rgba(0,0,0,.35)}
-  .zoom-wrap{position:relative;display:flex;flex:1;align-items:center}
-  .zoom-bubble{position:absolute;left:50%;top:-28px;transform:translateX(-50%);background:rgba(17,24,58,.9);border:1px solid var(--border);color:#dbe6ff;font-weight:600;font-size:12px;padding:4px 8px;border-radius:8px;white-space:nowrap;pointer-events:none}
-  .zoom-ctrl input[type="range"]{flex:1;accent-color:#7ea3ff;height:4px}
-  .zoom-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:#0f1640;color:#e8ecff;font-size:18px;line-height:1;cursor:pointer}
-  .zoom-btn:active{transform:scale(.98)}
-  .zoom-btn{user-select:none; -webkit-user-select:none; touch-action:manipulation;}
-  .scan-caption{position:absolute;left:50%;transform:translateX(-50%);bottom:56px;color:#cfe1ff;opacity:.8;font-size:12px;background:rgba(17,24,58,.7);border:1px solid var(--border);padding:6px 10px;border-radius:8px}
+  .scan-panel{
+    position:absolute;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+    opacity:1;
+  }
+
+  .scan-panel .frame{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:min(520px,86%);
+    aspect-ratio:16/9;
+    border-radius:16px;
+    --padv:8%;
+    --padh:5%;
+    --lineH:2px;
+  }
+
+  .scan-panel .frame::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    --c:#10e129;
+    background:
+      linear-gradient(var(--c),var(--c)) left top/42px 10px no-repeat,
+      linear-gradient(var(--c),var(--c)) left top/10px 42px no-repeat,
+      linear-gradient(var(--c),var(--c)) right top/42px 10px no-repeat,
+      linear-gradient(var(--c),var(--c)) right top/10px 42px no-repeat,
+      linear-gradient(var(--c),var(--c)) left bottom/42px 10px no-repeat,
+      linear-gradient(var(--c),var(--c)) left bottom/10px 42px no-repeat,
+      linear-gradient(var(--c),var(--c)) right bottom/42px 10px no-repeat,
+      linear-gradient(var(--c),var(--c)) right bottom/10px 42px no-repeat;
+  }
+
+  .scan-panel .dim-hole{
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    box-shadow:0 0 0 200vmax rgba(0,0,0,.65);
+  }
+
+  .scan-panel .frame::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+    pointer-events:none;
+  }
+
+  .scan-panel .scan-scope{
+    position:absolute;
+    top:var(--padv);
+    bottom:var(--padv);
+    left:var(--padh);
+    right:var(--padh);
+    border-radius:12px;
+    overflow:hidden;
+    z-index:1;
+  }
+
+  .scan-panel .scan-scope::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(120% 120% at 50% 50%,rgba(255,255,255,.06),rgba(255,255,255,0) 70%);
+    pointer-events:none;
+  }
+
+  .scan-panel .scan-line{
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    height:var(--lineH);
+    background:linear-gradient(90deg,rgba(150,210,255,0),rgba(180,235,255,1),rgba(150,210,255,0));
+    box-shadow:0 0 12px rgba(180,235,255,.65),0 0 26px rgba(180,235,255,.45);
+    animation:sweepY 2.6s ease-in-out infinite;
+    will-change:top;
+  }
+
+  @keyframes sweepY{
+    0%{top:0}
+    50%{top:calc(100% - var(--lineH))}
+    100%{top:0}
+  }
+
+  .scan-title{
+    position:absolute;
+    left:50%;
+    top:16px;
+    transform:translateX(-50%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    color:#cfe1ff;
+    padding:8px 12px;
+    z-index:6;
+    min-width:220px;
+  }
+
+  .scan-title__brand{
+    font-weight:700;
+    letter-spacing:.2px;
+    font-size:13px;
+  }
+
+  .scan-title__sub{
+    font-size:12px;
+    opacity:.9;
+  }
+
+  .zoom-ctrl{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:12px;
+    z-index:6;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(17,24,58,.9);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:8px 12px;
+    width:min(420px,86%);
+    box-shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+
+  .zoom-wrap{
+    position:relative;
+    display:flex;
+    flex:1;
+    align-items:center;
+  }
+
+  .zoom-bubble{
+    position:absolute;
+    left:50%;
+    top:-28px;
+    transform:translateX(-50%);
+    background:rgba(17,24,58,.9);
+    border:1px solid var(--border);
+    color:#dbe6ff;
+    font-weight:600;
+    font-size:12px;
+    padding:4px 8px;
+    border-radius:8px;
+    white-space:nowrap;
+    pointer-events:none;
+  }
+
+  .zoom-ctrl input[type="range"]{
+    flex:1;
+    accent-color:#7ea3ff;
+    height:4px;
+  }
+
+  .zoom-btn{
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#0f1640;
+    color:#e8ecff;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+  }
+
+  .zoom-btn:active{
+    transform:scale(.98);
+  }
+
+  .scan-caption{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:56px;
+    color:#cfe1ff;
+    opacity:.8;
+    font-size:12px;
+    background:rgba(17,24,58,.7);
+    border:1px solid var(--border);
+    padding:6px 10px;
+    border-radius:8px;
+  }
 
   @media (max-width:768px){
-    .ozm{background:#000}
-    .ozm__dialog{width:100vw;height:100svh;max-height:100svh;border:0;border-radius:0}
-    .ozm__head{position:sticky;top:0;z-index:2;padding-top:calc(12px + env(safe-area-inset-top,0px));background:rgba(17,24,58,.9);backdrop-filter:blur(6px)}
-    .qr-edge{flex:1 1 auto;max-height:none;height:100%}
-    .qr-form{padding:12px}
-    .scan-panel .frame{width:88vw;max-width:500px;aspect-ratio:10/9;border-radius:14px}
-    .scan-panel .frame::before{--c:#16e346;z-index:2;background:
-      linear-gradient(var(--c),var(--c)) left top/32px 2px no-repeat,
-      linear-gradient(var(--c),var(--c)) left top/2px 32px no-repeat,
-      linear-gradient(var(--c),var(--c)) right top/32px 2px no-repeat,
-      linear-gradient(var(--c),var(--c)) right top/2px 32px no-repeat,
-      linear-gradient(var(--c),var(--c)) left bottom/32px 2px no-repeat,
-      linear-gradient(var(--c),var(--c)) left bottom/2px 32px no-repeat,
-      linear-gradient(var(--c),var(--c)) right bottom/32px 2px no-repeat,
-      linear-gradient(var(--c),var(--c)) right bottom/2px 32px no-repeat;filter:drop-shadow(0 0 8px rgba(191,224,255,.45))}
+    .ozm{
+      background:#000;
+    }
+
+    .ozm__dialog{
+      width:100vw;
+      height:100svh;
+      max-height:100svh;
+      border:0;
+      border-radius:0;
+    }
+
+    .ozm__head{
+      position:sticky;
+      top:0;
+      z-index:2;
+      padding-top:calc(12px + env(safe-area-inset-top,0px));
+      background:rgba(17,24,58,.9);
+      backdrop-filter:blur(6px);
+    }
+
+    .qr-edge{
+      flex:1 1 auto;
+      max-height:none;
+      height:100%;
+    }
+
+    .qr-form{
+      padding:12px;
+    }
+
+    .scan-panel .frame{
+      width:88vw;
+      max-width:500px;
+      aspect-ratio:10/9;
+      border-radius:14px;
+    }
+
+    .scan-panel .frame::before{
+      --c:#16e346;
+      z-index:2;
+      background:
+        linear-gradient(var(--c),var(--c)) left top/32px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) left top/2px 32px no-repeat,
+        linear-gradient(var(--c),var(--c)) right top/32px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) right top/2px 32px no-repeat,
+        linear-gradient(var(--c),var(--c)) left bottom/32px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) left bottom/2px 32px no-repeat,
+        linear-gradient(var(--c),var(--c)) right bottom/32px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) right bottom/2px 32px no-repeat;
+      filter:drop-shadow(0 0 8px rgba(191,224,255,.45));
+    }
   }
 </style>
 
 <style>
-  /* ... NEE EXISTING CSS AS-IS ... */
-
   /* ===== Verifying state overlay (QR locked) ===== */
 
-  .qr-edge.scan--verifying::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba(4, 6, 20, 0.78);
-    backdrop-filter: blur(4px);
-    pointer-events: auto;       /* block clicks to underneath */
-    z-index: 20;
+  .qr-edge.scan--verifying::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:rgba(4, 6, 20, 0.78);
+    backdrop-filter:blur(4px);
+    pointer-events:auto;
+    z-index:20;
   }
 
-  .scan-verifying-chip {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%) scale(.96);
-    padding: 10px 16px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(15, 23, 60, 0.96);
-    box-shadow: 0 10px 30px rgba(0,0,0,.45);
-    color: #dbe6ff;
-    font-size: 14px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 30;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .18s ease-out, transform .18s ease-out;
+  .scan-verifying-chip{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%) scale(.96);
+    padding: 12px 18px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:rgba(15, 23, 60, 0.96);
+    box-shadow:0 10px 30px rgba(0,0,0,.45);
+    color:#dbe6ff;
+    font-size:15px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    z-index:30;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease-out, transform .18s ease-out;
   }
 
-  .scan-verifying-chip-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: #4ade80;
-    box-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
-    animation: scanPulse 1s ease-in-out infinite;
+  .scan-verifying-chip-dot{
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#4ade80;
+    box-shadow:0 0 10px rgba(74, 222, 128, 0.8);
+    animation:scanPulse 1s ease-in-out infinite;
   }
 
-  @keyframes scanPulse {
-    0% { transform: scale(0.9); opacity: 0.8; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(0.9); opacity: 0.8; }
+  @keyframes scanPulse{
+    0%{transform:scale(0.9);opacity:0.8}
+    50%{transform:scale(1.2);opacity:1}
+    100%{transform:scale(0.9);opacity:0.8}
   }
 
-  .qr-edge.scan--verifying .scan-verifying-chip {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+  .qr-edge.scan--verifying .scan-verifying-chip{
+    opacity:1;
+    transform:translate(-50%, -50%) scale(1);
   }
 </style>
 
 <style>
   /* ===== Small popup inside scan modal ===== */
-.ozpop{
-  position:absolute;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:60;
-  pointer-events:auto;
-}
-.ozpop.show{display:flex}
 
-.ozpop::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(4,6,20,.55);
-  backdrop-filter: blur(3px);
-}
+  .ozpop{
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:60;
+    pointer-events:auto;
+  }
 
-.ozpop__box{
-  position:relative;
-  width:min(360px, 92%);
-  border-radius:16px;
-  border:1px solid var(--border);
-  background:rgba(15,23,60,.98);
-  box-shadow:0 18px 50px rgba(0,0,0,.55);
-  padding:14px 14px 12px;
-  z-index:1;
-}
-.ozpop__title{
-  font-weight:800;
-  color:#e8ecff;
-  margin-bottom:6px;
-  font-size:14px;
-}
-.ozpop__msg{
-  color:#cfe1ff;
-  opacity:.95;
-  font-size:13px;
-  line-height:1.35;
-}
-.ozpop__actions{
-  display:flex;
-  justify-content:flex-end;
-  margin-top:12px;
-}
-.ozpop__btn{
-  background:#0f1640;
-  border:1px solid var(--border);
-  color:#e8ecff;
-  padding:8px 14px;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:700;
-}
-.ozpop__btn:active{transform:scale(.98)}
+  .ozpop.show{
+    display:flex;
+  }
+
+  .ozpop::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:rgba(4,6,20,.55);
+    backdrop-filter:blur(3px);
+  }
+
+  .ozpop__box{
+    position:relative;
+    width:min(360px, 92%);
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:rgba(15,23,60,.98);
+    box-shadow:0 18px 50px rgba(0,0,0,.55);
+    padding:14px 14px 12px;
+    z-index:1;
+  }
+
+  .ozpop__title{
+    font-weight:800;
+    color:#e8ecff;
+    margin-bottom:6px;
+    font-size:14px;
+  }
+
+  .ozpop__msg{
+    color:#cfe1ff;
+    opacity:.95;
+    font-size:13px;
+    line-height:1.35;
+  }
+
+  .ozpop__actions{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:12px;
+  }
+
+  .ozpop__btn{
+    background:#0f1640;
+    border:1px solid var(--border);
+    color:#e8ecff;
+    padding:8px 14px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+  }
+
+  .ozpop__btn:active{
+    transform:scale(.98);
+  }
+</style>
+
+<style>
+  /* ===== Button spinner state ===== */
+
+  .btn{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:auto;
+    min-height:52px;
+    border:0;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+  }
+
+  .btn[disabled]{
+    opacity:.88;
+    cursor:not-allowed;
+  }
+
+  .oz-btn__content{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+
+  .oz-btn__loading{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+
+  .oz-btn__loading[hidden]{
+    display:none !important;
+  }
+
+  .oz-btn-loading .oz-btn__content{
+    display:none !important;
+  }
+
+  .oz-btn-loading .oz-btn__loading{
+    display:inline-flex !important;
+  }
+
 
 </style>
 
@@ -240,7 +625,7 @@
         <!-- 🔥 chip ni ikkada ki move cheyyi -->
         <div class="scan-verifying-chip" id="scanVerifyingChip">
           <span class="scan-verifying-chip-dot"></span>
-          <span>Verifying QR…</span>
+          <span>Checking QR…</span>
         </div>
       </div>
 
@@ -267,8 +652,13 @@
         pattern="[0-9]*" data-pin-len="4"  maxlength="4" placeholder="1234" />
 
 
-  <button id="qrPinSubmit" class="btn" type="button"
-          style="width:100%;margin-top:10px">Verify PIN</button>
+  <button id="qrPinSubmit" class="btn" type="button" style="width:100%;margin-top:10px">
+    <span class="oz-btn__content">Verify PIN</span>
+    <span class="oz-btn__loading" hidden>
+      {% include "ui_states/spinners/button_spinner.html" %}
+      <span>Verifying...</span>
+    </span>
+  </button>
 
   <div id="qrStatus" class="oz-status" style="display:none;margin-top:10px"></div>
 </div>
@@ -279,12 +669,9 @@
 </div>
 
 
-
 <!-- scan-core.js -->
 
 <!-- (config + DOM refs + common helpers + verifying state) -->
-
-
 <script>
 window.OZScan = window.OZScan || {};
 
@@ -429,7 +816,6 @@ window.OZScan = window.OZScan || {};
 
 })(window.OZScan);
 </script>
-
 
 <!-- 2) scan-camera.js  (zoom helpers + camera start/stop) -->
 
@@ -642,6 +1028,7 @@ window.OZScan = window.OZScan || {};
 
     const markStarted = () => {
       s.started = true;
+      ns.setScanning(true);
       waitForVideoThenReveal();
     };
 
@@ -694,8 +1081,11 @@ window.OZScan = window.OZScan || {};
   ns.startScanner = function () {
     ns.hideStatus();
     ns.setVerifying(false);
-    ns.setScanning(true);
     s.started = false;
+
+    if (ns.dom.scanStateText) {
+      ns.dom.scanStateText.textContent = "Opening camera...";
+    }
 
     if (!window.Html5Qrcode) return;
 
@@ -972,14 +1362,12 @@ async function onScanSuccess(token) {
     ns.setVerifying(true);
     ns.stopScanner?.();
 
-    // ✅ NEW: if already counted today, show popup before redirect
     if (already) {
       ns.openPopup(
         "Already Counted Today ✅",
         "Ee branch lo today visit already count ayyindi mava. Status page lo details untayi."
       );
 
-      // OK click -> redirect (one-time)
       const d = ns.dom;
       const go = () => {
         d.scanPopOkBtn?.removeEventListener("click", go);
@@ -987,8 +1375,11 @@ async function onScanSuccess(token) {
       };
       d.scanPopOkBtn?.addEventListener("click", go);
 
-      return; // stop normal auto-redirect
+      return;
     }
+
+    /* ✅ success lo endless verifying feel rakudadhu */
+    ns.setVerifying(false);
 
     setTimeout(() => {
       window.location.replace(next);
@@ -1038,11 +1429,6 @@ window.OZScan = window.OZScan || {};
       return (Number.isFinite(v) && v > 0 && v <= 12) ? v : 4;
     }
 
-    function setPinEnabled(on) {
-      if (d.pinBtn) d.pinBtn.disabled = !on;
-      if (d.pinInput) d.pinInput.disabled = !on;
-    }
-
     function normalizePin(raw) {
       const PIN_LEN = getPinLen();
       let pin = String(raw || "").trim();
@@ -1050,8 +1436,37 @@ window.OZScan = window.OZScan || {};
       return pin;
     }
 
+    function setPinInputEnabled(on) {
+      if (d.pinInput) d.pinInput.disabled = !on;
+    }
+
+    function syncPinBtnState() {
+      if (!d.pinBtn) return;
+
+      const PIN_LEN = getPinLen();
+      const pin = normalizePin(d.pinInput?.value || "");
+      const ready = pin.length === PIN_LEN && !ns.state?.isVerifying;
+
+      d.pinBtn.disabled = !ready;
+    }
+
+    function setPinBtnLoading(on) {
+      if (!d.pinBtn) return;
+
+      d.pinBtn.classList.toggle("oz-btn-loading", !!on);
+      d.pinBtn.setAttribute("aria-busy", on ? "true" : "false");
+
+      const loadingEl = d.pinBtn.querySelector(".oz-btn__loading");
+      if (loadingEl) loadingEl.hidden = !on;
+
+      if (on) {
+        d.pinBtn.disabled = true;
+      } else {
+        syncPinBtnState();
+      }
+    }
+
     function showAlreadyPopupThenRedirect(nextUrl) {
-      // If popup infra exists, use it; else just redirect.
       if (typeof ns.openPopup !== "function") {
         window.location.replace(nextUrl);
         return;
@@ -1067,26 +1482,24 @@ window.OZScan = window.OZScan || {};
         window.location.replace(nextUrl);
       };
 
-      // one-time click handler
       d.scanPopOkBtn?.addEventListener("click", go);
     }
 
     async function submitPin() {
-      // prevent double submit (scan-verify/pin-verify overlap)
       if (ns.state?.isVerifying) return;
 
       const PIN_LEN = getPinLen();
       const pin = normalizePin(d.pinInput.value);
 
-      const pinRe = new RegExp("^\\d{" + PIN_LEN + "}$");
-      if (!pinRe.test(pin)) {
-        ns.showStatus(false, "Enter a valid " + PIN_LEN + "-digit PIN.");
+      if (pin.length !== PIN_LEN) {
+        syncPinBtnState();
         return;
       }
 
       ns.setVerifying(true);
-      setPinEnabled(false);
-      ns.showStatus(true, "Verifying PIN…");
+      setPinInputEnabled(false);
+      setPinBtnLoading(true);
+      ns.hideStatus();
 
       try {
         const res = await fetch("/qrg/pin-verify/", {
@@ -1105,25 +1518,30 @@ window.OZScan = window.OZScan || {};
         if (!res.ok || data.ok === false) {
           ns.showStatus(false, data.error || "PIN verification failed.");
           ns.setVerifying(false);
-          setPinEnabled(true);
+          setPinInputEnabled(true);
+          setPinBtnLoading(false);
           return;
         }
 
-        // backend decides next (status page OR visit pin page)
         const next = data.next || "/";
         const already = !!data.already_claimed_today;
 
-        // lock UI, stop scanner
         ns.setVerifying(true);
         try { ns.stopScanner?.(); } catch {}
 
-        // ✅ NEW: already counted today -> popup then redirect on OK
         if (already) {
           showAlreadyPopupThenRedirect(next);
-          return; // stop auto redirect
+          return;
         }
 
-        // normal success redirect
+        /* ✅ spinner stop after success */
+        ns.setVerifying(false);
+        setPinBtnLoading(false);
+        d.pinBtn.disabled = true;
+
+        const content = d.pinBtn.querySelector(".oz-btn__content");
+        if (content) content.textContent = "Opening status...";
+
         setTimeout(() => {
           window.location.replace(next);
         }, 80);
@@ -1132,7 +1550,8 @@ window.OZScan = window.OZScan || {};
         console.error("PIN verify error", err);
         ns.showStatus(false, "Network error. Please try again.");
         ns.setVerifying(false);
-        setPinEnabled(true);
+        setPinInputEnabled(true);
+        setPinBtnLoading(false);
       }
     }
 
@@ -1144,16 +1563,21 @@ window.OZScan = window.OZScan || {};
     d.pinInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        submitPin();
+        if (!d.pinBtn.disabled) {
+          submitPin();
+        }
       }
     });
 
-    // keep only digits + enforce length while typing
     d.pinInput.addEventListener("input", () => {
-      const PIN_LEN = getPinLen();
-      const cleaned = String(d.pinInput.value || "").replace(/\D/g, "").slice(0, PIN_LEN);
+      const cleaned = normalizePin(d.pinInput.value);
       if (d.pinInput.value !== cleaned) d.pinInput.value = cleaned;
+
+      ns.hideStatus();
+      syncPinBtnState();
     });
+
+    syncPinBtnState();
   }
 
   document.addEventListener("DOMContentLoaded", initPinVerify);

@@ -1,10 +1,13 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>User Sign in</title>
-
+  <script src="{% static 'offers/js/api-guard.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
+ 
 <style>
   :root{
     --bg1:#eef4ff;
@@ -350,21 +353,6 @@
     box-shadow:0 0 0 4px rgba(108,165,255,.14);
   }
 
-  .oz-btn-loading{
-    pointer-events:none;
-    opacity:.92;
-  }
-
-  .oz-btn-loading .oz-btn__content{
-    display:none !important;
-  }
-
-  .oz-btn-loading .oz-btn__loading{
-    display:inline-flex !important;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-  }
 
   .hint{
     margin-top:14px;
@@ -507,6 +495,14 @@
     animation:ozShake .36s ease;
   }
 
+    #btn-resend[disabled]{
+    opacity:.45;
+    cursor:not-allowed;
+    pointer-events:none;
+    text-decoration:none;
+  }
+
+
   @keyframes ozShake{
     0%{ transform:translateX(0); }
     20%{ transform:translateX(-6px); }
@@ -542,176 +538,210 @@
   {% include "pwa_install_process/_pwa_tags.html" %}
 </head>
 <body>
-  <div class="wrap">
-    <form class="card" id="user-otp-form" method="post" action="#" onsubmit="return false;" novalidate>
-      {% csrf_token %}
 
-      {% if messages %}
-        {% for m in messages %}
-          <div class="msg">{{ m }}</div>
-        {% endfor %}
-      {% endif %}
+<div class="wrap">
+  <form class="card" id="user-otp-form" method="post" action="#" onsubmit="return false;" novalidate>
+    {% csrf_token %}
 
-      <!-- Step 1: Enter Email -->
-      <div id="step-email">
-        <div class="header-row">
-          <div class="header-copy">
-            <h1>User sign in</h1>
-            <div class="step-title">Step 1 of 2</div>
-          </div>
+    {% if messages %}
+      {% for m in messages %}
+        <div class="msg">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
 
-          <div class="hero-badge" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M7 11V8a5 5 0 0 1 10 0v3"></path>
-              <rect x="5" y="11" width="14" height="9" rx="2"></rect>
-              <path d="M12 14.2v2.7"></path>
-              <circle cx="18.5" cy="18.5" r="3.2"></circle>
-              <path d="m17.3 18.5.8.8 1.6-1.8"></path>
-            </svg>
-          </div>
+    <!-- Step 1: Enter Email -->
+    <div id="step-email">
+      <div class="header-row">
+        <div class="header-copy">
+          <h1>User sign in</h1>
+          <div class="step-title">Step 1 of 2</div>
         </div>
 
-        <div class="field">
-          <label for="id_email">Email address</label>
-
-          <div class="input-shell" id="email-shell">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 6h16v12H4z"></path>
-              <path d="m4 7 8 6 8-6"></path>
-            </svg>
-            <input
-              id="id_email"
-              name="email"
-              type="email"
-              inputmode="email"
-              autocomplete="email"
-              placeholder="you@example.com"
-              required
-            >
-          </div>
-
-          <div id="email-error" class="field-error">Please enter a valid email address.</div>
+        <div class="hero-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M7 11V8a5 5 0 0 1 10 0v3"></path>
+            <rect x="5" y="11" width="14" height="9" rx="2"></rect>
+            <path d="M12 14.2v2.7"></path>
+            <circle cx="18.5" cy="18.5" r="3.2"></circle>
+            <path d="m17.3 18.5.8.8 1.6-1.8"></path>
+          </svg>
         </div>
+      </div>
 
-        <button class="btn" id="btn-send-otp" type="button">
-          <span class="oz-btn__content">Get OTP</span>
-          <span class="oz-btn__loading" style="display:none;">
-            {% include "ui_states/spinners/button_spinner.html" %}
-            <span>Sending...</span>
-          </span>
-        </button>
+      <div class="field">
+        <label for="id_email">Email address</label>
 
-        <div class="hint hint--with-icon">
+        <div class="input-shell" id="email-shell">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 6h16v12H4z"></path>
             <path d="m4 7 8 6 8-6"></path>
           </svg>
-          <span>We’ll email a 6-digit code to verify it’s you.</span>
+          <input
+            id="id_email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+          >
+        </div>
+
+        <div id="email-error" class="field-error">Please enter a valid email address.</div>
+      </div>
+
+      <button class="btn oz-btn-inline-flex" id="btn-send-otp" type="button">
+        <span class="oz-btn__content">Get OTP</span>
+      <span class="oz-btn__loading">
+        {% include "ui_states/spinners/button_spinner.html" %}
+        <span>Sending...</span>
+      </span>
+      </button>
+
+      <div class="hint hint--with-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16v12H4z"></path>
+          <path d="m4 7 8 6 8-6"></path>
+        </svg>
+        <span>We’ll email a 6-digit code to verify it’s you.</span>
+      </div>
+    </div>
+
+    <!-- Step 2: Verify OTP -->
+    <div id="step-otp" class="hidden" aria-hidden="true">
+      <div class="header-row">
+        <div class="header-copy">
+          <h1>User sign in</h1>
+          <div class="step-title">Step 2 of 2</div>
+        </div>
+
+        <div class="hero-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 8h16"></path>
+            <path d="M8 4v4"></path>
+            <path d="M16 4v4"></path>
+            <rect x="4" y="6" width="16" height="14" rx="2"></rect>
+            <path d="M9 12h.01"></path>
+            <path d="M12 12h.01"></path>
+            <path d="M15 12h.01"></path>
+            <path d="M9 15h.01"></path>
+            <path d="M12 15h.01"></path>
+            <path d="M15 15h.01"></path>
+          </svg>
         </div>
       </div>
 
-      <!-- Step 2: Verify OTP -->
-      <div id="step-otp" class="hidden" aria-hidden="true">
-        <div class="header-row">
-          <div class="header-copy">
-            <h1>User sign in</h1>
-            <div class="step-title">Step 2 of 2</div>
-          </div>
+      <div class="field">
+        <label>Enter 6-digit code</label>
+        <div class="otp-box" id="otp-box">
+          <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1">
+          <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 2">
+          <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 3">
+          <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 4">
+          <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 5">
+          <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 6">
+        </div>
+        <div id="otp-error" class="field-error">Enter the 6-digit code.</div>
+      </div>
 
-          <div class="hero-badge" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M4 8h16"></path>
-              <path d="M8 4v4"></path>
-              <path d="M16 4v4"></path>
-              <rect x="4" y="6" width="16" height="14" rx="2"></rect>
-              <path d="M9 12h.01"></path>
-              <path d="M12 12h.01"></path>
-              <path d="M15 12h.01"></path>
-              <path d="M9 15h.01"></path>
-              <path d="M12 15h.01"></path>
-              <path d="M15 15h.01"></path>
+      <div class="row">
+        <button class="btn oz-btn-inline-flex" id="btn-verify" type="button">
+          <span class="oz-btn__content">Verify &amp; Sign in</span>
+          <span class="oz-btn__loading">
+            {% include "ui_states/spinners/button_spinner.html" %}
+            <span>Verifying...</span>
+          </span>
+        </button>
+
+        <button class="btn right" id="btn-change" type="button">Change email</button>
+      </div>
+
+      <div class="hint">
+        Didn’t get the code?
+        <button id="btn-resend" type="button" style="background:none;border:0;color:#3474ff;text-decoration:underline;cursor:pointer;padding:0;font:inherit;font-weight:700;">Resend</button>
+        <span id="resend-timer" class="hint"></span>
+      </div>
+    </div>
+
+    <hr class="divider" id="auth-divider">
+
+    <div class="links" id="auth-links">
+      <a href="{% url 'offers:admin_login' %}" id="link-admin">
+        <span class="link-left">
+          <span class="link-icon-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="9" cy="8" r="3"></circle>
+              <path d="M4 18c0-2.5 2.5-4 5-4s5 1.5 5 4"></path>
+              <circle cx="17.5" cy="16.5" r="2.5"></circle>
+              <path d="m16.5 16.5.7.7 1.3-1.5"></path>
             </svg>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Enter 6-digit code</label>
-          <div class="otp-box" id="otp-box">
-            <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1">
-            <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 2">
-            <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 3">
-            <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 4">
-            <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 5">
-            <input type="tel" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 6">
-          </div>
-          <div id="otp-error" class="field-error">Enter the 6-digit code.</div>
-        </div>
-
-        <div class="row">
-          <button class="btn" id="btn-verify" type="button">
-            <span class="oz-btn__content">Verify &amp; Sign in</span>
-          </button>
-          <button class="btn right" id="btn-change" type="button">Change email</button>
-        </div>
-
-        <div class="hint">
-          Didn’t get the code?
-          <button id="btn-resend" type="button" style="background:none;border:0;color:#3474ff;text-decoration:underline;cursor:pointer;padding:0;font:inherit;font-weight:700;">Resend</button>
-          <span id="resend-timer" class="hint"></span>
-        </div>
-      </div>
-
-      <hr class="divider" id="auth-divider">
-
-      <div class="links" id="auth-links">
-        <a href="{% url 'offers:admin_login' %}">
-          <span class="link-left">
-            <span class="link-icon-wrap">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="9" cy="8" r="3"></circle>
-                <path d="M4 18c0-2.5 2.5-4 5-4s5 1.5 5 4"></path>
-                <circle cx="17.5" cy="16.5" r="2.5"></circle>
-                <path d="m16.5 16.5.7.7 1.3-1.5"></path>
-              </svg>
-            </span>
-            <span>admin sign-in</span>
           </span>
-          <svg class="link-arrow" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 12h14"></path>
-            <path d="m13 5 7 7-7 7"></path>
-          </svg>
-        </a>
+          <span>admin sign-in</span>
+        </span>
+        <svg class="link-arrow" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12h14"></path>
+          <path d="m13 5 7 7-7 7"></path>
+        </svg>
+      </a>
 
-        <a href="{% url 'offers:branch_login' %}" id="link-branch">
-          <span class="link-left">
-            <span class="link-icon-wrap">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 10.5 12 4l8 6.5"></path>
-                <path d="M6 9.5V20h12V9.5"></path>
-                <path d="M10 20v-5h4v5"></path>
-              </svg>
-            </span>
-            <span>Branch Login</span>
+      <a href="{% url 'offers:branch_login' %}" id="link-branch">
+        <span class="link-left">
+          <span class="link-icon-wrap">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 10.5 12 4l8 6.5"></path>
+              <path d="M6 9.5V20h12V9.5"></path>
+              <path d="M10 20v-5h4v5"></path>
+            </svg>
           </span>
-          <svg class="link-arrow" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 12h14"></path>
-            <path d="m13 5 7 7-7 7"></path>
-          </svg>
-        </a>
-      </div>
+          <span>Branch Login</span>
+        </span>
+        <svg class="link-arrow" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12h14"></path>
+          <path d="m13 5 7 7-7 7"></path>
+        </svg>
+      </a>
+    </div>
 
-      {% if request.GET.next %}
-        <input type="hidden" name="next" value="{{ request.GET.next|urlencode }}">
-      {% endif %}
-    </form>
-  </div>
+    {% if request.GET.next %}
+      <input type="hidden" name="next" value="{{ request.GET.next|urlencode }}">
+    {% endif %}
+  </form>
+</div>
 
-  <script>
-    document.getElementById('link-branch').addEventListener('click', function (e) {
-      e.preventDefault();
-      location.replace(this.href);
-    });
-  </script>
+<script>
+  (function () {
+    function showOfflineNavMessage() {
+      if (window.ApiGuard && typeof window.ApiGuard.presentError === "function") {
+        window.ApiGuard.presentError("You are offline. Please reconnect to continue.");
+        return;
+      }
+      alert("You are offline. Please reconnect to continue.");
+    }
+
+    function handleProtectedNav(link, useReplace) {
+      if (!link) return;
+
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        if (!navigator.onLine) {
+          showOfflineNavMessage();
+          return;
+        }
+
+        if (useReplace) {
+          location.replace(this.href);
+        } else {
+          location.href = this.href;
+        }
+      });
+    }
+
+    handleProtectedNav(document.getElementById("link-branch"), true);
+    handleProtectedNav(document.getElementById("link-admin"), false);
+  })();
+</script>
+
 
 <script>
   (function(){
@@ -741,9 +771,10 @@
     const OTP_EMAIL_KEY = "userOtpEmail";
     const OTP_RELOAD_FLAG_KEY = "userOtpStayOnReload";
 
-    function setSendLoading(isLoading){
-      btnSend.classList.toggle("oz-btn-loading", isLoading);
-      btnSend.disabled = isLoading;
+    function setBtnLoading(button, isLoading){
+      if (!button) return;
+      button.classList.toggle("oz-btn-loading", isLoading);
+      button.disabled = isLoading;
     }
 
     function animateShake(el){
@@ -843,11 +874,12 @@
       setFooterVisibility(true);
       stopTimer();
       timerEl.textContent = "";
-      setSendLoading(false);
       clearOtpInvalid();
 
-      emailInput.focus();
+      setBtnLoading(btnSend, false);
+      setBtnLoading(btnVerify, false);
 
+      emailInput.focus();
       clearOtpDraftState();
     }
 
@@ -878,10 +910,6 @@
 
     function updateTimer(){
       timerEl.textContent = ` (wait ${countdown}s)`;
-    }
-
-    function getCsrf(){
-      return document.querySelector('input[name=csrfmiddlewaretoken]')?.value || "";
     }
 
     function getCode(){
@@ -1130,30 +1158,21 @@
         return;
       }
 
-      setSendLoading(true);
+      setBtnLoading(btnSend, true);
 
-      try{
-        const res = await fetch("{% url 'offers:otp_send' %}", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCsrf(),
-            "Accept": "application/json",
-          },
-          body: JSON.stringify({ email })
+      try {
+        const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
+          suppressGlobalError: true,
         });
 
-        const data = await res.json();
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+        if (!result || !result.ok) {
+          markEmailInvalid(result?.message || "Failed to send OTP.");
+          return;
         }
 
         showOtpStep();
-      }catch(err){
-        markEmailInvalid(err.message || "Failed to send OTP.");
-      }finally{
-        setSendLoading(false);
+      } finally {
+        setBtnLoading(btnSend, false);
       }
     });
 
@@ -1181,35 +1200,26 @@
         return;
       }
 
-      btnVerify.disabled = true;
+      setBtnLoading(btnVerify, true);
 
-      try{
-        const res = await fetch("{% url 'offers:otp_verify' %}", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCsrf(),
-            "Accept": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            code,
-            next: "{{ request.GET.next|default:'' }}"
-          })
+      try {
+        const result = await ApiGuard.postJson("{% url 'offers:otp_verify' %}", {
+          email,
+          code,
+          next: "{{ request.GET.next|default:'' }}"
+        }, {
+          suppressGlobalError: true,
         });
 
-        const data = await res.json();
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
+        if (!result || !result.ok) {
+          markOtpInvalid(result?.message || "Verify failed.");
+          return;
         }
 
         clearOtpDraftState();
-        window.location.replace(data.next || "{% url 'offers:user_home' %}");
-      }catch(err){
-        markOtpInvalid(err.message || "Verify failed.");
-      }finally{
-        btnVerify.disabled = false;
+        window.location.replace(result.next || "{% url 'offers:user_home' %}");
+      } finally {
+        setBtnLoading(btnVerify, false);
       }
     });
 
@@ -1236,35 +1246,24 @@
 
       btnResend.disabled = true;
 
-      try{
-        const res = await fetch("{% url 'offers:otp_send' %}", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCsrf(),
-            "Accept": "application/json",
-          },
-          body: JSON.stringify({ email })
-        });
+      const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
+        suppressGlobalError: true,
+      });
 
-        const data = await res.json();
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || `HTTP ${res.status}`);
-        }
-
-        otpInputs.forEach(i => i.value = "");
-        focusOtpAt(0);
-
-        sessionStorage.setItem(OTP_STEP_KEY, "otp");
-        sessionStorage.setItem(OTP_EMAIL_KEY, email);
-        markOtpReloadAllowed();
-
-        startResendTimer(30);
-      }catch(err){
-        markOtpInvalid(err.message || "Resend failed.");
+      if (!result || !result.ok) {
         btnResend.disabled = false;
+        markOtpInvalid(result?.message || "Resend failed.");
+        return;
       }
+
+      otpInputs.forEach(i => i.value = "");
+      focusOtpAt(0);
+
+      sessionStorage.setItem(OTP_STEP_KEY, "otp");
+      sessionStorage.setItem(OTP_EMAIL_KEY, email);
+      markOtpReloadAllowed();
+
+      startResendTimer(30);
     });
 
     window.addEventListener("beforeunload", () => {
@@ -1300,5 +1299,6 @@
     }
   })();
 </script>
+
 </body>
 </html>

@@ -5,188 +5,275 @@
   <title>Verify Visit PIN</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <style>
-    :root{
-      --bg:#0b1020;
-      --card:#11183a;
-      --border:#273164;
-      --text:#e8ecff;
-      --muted:#b9c4ff;
-      --prim:#4c74ff;
-      --bad:#ff4c6a;
-      --good:#22c55e;
-    }
+<style>
+  :root{
+    --bg:#0b1020;
+    --card:#11183a;
+    --border:#273164;
+    --text:#e8ecff;
+    --muted:#b9c4ff;
+    --prim:#4c74ff;
+    --bad:#ff4c6a;
+    --good:#22c55e;
+  }
 
-    html, body{ height:100%; margin:0; }
-    body{ background: var(--bg); }
+  html, body{ height:100%; margin:0; }
+  body{ background: var(--bg); }
 
-    #vcVisitOverlay{
-      position:fixed; inset:0; z-index:50;
-      display:flex; align-items:center; justify-content:center;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(900px 500px at 30% 20%, rgba(76,116,255,.28), transparent 60%),
-        radial-gradient(800px 420px at 80% 70%, rgba(106,161,255,.20), transparent 55%),
-        linear-gradient(180deg, #0b1020 0%, #090d1a 100%);
-    }
+  #vcVisitOverlay{
+    position:fixed; inset:0; z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(900px 500px at 30% 20%, rgba(76,116,255,.28), transparent 60%),
+      radial-gradient(800px 420px at 80% 70%, rgba(106,161,255,.20), transparent 55%),
+      linear-gradient(180deg, #0b1020 0%, #090d1a 100%);
+  }
 
+  .vcBaseCard{
+    position:relative;
+    width:min(420px,94vw);
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(120,150,255,.18), rgba(17,24,58,.92) 60%),
+      linear-gradient(180deg, rgba(25,35,85,.95), rgba(12,18,48,.95));
+    border:1px solid rgba(170,200,255,.28);
+    border-radius:22px;
+    box-shadow:
+      0 30px 70px rgba(0,0,0,.55),
+      0 0 0 1px rgba(255,255,255,.06) inset,
+      0 0 90px rgba(76,116,255,.25);
+    padding:56px 18px 18px;
+    text-align:center;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+
+  .vcCodeCard{
+    position:absolute;
+    left:50%;
+    top:0;
+    transform:translate(-50%,-50%);
+    min-width:280px;
+    background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+    border:1px solid rgba(190,220,255,.35);
+    border-radius:14px;
+    box-shadow:
+      0 14px 34px rgba(0,0,0,.35),
+      0 0 0 1px rgba(255,255,255,.08) inset,
+      0 0 45px rgba(106,161,255,.35);
+    padding:14px 18px;
+  }
+
+  .vcDigits{
+    font-size:22px;
+    letter-spacing:.06em;
+    text-align:center;
+    color:#ffffff;
+    font-weight:900;
+  }
+
+  .vcHint{
+    margin-top:6px;
+    font-size:11px;
+    color:rgba(185,196,255,.9);
+  }
+
+  .vcBodyText{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.6;
+    margin-top:6px;
+  }
+
+  .vcPinRow{
+    margin:14px 0 8px;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+  }
+
+  .vcPinBox{
+    width:44px;
+    height:54px;
+    border-radius:14px;
+    border:1px solid rgba(190,220,255,.22);
+    background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+    color:#ffffff;
+    text-align:center;
+    font-size:24px;
+    font-weight:900;
+    outline:none;
+    caret-color:#ffffff;
+    text-shadow:
+      0 1px 0 rgba(255,255,255,.10),
+      0 0 10px rgba(255,255,255,.16);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 8px 18px rgba(0,0,0,.14);
+    transition:
+      border-color .16s ease,
+      box-shadow .16s ease,
+      background .16s ease,
+      opacity .16s ease,
+      transform .12s ease;
+  }
+
+  .vcPinBox:focus{
+    border-color:rgba(96,140,255,.98);
+    background:linear-gradient(180deg, rgba(79,116,255,.22), rgba(255,255,255,.06));
+    box-shadow:
+      0 0 0 3px rgba(76,116,255,.20),
+      0 0 18px rgba(76,116,255,.28),
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 10px 24px rgba(0,0,0,.18);
+  }
+
+  /* entered boxes visible ga kanapadali */
+  .vcPinBox.vcFilled{
+    border-color:rgba(175,205,255,.34);
+    background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05));
+    color:#ffffff;
+    text-shadow:
+      0 1px 0 rgba(255,255,255,.12),
+      0 0 12px rgba(255,255,255,.20);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 10px 24px rgba(0,0,0,.16);
+  }
+
+  /* inactive boxes too dull kakudadhu */
+  .vcPinBox[disabled]{
+    opacity:.78;
+    cursor:not-allowed;
+  }
+
+  .vcStatus{
+    margin-top:10px;
+    font-size:12px;
+    line-height:1.4;
+    min-height:18px;
+  }
+
+  .vcStatus.ok{ color:var(--good); }
+  .vcStatus.bad{ color:var(--bad); }
+
+  .vcPrimaryBtn{
+    margin-top:14px;
+    width:100%;
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(39,49,100,.95);
+    background:var(--prim);
+    color:#fff;
+    font-size:14px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 10px 26px rgba(76,116,255,.22);
+    transition:opacity .16s ease, box-shadow .16s ease, transform .12s ease;
+  }
+
+  .vcPrimaryBtn:active{
+    transform:translateY(1px);
+  }
+
+  .vcPrimaryBtn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+
+  .vcGhostBtn{
+    margin-top:10px;
+    width:100%;
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(190,220,255,.22);
+    background:rgba(255,255,255,.06);
+    color:#fff;
+    font-size:13px;
+    font-weight:800;
+    cursor:pointer;
+  }
+
+  .vcMiniLinkRow{
+    margin-top:6px;
+    text-align:center;
+  }
+
+  .vcMiniLink{
+    font-size:11px;
+    font-weight:900;
+    color:#b9c4ff;
+    text-decoration:underline;
+    cursor:pointer;
+    opacity:.95;
+  }
+
+  .vcMiniLink:hover{ opacity:1; }
+  .vcMiniLink:active{ transform:translateY(1px); }
+
+  @media (max-width: 420px){
     .vcBaseCard{
-      position:relative;
-      width:min(420px,94vw);
-      background:
-        radial-gradient(120% 80% at 50% 0%,
-          rgba(120,150,255,.18),
-          rgba(17,24,58,.92) 60%),
-        linear-gradient(180deg,
-          rgba(25,35,85,.95),
-          rgba(12,18,48,.95));
-      border: 1px solid rgba(170,200,255,.28);
-      border-radius: 22px;
-      box-shadow:
-        0 30px 70px rgba(0,0,0,.55),
-        0 0 0 1px rgba(255,255,255,.06) inset,
-        0 0 90px rgba(76,116,255,.25);
-      padding:56px 18px 18px;
-      text-align:center;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      width:min(92vw, 420px);
+      padding:62px 16px 16px;
     }
 
     .vcCodeCard{
-      position:absolute;
-      left:50%;
-      top:0;
-      transform:translate(-50%,-50%);
-      min-width:280px;
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-      border: 1px solid rgba(190,220,255,.35);
-      border-radius:14px;
-      box-shadow:
-        0 14px 34px rgba(0,0,0,.35),
-        0 0 0 1px rgba(255,255,255,.08) inset,
-        0 0 45px rgba(106,161,255,.35);
-      padding:14px 18px;
+      min-width:300px;
     }
 
-    .vcDigits{
-      font-size:22px;
-      letter-spacing:.06em;
-      text-align:center;
-      color:#ffffff;
-      font-weight:900;
-    }
-
-    .vcHint{
-      margin-top:6px;
-      font-size:11px;
-      color:rgba(185,196,255,.9);
-    }
-
-    .vcBodyText{
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.6;
-      margin-top:6px;
+    .vcPinBox{
+      width:52px;
+      height:60px;
+      font-size:24px;
+      border-radius:16px;
     }
 
     .vcPinRow{
-      margin:14px 0 8px;
-      display:flex;
-      justify-content:center;
-      gap:10px;
-    }
-    .vcPinBox{
-      width:44px;
-      height:54px;
-      border-radius:14px;
-      border:1px solid rgba(190,220,255,.25);
-      background:rgba(255,255,255,.06);
-      color:#fff;
-      text-align:center;
-      font-size:22px;
-      font-weight:900;
-      outline:none;
-    }
-    .vcPinBox:focus{
-      border-color: rgba(76,116,255,.95);
-      box-shadow: 0 0 0 3px rgba(76,116,255,.22);
+      gap:12px;
     }
 
-    .vcStatus{
-      margin-top:10px;
-      font-size:12px;
-      line-height:1.4;
-      min-height:18px;
-    }
-    .vcStatus.ok{ color: var(--good); }
-    .vcStatus.bad{ color: var(--bad); }
-
-    .vcPrimaryBtn{
-      margin-top:14px;
-      width:100%;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid rgba(39,49,100,.95);
-      background:var(--prim);
-      color:#fff;
-      font-size:14px;
-      font-weight:900;
-      cursor:pointer;
-      box-shadow:0 10px 26px rgba(76,116,255,.22);
-    }
-    .vcPrimaryBtn:active{ transform:translateY(1px); }
-
+    .vcPrimaryBtn,
     .vcGhostBtn{
-      margin-top:10px;
-      width:100%;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid rgba(190,220,255,.22);
-      background:rgba(255,255,255,.06);
-      color:#fff;
-      font-size:13px;
-      font-weight:800;
-      cursor:pointer;
+      padding:12px 14px;
+      font-size:15px;
     }
+  }
+</style>
 
-    /* mobile upgrades */
-    @media (max-width: 420px){
-      .vcBaseCard{
-        width: min(92vw, 420px);
-        padding: 62px 16px 16px;
-      }
-      .vcCodeCard{ min-width: 300px; }
-      .vcPinBox{
-        width: 52px;
-        height: 60px;
-        font-size: 24px;
-        border-radius: 16px;
-      }
-      .vcPinRow{ gap: 12px; }
-      .vcPrimaryBtn, .vcGhostBtn{
-        padding: 12px 14px;
-        font-size: 15px;
-      }
-    }
-  </style>
+<style>
+  .vcPrimaryBtn,
+.vcGhostBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:44px;
+}
 
-  <style>
-    .vcMiniLinkRow{
-      margin-top:6px;
-      text-align:center;
-    }
-    .vcMiniLink{
-      font-size:11px;
-      font-weight:900;
-      color:#b9c4ff;
-      text-decoration:underline;
-      cursor:pointer;
-      opacity:.95;
-    }
-    .vcMiniLink:hover{ opacity:1; }
-    .vcMiniLink:active{ transform:translateY(1px); }
-  </style>
+.oz-btn__content{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.oz-btn__loading{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.vcPrimaryBtn.oz-btn-loading .oz-btn__content{
+  display:none;
+}
+
+.vcPrimaryBtn.oz-btn-loading .oz-btn__loading{
+  display:inline-flex;
+}
+</style>
+
 </head>
 
 <body>
@@ -244,9 +331,13 @@
 {% endif %}
 
 
-      <button type="button" id="vcVerifyBtn" class="vcPrimaryBtn" onclick="vcVerifyPin()">
-        Verify PIN
-      </button>
+    <button type="button" id="vcVerifyBtn" class="vcPrimaryBtn" onclick="vcVerifyPin()" disabled>
+      <span class="oz-btn__content">Verify PIN</span>
+      <span class="oz-btn__loading" aria-hidden="true">
+        {% include "ui_states/spinners/button_spinner.html" %}
+        <span style="margin-left:8px;">Verifying...</span>
+      </span>
+    </button>
 
       <button type="button" class="vcGhostBtn" onclick="vcClearPin()">
         Clear
@@ -265,59 +356,223 @@
     el.textContent = msg || '';
   }
 
+  function setBtnLoading(btn, isLoading){
+    if (!btn) return;
+    btn.classList.toggle('oz-btn-loading', !!isLoading);
+    btn.disabled = !!isLoading;
+    btn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+  }
+
+  function setBtnText(btn, text){
+    const content = btn?.querySelector('.oz-btn__content');
+    if (content) content.textContent = text || '';
+  }
+
+  function getPinBoxes(){
+    return ['p1','p2','p3','p4'].map(id => document.getElementById(id)).filter(Boolean);
+  }
+
   function getPin(){
-    const ids = ['p1','p2','p3','p4'];
-    return ids.map(id => (document.getElementById(id).value || '').trim()).join('');
+    return getPinBoxes().map(box => (box.value || '').trim()).join('');
+  }
+
+  function focusBoxAtEnd(box){
+    if (!box) return;
+    box.focus();
+    try{
+      const len = box.value.length;
+      box.setSelectionRange(len, len);
+    }catch(e){}
+  }
+
+  function firstEmptyIndex(boxes){
+    return boxes.findIndex(box => !(box.value || '').trim());
+  }
+
+  function refreshPinUI(){
+    const boxes = getPinBoxes();
+    const btn = document.getElementById('vcVerifyBtn');
+    const pin = boxes.map(box => (box.value || '').trim()).join('');
+    const emptyIdx = firstEmptyIndex(boxes);
+    const activeIdx = emptyIdx === -1 ? boxes.length - 1 : emptyIdx;
+    const isLoading = !!btn?.classList.contains('oz-btn-loading');
+
+    boxes.forEach((box, i) => {
+      const shouldEnable = !isLoading && (i === activeIdx);
+      box.disabled = !shouldEnable;
+      box.readOnly = !shouldEnable;
+      box.tabIndex = shouldEnable ? 0 : -1;
+      box.classList.toggle('vcFilled', !!(box.value || '').trim());
+    });
+
+    if (btn && !isLoading) {
+      btn.disabled = !/^\d{4}$/.test(pin);
+    }
   }
 
   function vcClearPin(){
-    ['p1','p2','p3','p4'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
+    const btn = document.getElementById('vcVerifyBtn');
+    setBtnLoading(btn, false);
+
+    const boxes = getPinBoxes();
+    boxes.forEach(box => {
+      box.value = '';
+      box.disabled = true;
+      box.readOnly = true;
+      box.tabIndex = -1;
     });
+
     setStatus('');
-    document.getElementById('p1')?.focus();
+    refreshPinUI();
+    focusBoxAtEnd(boxes[0]);
   }
 
   function wirePinBoxes(){
-    const boxes = ['p1','p2','p3','p4'].map(id => document.getElementById(id));
-    boxes.forEach((box, i) => {
-      if (!box) return;
+    const boxes = getPinBoxes();
 
-      box.addEventListener('input', () => {
-        box.value = (box.value || '').replace(/\D/g,'').slice(0,1);
-        if (box.value && i < boxes.length - 1) boxes[i+1].focus();
+    boxes.forEach((box, i) => {
+      box.autocomplete = 'one-time-code';
+      box.inputMode = 'numeric';
+
+      box.addEventListener('focus', () => {
+        const emptyIdx = firstEmptyIndex(boxes);
+        const activeIdx = emptyIdx === -1 ? boxes.length - 1 : emptyIdx;
+
+        if (i !== activeIdx) {
+          focusBoxAtEnd(boxes[activeIdx]);
+          return;
+        }
+
+        focusBoxAtEnd(box);
+      });
+
+      box.addEventListener('click', () => {
+        const emptyIdx = firstEmptyIndex(boxes);
+        const activeIdx = emptyIdx === -1 ? boxes.length - 1 : emptyIdx;
+
+        if (i !== activeIdx) {
+          focusBoxAtEnd(boxes[activeIdx]);
+          return;
+        }
+
+        focusBoxAtEnd(box);
+      });
+
+      box.addEventListener('input', (e) => {
+        const val = (e.target.value || '').replace(/\D/g, '').slice(-1);
+        box.value = val;
+
+        if (val && i < boxes.length - 1) {
+          refreshPinUI();
+          focusBoxAtEnd(boxes[i + 1]);
+        } else {
+          refreshPinUI();
+          focusBoxAtEnd(box);
+        }
+
+        setStatus('');
       });
 
       box.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !box.value && i > 0) boxes[i-1].focus();
-        if (e.key === 'Enter') vcVerifyPin();
+        if (e.key === 'Backspace') {
+          e.preventDefault();
+
+          if (box.value) {
+            box.value = '';
+            refreshPinUI();
+            focusBoxAtEnd(box);
+            setStatus('');
+            return;
+          }
+
+          if (i > 0) {
+            boxes[i - 1].value = '';
+            refreshPinUI();
+            focusBoxAtEnd(boxes[i - 1]);
+            setStatus('');
+          }
+          return;
+        }
+
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          if (i > 0) focusBoxAtEnd(boxes[i - 1]);
+          return;
+        }
+
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (i < boxes.length - 1 && boxes[i].value) {
+            focusBoxAtEnd(boxes[i + 1]);
+          }
+          return;
+        }
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const btn = document.getElementById('vcVerifyBtn');
+          if (btn && !btn.disabled) vcVerifyPin();
+          return;
+        }
+      });
+
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = (e.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, 4);
+        if (!pasted) return;
+
+        boxes.forEach(b => b.value = '');
+        pasted.split('').forEach((digit, idx) => {
+          if (boxes[idx]) boxes[idx].value = digit;
+        });
+
+        refreshPinUI();
+
+        const nextEmpty = firstEmptyIndex(boxes);
+        if (nextEmpty === -1) {
+          focusBoxAtEnd(boxes[boxes.length - 1]);
+        } else {
+          focusBoxAtEnd(boxes[nextEmpty]);
+        }
+
+        setStatus('');
       });
     });
+
+    refreshPinUI();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     wirePinBoxes();
-    document.getElementById('p1')?.focus();
+    const first = document.getElementById('p1');
+    refreshPinUI();
+    focusBoxAtEnd(first);
     window.OZShake?.init?.();
   });
 
   async function vcVerifyPin(){
-    // ✅ 1) Eligibility checkbox gate (if exists)
     if (window.OZShake && !window.OZShake.mustCheckEligibilityOrShake()){
       setStatus("Mava, offer eligibility checkbox tick cheyyali.", "bad");
       return;
     }
 
-    // ✅ 2) PIN validation
     const pin = getPin();
     if (!/^\d{4}$/.test(pin)){
       setStatus('4 digits correct ga enter cheyyi mava.', 'bad');
+      refreshPinUI();
       return;
     }
 
     const btn = document.getElementById('vcVerifyBtn');
-    btn.disabled = true;
+    const boxes = getPinBoxes();
+
+    setBtnLoading(btn, true);
+    boxes.forEach(box => {
+      box.disabled = true;
+      box.readOnly = true;
+      box.tabIndex = -1;
+    });
+
     setStatus('Verifying…', '');
 
     try{
@@ -336,20 +591,44 @@
 
       if (!res.ok || !data.ok){
         setStatus(data.error || "Invalid / Expired PIN.", "bad");
-        btn.disabled = false;
+        setBtnLoading(btn, false);
+        refreshPinUI();
+
+        const emptyIdx = firstEmptyIndex(boxes);
+        if (emptyIdx === -1) {
+          focusBoxAtEnd(boxes[boxes.length - 1]);
+        } else {
+          focusBoxAtEnd(boxes[emptyIdx]);
+        }
         return;
       }
 
       setStatus("Visit recorded successfully! Taking you to your status... 🚀", "ok");
+      setBtnLoading(btn, false);
+      setBtnText(btn, "Opening status...");
+      btn.disabled = true;
 
       setTimeout(() => {
-        if (data.redirect_url) window.location.replace(data.redirect_url);
-      }, 1500);
+        if (data.redirect_url) {
+          window.location.replace(data.redirect_url);
+        } else {
+          setBtnText(btn, "Verify PIN");
+          refreshPinUI();
+        }
+      }, 700);
 
     }catch(e){
       console.error(e);
       setStatus("Network issue mava. Malli try cheyyi.", "bad");
-      btn.disabled = false;
+      setBtnLoading(btn, false);
+      refreshPinUI();
+
+      const emptyIdx = firstEmptyIndex(boxes);
+      if (emptyIdx === -1) {
+        focusBoxAtEnd(boxes[boxes.length - 1]);
+      } else {
+        focusBoxAtEnd(boxes[emptyIdx]);
+      }
     }
   }
 
@@ -360,8 +639,6 @@
     return '';
   }
 </script>
-
-
 
 <!--===== OZ Shake Helper (one-time)========== */ -->
 <script>
