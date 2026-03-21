@@ -4,11 +4,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="{% static 'offers/js/api-guard.js' %}"></script>
-    <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
-
+  <script src="{% static 'offers/js/api-guard.js' %}" defer></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
+  <script src="{% static 'offers/js/ui/button_loading.js' %}" defer></script>
   <title>Sign in</title>
-  
+
   <style>
     html, body { height: 100%; margin: 0; background:#0b1020; color:#e8ecff; }
 
@@ -74,9 +74,6 @@
       transform:none;
     }
 
-    @keyframes spin{
-      to{ transform: rotate(360deg); }
-    }
 
     .msg { margin-bottom:8px; color:#ff9aa2; font-size:13px; }
     .hint { margin-top:8px; font-size:12px; color:#93a3ff; opacity:.9; }
@@ -86,6 +83,7 @@
     .links a{ color:#bfc9ff; text-decoration:none; font-size:13px; }
     .links a:hover{ text-decoration:underline; }
   </style>
+
 </head>
 <body>
   <div class="wrap">
@@ -128,7 +126,7 @@
   </div>
 
 <script>
-  function navReplace(e){
+  function navReplace(e) {
     e.preventDefault();
 
     if (!navigator.onLine) {
@@ -152,59 +150,85 @@
     const usernameEl = document.getElementById('id_username');
     const passwordEl = document.getElementById('id_password');
 
+    if (!form || !btn || !usernameEl || !passwordEl) return;
+
     function hasValue(el) {
       return !!(el && el.value && el.value.trim());
     }
 
+    function isBtnLoading() {
+      return btn.classList.contains('oz-btn-loading') || btn.dataset.loading === 'true';
+    }
+
+    function setExternalBtnLoading(button, isLoading) {
+      if (window.ButtonLoading && typeof window.ButtonLoading.setLoading === 'function') {
+        window.ButtonLoading.setLoading(button, isLoading);
+        return true;
+      }
+      return false;
+    }
+
     function updateBtnState() {
       const ready = hasValue(usernameEl) && hasValue(passwordEl);
-      const isLoading = btn.classList.contains('oz-btn-loading');
+      const loading = isBtnLoading();
 
-      btn.disabled = !ready || isLoading;
+      btn.disabled = !ready || loading;
       btn.setAttribute('aria-disabled', btn.disabled ? 'true' : 'false');
     }
 
     function setBtnLoading(isLoading) {
-      btn.classList.toggle('oz-btn-loading', !!isLoading);
-      btn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+      const on = !!isLoading;
+
+      const handledByExternal = setExternalBtnLoading(btn, on);
+
+      if (!handledByExternal) {
+        btn.classList.toggle('oz-btn-loading', on);
+      }
+
+      btn.dataset.loading = on ? 'true' : 'false';
+      btn.setAttribute('aria-busy', on ? 'true' : 'false');
+
       updateBtnState();
     }
 
-    usernameEl?.addEventListener('input', updateBtnState);
-    passwordEl?.addEventListener('input', updateBtnState);
+    usernameEl.addEventListener('input', updateBtnState);
+    passwordEl.addEventListener('input', updateBtnState);
 
-    form?.addEventListener('submit', function (e) {
-      if (!form.checkValidity()) {
-        setBtnLoading(false);
-        return;
-      }
+    form.addEventListener('submit', function (e) {
+  if (!form.checkValidity()) {
+    e.preventDefault();
+    setBtnLoading(false);
+    return;
+  }
 
-      if (btn.disabled) {
-        e.preventDefault();
-        return;
-      }
+  if (btn.disabled) {
+    e.preventDefault();
+    setBtnLoading(false);
+    return;
+  }
 
-      if (!navigator.onLine) {
-        e.preventDefault();
-        setBtnLoading(false);
+  if (!navigator.onLine) {
+    e.preventDefault();
+    setBtnLoading(false);
 
-        if (window.ApiGuard?.presentError) {
-          window.ApiGuard.presentError("No internet connection. Please check your network.");
-        } else {
-          alert("No internet connection. Please check your network.");
-        }
-        return;
-      }
+    if (window.ApiGuard?.presentError) {
+      window.ApiGuard.presentError("No internet connection. Please check your network.");
+    } else {
+      alert("No internet connection. Please check your network.");
+    }
+    return;
+  }
 
-      setBtnLoading(true);
-    });
+  setBtnLoading(true);
+});
 
     window.addEventListener('pageshow', function () {
       setBtnLoading(false);
-      updateBtnState();
     });
 
     window.addEventListener('offline', function () {
+      setBtnLoading(false);
+
       if (window.ApiGuard?.presentError) {
         window.ApiGuard.presentError("You are offline. Please check your network.");
       }
@@ -213,7 +237,6 @@
     updateBtnState();
   })();
 </script>
-
 
 </body>
 </html>

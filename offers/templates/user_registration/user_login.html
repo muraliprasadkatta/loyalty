@@ -7,6 +7,7 @@
   <title>User Sign in</title>
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
   <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
+  <script src="{% static 'offers/js/ui/button_loading.js' %}"></script>
  
 <style>
   :root{
@@ -771,12 +772,6 @@
     const OTP_EMAIL_KEY = "userOtpEmail";
     const OTP_RELOAD_FLAG_KEY = "userOtpStayOnReload";
 
-    function setBtnLoading(button, isLoading){
-      if (!button) return;
-      button.classList.toggle("oz-btn-loading", isLoading);
-      button.disabled = isLoading;
-    }
-
     function animateShake(el){
       if (!el) return;
       el.classList.remove("shake");
@@ -876,8 +871,8 @@
       timerEl.textContent = "";
       clearOtpInvalid();
 
-      setBtnLoading(btnSend, false);
-      setBtnLoading(btnVerify, false);
+      OZButtons.stop(btnSend, { keepWidth: true });
+      OZButtons.stop(btnVerify, { keepWidth: true });
 
       emailInput.focus();
       clearOtpDraftState();
@@ -1158,7 +1153,8 @@
         return;
       }
 
-      setBtnLoading(btnSend, true);
+      OZButtons.start(btnSend, { keepWidth: true });
+
 
       try {
         const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
@@ -1172,7 +1168,7 @@
 
         showOtpStep();
       } finally {
-        setBtnLoading(btnSend, false);
+        OZButtons.stop(btnSend, { keepWidth: true });
       }
     });
 
@@ -1200,7 +1196,7 @@
         return;
       }
 
-      setBtnLoading(btnVerify, true);
+      OZButtons.start(btnVerify, { keepWidth: true });
 
       try {
         const result = await ApiGuard.postJson("{% url 'offers:otp_verify' %}", {
@@ -1219,52 +1215,58 @@
         clearOtpDraftState();
         window.location.replace(result.next || "{% url 'offers:user_home' %}");
       } finally {
-        setBtnLoading(btnVerify, false);
+        OZButtons.stop(btnVerify, { keepWidth: true });
       }
     });
 
     btnChange.addEventListener("click", showEmailStep);
 
     btnResend.addEventListener("click", async () => {
-      if (btnResend.disabled) return;
+  if (btnResend.disabled) return;
 
-      const email = emailInput.value.trim();
-      clearEmailInvalid();
-      clearOtpInvalid();
+  const email = emailInput.value.trim();
+  clearEmailInvalid();
+  clearOtpInvalid();
 
-      if (!email) {
-        showEmailStep();
-        markEmailInvalid("Please enter your email.");
-        return;
-      }
+  if (!email) {
+    showEmailStep();
+    markEmailInvalid("Please enter your email.");
+    return;
+  }
 
-      if (!isValidEmail(email)) {
-        showEmailStep();
-        markEmailInvalid("Please enter a valid email address.");
-        return;
-      }
+  if (!isValidEmail(email)) {
+    showEmailStep();
+    markEmailInvalid("Please enter a valid email address.");
+    return;
+  }
 
-      btnResend.disabled = true;
+  btnResend.disabled = true;
 
-      const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
-        suppressGlobalError: true,
-      });
-
-      if (!result || !result.ok) {
-        btnResend.disabled = false;
-        markOtpInvalid(result?.message || "Resend failed.");
-        return;
-      }
-
-      otpInputs.forEach(i => i.value = "");
-      focusOtpAt(0);
-
-      sessionStorage.setItem(OTP_STEP_KEY, "otp");
-      sessionStorage.setItem(OTP_EMAIL_KEY, email);
-      markOtpReloadAllowed();
-
-      startResendTimer(30);
+  try {
+    const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
+      suppressGlobalError: true,
     });
+
+    if (!result || !result.ok) {
+      btnResend.disabled = false;
+      markOtpInvalid(result?.message || "Resend failed.");
+      return;
+    }
+
+    otpInputs.forEach(i => i.value = "");
+    focusOtpAt(0);
+
+    sessionStorage.setItem(OTP_STEP_KEY, "otp");
+    sessionStorage.setItem(OTP_EMAIL_KEY, email);
+    markOtpReloadAllowed();
+
+    startResendTimer(30);
+  } catch (err) {
+    btnResend.disabled = false;
+    markOtpInvalid("Unable to resend OTP. Please try again.");
+  }
+});
+
 
     window.addEventListener("beforeunload", () => {
       if (!stepOtp.classList.contains("hidden")) {

@@ -7,48 +7,190 @@
   <title>Branch · OTP Login</title>
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
   <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
+  <script src="{% static 'offers/js/ui/button_loading.js' %}"></script>
   
-  <style>
-    :root{ --bg:#0b1020; --card:#11183a; --border:#273164; --text:#e8ecff; --muted:#b9c4ff; --prim:#4c74ff; --ok:#a7ffb5; --err:#ffb3b3; }
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    .lg-wrap{min-height:100dvh;display:grid;place-items:center;padding:20px}
-    /* Remove vw usage; keep it inside parent's content box */
-    .lg-card{
-      width: min(420px, 100%);
-      margin-inline: auto;
-      background: var(--card);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:18px 18px 16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-    }
-    h1{margin:0 0 12px;font-size:18px}
-    .lg-hint{color:var(--muted);font-size:13px;margin:-6px 0 14px}
-    label{display:block;margin:10px 0 6px;font-size:14px}
-    input,button,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0f1540;color:var(--text);transition:border-color .15s}
-    input::placeholder{color:#9fb0ff99}
-    .lg-row{display:flex;gap:10px}
-    .lg-row > *{flex:1}
-    .lg-btn{background:var(--prim);border-color:transparent;font-weight:700;cursor:pointer}
-    .lg-btn[disabled]{opacity:.6;cursor:not-allowed}
-    .lg-otp-row{display:grid;grid-template-columns:1fr auto;gap:10px}
-    .lg-msg{margin-top:12px;font-size:13px;color:#b9c4ff}
-    .lg-err{color:#ffb3b3}
-    .lg-ok{color:#a7ffb5}
-    .lg-field-hint{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)}
-    .lg-chip{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px}
-    .lg-chip.ok{border-color:#2f7; color:#9f9}
-    .lg-chip.err{border-color:#f77; color:#ffb3b3}
-    .lg-is-ok{border-color:#2f7 !important}
-    .lg-is-err{border-color:#f77 !important}
+<style>
+  :root{
+    --bg:#0b1020;
+    --card:#11183a;
+    --border:#273164;
+    --text:#e8ecff;
+    --muted:#b9c4ff;
+    --prim:#4c74ff;
+    --ok:#a7ffb5;
+    --err:#ffb3b3;
+  }
 
-    /* lock field */
-    .lg-lockwrap{position:relative}
-    .lg-lockwrap .lg-lockicon{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.85;pointer-events:none}
-    .lg-lockwrap input{padding-left:34px}
-    /* ellipsis for long emails */
-    #lgIdentifier{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  </style>
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    font-family:system-ui,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+
+  .lg-wrap{
+    min-height:100dvh;
+    display:grid;
+    place-items:center;
+    padding:20px;
+  }
+
+  .lg-card{
+    width:min(420px, 100%);
+    margin-inline:auto;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 18px 16px;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+
+  h1{
+    margin:0 0 12px;
+    font-size:18px;
+  }
+
+  .lg-hint{
+    color:var(--muted);
+    font-size:13px;
+    margin:-6px 0 14px;
+  }
+
+  label{
+    display:block;
+    margin:10px 0 6px;
+    font-size:14px;
+  }
+
+  input,
+  button,
+  select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#0f1540;
+    color:var(--text);
+    transition:border-color .15s;
+  }
+
+  input::placeholder{
+    color:#9fb0ff99;
+  }
+
+  .lg-row{
+    display:flex;
+    gap:10px;
+  }
+
+  .lg-row > *{
+    flex:1;
+    min-width:0;
+  }
+
+  .lg-btn{
+    background:var(--prim);
+    border-color:transparent;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .lg-btn[disabled]{
+    opacity:.6;
+    cursor:not-allowed;
+  }
+
+  .lg-otp-row{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) 136px;
+    gap:10px;
+    align-items:stretch;
+  }
+
+  .lg-otp-row > *{
+    min-width:0;
+  }
+
+  #lgBtnGetOtp{
+    width:136px;
+    min-width:136px;
+    max-width:136px;
+    padding-inline:10px;
+  }
+
+  #lgBtnGetOtp .oz-btn__content,
+  #lgBtnGetOtp .oz-btn__loading{
+    width:100%;
+    justify-content:center;
+    gap:8px;
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .lg-msg{
+    margin-top:12px;
+    font-size:13px;
+    color:#b9c4ff;
+  }
+
+  .lg-err{color:#ffb3b3}
+  .lg-ok{color:#a7ffb5}
+
+  .lg-field-hint{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:6px;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .lg-chip{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    font-size:11px;
+  }
+
+  .lg-chip.ok{
+    border-color:#2f7;
+    color:#9f9;
+  }
+
+  .lg-chip.err{
+    border-color:#f77;
+    color:#ffb3b3;
+  }
+
+  .lg-is-ok{border-color:#2f7 !important}
+  .lg-is-err{border-color:#f77 !important}
+
+  .lg-lockwrap{
+    position:relative;
+  }
+
+  .lg-lockwrap .lg-lockicon{
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform:translateY(-50%);
+    opacity:.85;
+    pointer-events:none;
+  }
+
+  .lg-lockwrap input{
+    padding-left:34px;
+  }
+
+  #lgIdentifier{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+</style>
 
 </head>
 <body>
@@ -58,16 +200,21 @@
     <div class="lg-hint">Enter branch name and get OTP to sign in.</div>
 
     <label for="lgBranchName">Branch name</label>
-    <input id="lgBranchName" name="branch" type="text"
-           placeholder="e.g., madhapura1" required
-           pattern="[a-z0-9]+"
-           title="Only lowercase letters and numbers. No spaces.">
+    <input
+      id="lgBranchName"
+      name="branch"
+      type="text"
+      placeholder="e.g., madhapura1"
+      required
+      pattern="[a-z0-9]+"
+      title="Only lowercase letters and numbers. No spaces."
+    >
+
     <div class="lg-field-hint">
       <span class="lg-chip" id="lgBranchChip">Not checked</span>
       <small id="lgBranchMsg">Type to check…</small>
     </div>
 
-    <!-- 🌟 NEW: Login for dropdown (above Send OTP + Email row) -->
     <div style="margin-top:8px">
       <label for="lgLoginFor">Login for</label>
       <select id="lgLoginFor" name="login_for">
@@ -78,51 +225,75 @@
     <div class="lg-row" style="margin-top:8px">
       <div>
         <label for="lgLoginTarget">Send OTP to</label>
-        <!-- forced to Email & disabled (phone dummy) -->
         <select id="lgLoginTarget" name="target" disabled>
           <option value="email" selected>Email</option>
           <option value="phone" disabled>Phone (disabled)</option>
         </select>
       </div>
+
       <div>
         <label for="lgIdentifier">Email (locked)</label>
         <div class="lg-lockwrap">
           <span class="lg-lockicon">🔒</span>
-          <input id="lgIdentifier" name="identifier" type="text"
-                 placeholder="mail@branch.com" readonly>
+          <input
+            id="lgIdentifier"
+            name="identifier"
+            type="text"
+            placeholder="mail@branch.com"
+            readonly
+          >
         </div>
       </div>
     </div>
 
     <label for="lgOtp" style="margin-top:8px">OTP</label>
     <div class="lg-otp-row">
-      <input id="lgOtp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter OTP" maxlength="6" required>
-      <button type="button" id="lgBtnGetOtp" class="lg-btn oz-btn-inline-flex" disabled>
+      <input
+        id="lgOtp"
+        name="otp"
+        type="text"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        placeholder="Enter OTP"
+        maxlength="6"
+        required
+      >
+
+      <button
+        type="button"
+        id="lgBtnGetOtp"
+        class="lg-btn oz-btn-inline-flex"
+        disabled
+      >
         <span class="oz-btn__content">Get OTP</span>
         <span class="oz-btn__loading">
           {% include "ui_states/spinners/button_spinner.html" %}
-          <span>Sending...</span>
+          <span>Sending</span>
         </span>
       </button>
     </div>
 
-  <button type="submit" id="lgBtnVerify" class="lg-btn oz-btn-inline-flex" style="margin-top:10px" disabled>
-    <span class="oz-btn__content">Verify &amp; Continue</span>
-    <span class="oz-btn__loading">
-      {% include "ui_states/spinners/button_spinner.html" %}
-      <span>Verifying...</span>
-    </span>
-  </button>
+    <button
+      type="submit"
+      id="lgBtnVerify"
+      class="lg-btn oz-btn-inline-flex"
+      style="margin-top:10px"
+      disabled
+    >
+      <span class="oz-btn__content">Verify &amp; Continue</span>
+      <span class="oz-btn__loading">
+        {% include "ui_states/spinners/button_spinner.html" %}
+        <span>Verifying...</span>
+      </span>
+    </button>
 
     <div id="lgMsg" class="lg-msg" role="status" aria-live="polite"></div>
 
-  <div style="margin-top:12px; display:flex; justify-content:space-between; gap:12px;">
-    <a href="{% url 'offers:user_login' %}" id="link-user">User Login</a>
-    <a href="{% url 'offers:admin_login' %}" id="link-admin">Admin sign-in</a>
-  </div>
-    {# {% csrf_token %} #}
+    <div style="margin-top:12px; display:flex; justify-content:space-between; gap:12px;">
+      <a href="{% url 'offers:user_login' %}" id="link-user">User Login</a>
+      <a href="{% url 'offers:admin_login' %}" id="link-admin">Admin sign-in</a>
+    </div>
   </form>
-  
 </div>
 
 <script>
@@ -176,12 +347,6 @@
 
   function sanitizeOtp(value){
     return (value || '').replace(/\D/g, '').slice(0, 6);
-  }
-
-  function setBtnLoading(button, isLoading){
-    if (!button) return;
-    button.classList.toggle('oz-btn-loading', isLoading);
-    button.disabled = isLoading;
   }
 
   function setGetOtpLabel(text){
@@ -251,14 +416,16 @@
 
   function setOtpInputEnabled(enabled){
     otpEl.disabled = !enabled;
-    if (!enabled) {
-      otpEl.blur();
-    }
+    if (!enabled) otpEl.blur();
   }
 
   function isBranchReady(){
     return branchChip.textContent === 'Branch found' && !!idEl.dataset.real;
   }
+
+  let otpRequestInFlight = false;
+  let verifyRequestInFlight = false;
+  let otpSent = false;
 
   function updateVerifyButtonState(){
     const branchOk = isBranchReady();
@@ -279,7 +446,8 @@
     verifyRequestInFlight = false;
     otpEl.value = '';
     setOtpInputEnabled(false);
-    setBtnLoading(verifyBtn, false);
+    OZButtons.stop(getBtn, { keepWidth: true });
+    OZButtons.stop(verifyBtn, { keepWidth: true });
     updateVerifyButtonState();
   }
 
@@ -290,12 +458,7 @@
       const opt = loginForEl.options[loginForEl.selectedIndex];
       const email = opt?.dataset.email || "";
 
-      if (email) {
-        lockEmail(email);
-      } else {
-        lockEmail('');
-      }
-
+      lockEmail(email || '');
       resetOtpUi();
       showMsg('');
     });
@@ -320,10 +483,6 @@
     e.preventDefault();
   });
 
-  let otpRequestInFlight = false;
-  let verifyRequestInFlight = false;
-  let otpSent = false;
-
   let checkTimer = null;
   let activeBranchQuery = '';
   const cache = new Map();
@@ -340,8 +499,8 @@
     activeBranchQuery = after;
     clearCooldown();
     lockEmail('');
-    setBtnLoading(getBtn, false);
-    setBtnLoading(verifyBtn, false);
+    OZButtons.stop(getBtn, { keepWidth: true });
+    OZButtons.stop(verifyBtn, { keepWidth: true });
     getBtn.disabled = true;
     setGetOtpLabel('Get OTP');
     populateLoginFor([], "");
@@ -488,7 +647,7 @@
 
     function tick(){
       getBtn.disabled = true;
-      setGetOtpLabel(`Get OTP (${remaining}s)`);
+      setGetOtpLabel(`Resend ${remaining}s`);
 
       if (--remaining < 0){
         clearCooldown();
@@ -522,50 +681,53 @@
     updateVerifyButtonState();
 
     showMsg('Sending OTP…');
-    setBtnLoading(getBtn, true);
+    OZButtons.start(getBtn, { keepWidth: true });
 
-    const res = await ApiGuard.postJson(
-      OTP_SEND_URL,
-      {
-        branch,
-        identifier: codeTo,
-        target: "email"
-      },
-      {
-        suppressGlobalError: true,
-        autoRedirect: false
-      }
-    );
-
-    otpRequestInFlight = false;
-    setBtnLoading(getBtn, false);
-
-    if (res && res.ok){
-      otpSent = true;
-      setOtpInputEnabled(true);
-      showMsg(res.message || 'OTP sent to selected email.', 'lg-ok');
-      startCooldown();
-      updateVerifyButtonState();
-      otpEl.focus();
-      return;
-    }
-
-    otpSent = false;
-    setOtpInputEnabled(false);
-    getBtn.disabled = !isBranchReady();
-    updateVerifyButtonState();
-
-    if (res?.error_code === 'offline') {
-      showMsg('No internet connection. Please check your network.', 'lg-err');
-    } else if (res?.error_code === 'timeout') {
-      showMsg('Request timed out. Please try again.', 'lg-err');
-    } else {
-      showMsg(
-        res?.error ||
-        res?.message ||
-        'Failed to send OTP.',
-        'lg-err'
+    try {
+      const res = await ApiGuard.postJson(
+        OTP_SEND_URL,
+        {
+          branch,
+          identifier: codeTo,
+          target: "email"
+        },
+        {
+          suppressGlobalError: true,
+          autoRedirect: false
+        }
       );
+
+      if (res && res.ok){
+        otpSent = true;
+        setOtpInputEnabled(true);
+        showMsg(res.message || 'OTP sent to selected email.', 'lg-ok');
+        startCooldown();
+        updateVerifyButtonState();
+        otpEl.focus();
+        return;
+      }
+
+      otpSent = false;
+      setOtpInputEnabled(false);
+      getBtn.disabled = !isBranchReady();
+      updateVerifyButtonState();
+
+      if (res?.error_code === 'offline') {
+        showMsg('No internet connection. Please check your network.', 'lg-err');
+      } else if (res?.error_code === 'timeout') {
+        showMsg('Request timed out. Please try again.', 'lg-err');
+      } else {
+        showMsg(res?.error || res?.message || 'Failed to send OTP.', 'lg-err');
+      }
+    } catch (err) {
+      otpSent = false;
+      setOtpInputEnabled(false);
+      getBtn.disabled = !isBranchReady();
+      updateVerifyButtonState();
+      showMsg('Something went wrong while sending OTP.', 'lg-err');
+    } finally {
+      otpRequestInFlight = false;
+      OZButtons.stop(getBtn, { keepWidth: true });
     }
   });
 
@@ -604,43 +766,47 @@
 
     verifyRequestInFlight = true;
     showMsg('Verifying…');
-    setBtnLoading(verifyBtn, true);
+    OZButtons.start(verifyBtn, { keepWidth: true });
     updateVerifyButtonState();
 
-    const res = await ApiGuard.postJson(
-      OTP_VERIFY_URL,
-      {
-        branch,
-        otp: code,
-        identifier: codeTo
-      },
-      {
-        suppressGlobalError: true,
-        autoRedirect: false
-      }
-    );
-
-    verifyRequestInFlight = false;
-    setBtnLoading(verifyBtn, false);
-    updateVerifyButtonState();
-
-    if (res && res.ok){
-      showMsg(res.message || 'Verified. Redirecting…', 'lg-ok');
-      window.location.replace(res.next || res.redirect_url || '/');
-      return;
-    }
-
-    if (res?.error_code === 'offline') {
-      showMsg('No internet connection. Please check your network.', 'lg-err');
-    } else if (res?.error_code === 'timeout') {
-      showMsg('Request timed out. Please try again.', 'lg-err');
-    } else {
-      showMsg(
-        res?.error ||
-        res?.message ||
-        'Invalid OTP. Try again.',
-        'lg-err'
+    try {
+      const res = await ApiGuard.postJson(
+        OTP_VERIFY_URL,
+        {
+          branch,
+          otp: code,
+          identifier: codeTo
+        },
+        {
+          suppressGlobalError: true,
+          autoRedirect: false
+        }
       );
+
+      if (res && res.ok){
+        showMsg(res.message || 'Verified. Redirecting…', 'lg-ok');
+        window.location.replace(res.next || res.redirect_url || '/');
+        return;
+      }
+
+      if (res?.error_code === 'offline') {
+        showMsg('No internet connection. Please check your network.', 'lg-err');
+      } else if (res?.error_code === 'timeout') {
+        showMsg('Request timed out. Please try again.', 'lg-err');
+      } else {
+        showMsg(
+          res?.error ||
+          res?.message ||
+          'Invalid OTP. Try again.',
+          'lg-err'
+        );
+      }
+    } catch (err) {
+      showMsg('Something went wrong while verifying OTP.', 'lg-err');
+    } finally {
+      verifyRequestInFlight = false;
+      OZButtons.stop(verifyBtn, { keepWidth: true });
+      updateVerifyButtonState();
     }
   });
 
