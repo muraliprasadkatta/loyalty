@@ -746,6 +746,8 @@
 
 <script>
   (function(){
+    const RESEND_COOLDOWN_SECS = 60;
+
     const stepEmail = document.getElementById("step-email");
     const stepOtp = document.getElementById("step-otp");
     const emailInput = document.getElementById("id_email");
@@ -853,7 +855,7 @@
       }
 
       if (restartTimer) {
-        startResendTimer(30);
+        startResendTimer(RESEND_COOLDOWN_SECS);
       }
 
       sessionStorage.setItem(OTP_STEP_KEY, "otp");
@@ -874,25 +876,38 @@
       OZButtons.stop(btnSend, { keepWidth: true });
       OZButtons.stop(btnVerify, { keepWidth: true });
 
+      if (btnResend) btnResend.disabled = false;
+
       emailInput.focus();
       clearOtpDraftState();
     }
 
     function startResendTimer(sec){
       stopTimer();
-      countdown = sec;
-      btnResend.disabled = true;
+
+      countdown = Math.max(0, Number(sec) || 0);
+      btnResend.disabled = countdown > 0;
+
+      if (countdown <= 0) {
+        timerEl.textContent = "";
+        btnResend.disabled = false;
+        return;
+      }
+
       updateTimer();
 
       timerId = setInterval(() => {
-        countdown--;
-        updateTimer();
+        countdown -= 1;
 
         if (countdown <= 0) {
           stopTimer();
+          countdown = 0;
           timerEl.textContent = "";
           btnResend.disabled = false;
+          return;
         }
+
+        updateTimer();
       }, 1000);
     }
 
@@ -918,6 +933,8 @@
     function focusOtpAt(index){
       const safeIndex = Math.max(0, Math.min(index, otpInputs.length - 1));
       const input = otpInputs[safeIndex];
+      if (!input) return;
+
       input.focus({ preventScroll: true });
 
       requestAnimationFrame(() => {
@@ -1078,10 +1095,7 @@
           e.preventDefault();
 
           const otpComplete = otpInputs.every(i => i.value);
-
-          if (otpComplete) {
-            return;
-          }
+          if (otpComplete) return;
 
           const allowedIndex = normalizeOtpTargetIndex(idx);
           if (allowedIndex !== idx) {
@@ -1155,7 +1169,6 @@
 
       OZButtons.start(btnSend, { keepWidth: true });
 
-
       try {
         const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
           suppressGlobalError: true,
@@ -1166,7 +1179,9 @@
           return;
         }
 
-        showOtpStep();
+        showOtpStep({ preserveInputs: false, restartTimer: true });
+      } catch (err) {
+        markEmailInvalid("Unable to send OTP. Please try again.");
       } finally {
         OZButtons.stop(btnSend, { keepWidth: true });
       }
@@ -1214,6 +1229,8 @@
 
         clearOtpDraftState();
         window.location.replace(result.next || "{% url 'offers:user_home' %}");
+      } catch (err) {
+        markOtpInvalid("Unable to verify OTP. Please try again.");
       } finally {
         OZButtons.stop(btnVerify, { keepWidth: true });
       }
@@ -1222,51 +1239,50 @@
     btnChange.addEventListener("click", showEmailStep);
 
     btnResend.addEventListener("click", async () => {
-  if (btnResend.disabled) return;
+      if (btnResend.disabled) return;
 
-  const email = emailInput.value.trim();
-  clearEmailInvalid();
-  clearOtpInvalid();
+      const email = emailInput.value.trim();
+      clearEmailInvalid();
+      clearOtpInvalid();
 
-  if (!email) {
-    showEmailStep();
-    markEmailInvalid("Please enter your email.");
-    return;
-  }
+      if (!email) {
+        showEmailStep();
+        markEmailInvalid("Please enter your email.");
+        return;
+      }
 
-  if (!isValidEmail(email)) {
-    showEmailStep();
-    markEmailInvalid("Please enter a valid email address.");
-    return;
-  }
+      if (!isValidEmail(email)) {
+        showEmailStep();
+        markEmailInvalid("Please enter a valid email address.");
+        return;
+      }
 
-  btnResend.disabled = true;
+      btnResend.disabled = true;
 
-  try {
-    const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
-      suppressGlobalError: true,
+      try {
+        const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
+          suppressGlobalError: true,
+        });
+
+        if (!result || !result.ok) {
+          btnResend.disabled = false;
+          markOtpInvalid(result?.message || "Resend failed.");
+          return;
+        }
+
+        otpInputs.forEach(i => i.value = "");
+        focusOtpAt(0);
+
+        sessionStorage.setItem(OTP_STEP_KEY, "otp");
+        sessionStorage.setItem(OTP_EMAIL_KEY, email);
+        markOtpReloadAllowed();
+
+        startResendTimer(RESEND_COOLDOWN_SECS);
+      } catch (err) {
+        btnResend.disabled = false;
+        markOtpInvalid("Unable to resend OTP. Please try again.");
+      }
     });
-
-    if (!result || !result.ok) {
-      btnResend.disabled = false;
-      markOtpInvalid(result?.message || "Resend failed.");
-      return;
-    }
-
-    otpInputs.forEach(i => i.value = "");
-    focusOtpAt(0);
-
-    sessionStorage.setItem(OTP_STEP_KEY, "otp");
-    sessionStorage.setItem(OTP_EMAIL_KEY, email);
-    markOtpReloadAllowed();
-
-    startResendTimer(30);
-  } catch (err) {
-    btnResend.disabled = false;
-    markOtpInvalid("Unable to resend OTP. Please try again.");
-  }
-});
-
 
     window.addEventListener("beforeunload", () => {
       if (!stepOtp.classList.contains("hidden")) {
