@@ -5,6 +5,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>User • OfferZone</title>
+  <script src="{% static 'offers/js/api-guard.js' %}"></script>
+
 
   <!-- libs -->
   <script src="https://unpkg.com/html5-qrcode" defer></script>
@@ -400,6 +402,12 @@ header .right a{ color:rgba(232,236,255,0.92); }
   grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:14px;
 }
+.scan-inline-error{
+  background: rgba(239,68,68,0.10);
+  border: 1px solid rgba(239,68,68,0.28);
+  color: #7f1d1d;
+}
+
 @media (min-width:740px){
   .grid{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
 }
@@ -501,8 +509,7 @@ footer.nav{
       </div>
     </div>
 
-    <div id="scanInlineMsg" class="msg" style="display:none; margin-top:12px"></div>
-
+  <div id="scanInlineMsg" class="msg scan-inline-error" style="display:none; margin-top:12px"></div>
     <!-- Welcome -->
     <div class="card hero" style="margin-top:16px">
       <div style="flex:1 1 420px; min-width:280px">
