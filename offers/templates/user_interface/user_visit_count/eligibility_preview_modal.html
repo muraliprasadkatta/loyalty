@@ -294,9 +294,8 @@ function getCookie(name){
     if (!overlay) return;
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden','true');
+    window.__setMainEligibilityBox?.(false);
 
-    // ✅ Close press chesina kuda status page ki (same visit-pin style)
-    window.location.replace("{% url 'offers:user_status' %}");
   }
 
   closeBtn?.addEventListener('click', close);

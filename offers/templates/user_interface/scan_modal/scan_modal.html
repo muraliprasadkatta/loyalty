@@ -1840,12 +1840,11 @@ window.OZScan = window.OZScan || {};
           return;
         }
 
-        ns.setVerifying(false);
-        setPinBtnLoading(false);
+
         d.pinBtn.disabled = true;
 
-        const content = d.pinBtn.querySelector(".oz-btn__content");
-        if (content) content.textContent = "Opening status...";
+        const loadingText = d.pinBtn.querySelector(".oz-btn__loading span:last-child");
+        if (loadingText) loadingText.textContent = "Opening status...";
 
         setTimeout(() => {
           window.location.replace(next);

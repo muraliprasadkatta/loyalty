@@ -1,9 +1,13 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Verify Visit PIN</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
+  <script src="{% static 'offers/js/ui/button_loading.js' %}"></script>
+  <script src="{% static 'offers/js/api-guard.js' %}"></script>
 
 <style>
   :root{
@@ -243,35 +247,11 @@
 </style>
 
 <style>
-  .vcPrimaryBtn,
+.vcPrimaryBtn,
 .vcGhostBtn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
   min-height:44px;
 }
 
-.oz-btn__content{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.oz-btn__loading{
-  display:none;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-}
-
-.vcPrimaryBtn.oz-btn-loading .oz-btn__content{
-  display:none;
-}
-
-.vcPrimaryBtn.oz-btn-loading .oz-btn__loading{
-  display:inline-flex;
-}
 </style>
 
 </head>
@@ -282,17 +262,26 @@
   <div class="vcBaseCard">
 
     <div class="vcCodeCard">
-      <div class="vcDigits">Enter Visit PIN</div>
-      <div class="vcHint">Customer cheppina 4-digit PIN ni enter cheyyi mava</div>
+      {% if show_offer_ui and show_check_eligibility %}
+        <div class="vcDigits">Check Offer Eligibility</div>
+        <div class="vcHint">Mundhu eligibility check complete cheyyi mava</div>
+      {% else %}
+        <div class="vcDigits">Enter Visit PIN</div>
+        <div class="vcHint">Customer cheppina 4-digit PIN ni enter cheyyi mava</div>
+      {% endif %}
     </div>
 
     <div class="vcBodyText">
+    {% if not show_offer_ui or not show_check_eligibility %}
       <div class="vcPinRow" aria-label="Enter 4 digit PIN">
         <input class="vcPinBox" inputmode="numeric" maxlength="1" id="p1" />
         <input class="vcPinBox" inputmode="numeric" maxlength="1" id="p2" />
         <input class="vcPinBox" inputmode="numeric" maxlength="1" id="p3" />
         <input class="vcPinBox" inputmode="numeric" maxlength="1" id="p4" />
       </div>
+    {% endif %}
+
+
 
       <div id="vcStatus" class="vcStatus"></div>
 
@@ -330,18 +319,21 @@
   </div>
 {% endif %}
 
+      {% if not show_offer_ui or not show_check_eligibility %}
+        <button type="button" id="vcVerifyBtn" class="vcPrimaryBtn oz-btn-inline-flex" onclick="vcVerifyPin()" disabled>
+          <span class="oz-btn__content">Verify PIN</span>
+          <span class="oz-btn__loading" aria-hidden="true">
+            {% include "ui_states/spinners/button_spinner.html" %}
+            <span style="margin-left:8px;">Verifying...</span>
+          </span>
+        </button>
+      {% endif %}
 
-    <button type="button" id="vcVerifyBtn" class="vcPrimaryBtn" onclick="vcVerifyPin()" disabled>
-      <span class="oz-btn__content">Verify PIN</span>
-      <span class="oz-btn__loading" aria-hidden="true">
-        {% include "ui_states/spinners/button_spinner.html" %}
-        <span style="margin-left:8px;">Verifying...</span>
-      </span>
-    </button>
-
-      <button type="button" class="vcGhostBtn" onclick="vcClearPin()">
+      {% if not show_offer_ui or not show_check_eligibility %}
+      <button type="button" class="vcGhostBtn oz-btn-inline-flex" onclick="vcClearPin()">
         Clear
       </button>
+      {% endif %}
     </div>
 
   </div>
@@ -358,6 +350,15 @@
 
   function setBtnLoading(btn, isLoading){
     if (!btn) return;
+
+    if (window.OZButtons?.setLoading) {
+      window.OZButtons.setLoading(btn, isLoading, {
+        keepWidth: true,
+        disable: true
+      });
+      return;
+    }
+
     btn.classList.toggle('oz-btn-loading', !!isLoading);
     btn.disabled = !!isLoading;
     btn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
@@ -543,83 +544,57 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    wirePinBoxes();
     const first = document.getElementById('p1');
-    refreshPinUI();
-    focusBoxAtEnd(first);
+
+    if (first) {
+      wirePinBoxes();
+      refreshPinUI();
+      focusBoxAtEnd(first);
+    }
+
     window.OZShake?.init?.();
   });
 
   async function vcVerifyPin(){
-    if (window.OZShake && !window.OZShake.mustCheckEligibilityOrShake()){
-      setStatus("Mava, offer eligibility checkbox tick cheyyali.", "bad");
-      return;
-    }
+  if (window.OZShake && !window.OZShake.mustCheckEligibilityOrShake()){
+    setStatus("Mava, offer eligibility checkbox tick cheyyali.", "bad");
+    return;
+  }
 
-    const pin = getPin();
-    if (!/^\d{4}$/.test(pin)){
-      setStatus('4 digits correct ga enter cheyyi mava.', 'bad');
-      refreshPinUI();
-      return;
-    }
+  const pin = getPin();
+  if (!/^\d{4}$/.test(pin)){
+    setStatus('4 digits correct ga enter cheyyi mava.', 'bad');
+    refreshPinUI();
+    return;
+  }
 
-    const btn = document.getElementById('vcVerifyBtn');
-    const boxes = getPinBoxes();
+  const btn = document.getElementById('vcVerifyBtn');
+  const boxes = getPinBoxes();
 
-    setBtnLoading(btn, true);
-    boxes.forEach(box => {
-      box.disabled = true;
-      box.readOnly = true;
-      box.tabIndex = -1;
-    });
+  setBtnLoading(btn, true);
+  boxes.forEach(box => {
+    box.disabled = true;
+    box.readOnly = true;
+    box.tabIndex = -1;
+  });
 
-    setStatus('Verifying…', '');
+  setStatus('Verifying…', '');
 
-    try{
-      const res = await fetch("{% url 'offers:user_verify_visit_pin' %}", {
-        method: "POST",
-        credentials: "same-origin",
+  try{
+    const data = await window.ApiGuard.postJson(
+      "{% url 'offers:user_verify_visit_pin' %}",
+      { pin },
+      {
+        suppressGlobalError: true,
         headers: {
-          "Content-Type": "application/json",
           "X-CSRFToken": getCookie("csrftoken"),
           "Accept": "application/json",
-        },
-        body: JSON.stringify({ pin })
-      });
-
-      const data = await res.json().catch(()=> ({}));
-
-      if (!res.ok || !data.ok){
-        setStatus(data.error || "Invalid / Expired PIN.", "bad");
-        setBtnLoading(btn, false);
-        refreshPinUI();
-
-        const emptyIdx = firstEmptyIndex(boxes);
-        if (emptyIdx === -1) {
-          focusBoxAtEnd(boxes[boxes.length - 1]);
-        } else {
-          focusBoxAtEnd(boxes[emptyIdx]);
         }
-        return;
       }
+    );
 
-      setStatus("Visit recorded successfully! Taking you to your status... 🚀", "ok");
-      setBtnLoading(btn, false);
-      setBtnText(btn, "Opening status...");
-      btn.disabled = true;
-
-      setTimeout(() => {
-        if (data.redirect_url) {
-          window.location.replace(data.redirect_url);
-        } else {
-          setBtnText(btn, "Verify PIN");
-          refreshPinUI();
-        }
-      }, 700);
-
-    }catch(e){
-      console.error(e);
-      setStatus("Network issue mava. Malli try cheyyi.", "bad");
+    if (!data.ok){
+      setStatus(data.message || data.error || "Invalid / Expired PIN.", "bad");
       setBtnLoading(btn, false);
       refreshPinUI();
 
@@ -629,8 +604,47 @@
       } else {
         focusBoxAtEnd(boxes[emptyIdx]);
       }
+      return;
+    }
+
+    setStatus("Visit recorded successfully! Taking you to your status... 🚀", "ok");
+
+    const loadingText = btn?.querySelector('.oz-btn__loading span:last-child');
+    if (loadingText) loadingText.textContent = "Opening status...";
+
+    btn.disabled = true;
+
+    setTimeout(() => {
+      if (data.redirect_url) {
+        window.location.replace(data.redirect_url);
+      } else {
+        setBtnLoading(btn, false);
+        setBtnText(btn, "Verify PIN");
+        refreshPinUI();
+      }
+    }, 700);
+
+  }catch(e){
+    console.error(e);
+
+    const msg =
+      e?.userMessage ||
+      e?.message ||
+      "Network issue mava. Malli try cheyyi.";
+
+    setStatus(msg, "bad");
+    setBtnLoading(btn, false);
+    refreshPinUI();
+
+    const emptyIdx = firstEmptyIndex(boxes);
+    if (emptyIdx === -1) {
+      focusBoxAtEnd(boxes[boxes.length - 1]);
+    } else {
+      focusBoxAtEnd(boxes[emptyIdx]);
     }
   }
+}
+
 
   function getCookie(name) {
     const value = `; ${document.cookie}`;
