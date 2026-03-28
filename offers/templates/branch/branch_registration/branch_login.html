@@ -764,6 +764,7 @@
       return;
     }
 
+    let shouldStop = true;
     verifyRequestInFlight = true;
     showMsg('Verifying…');
     OZButtons.start(verifyBtn, { keepWidth: true });
@@ -785,6 +786,7 @@
 
       if (res && res.ok){
         showMsg(res.message || 'Verified. Redirecting…', 'lg-ok');
+        shouldStop = false;
         window.location.replace(res.next || res.redirect_url || '/');
         return;
       }
@@ -804,9 +806,11 @@
     } catch (err) {
       showMsg('Something went wrong while verifying OTP.', 'lg-err');
     } finally {
-      verifyRequestInFlight = false;
-      OZButtons.stop(verifyBtn, { keepWidth: true });
-      updateVerifyButtonState();
+      if (shouldStop) {
+        verifyRequestInFlight = false;
+        OZButtons.stop(verifyBtn, { keepWidth: true });
+        updateVerifyButtonState();
+      }
     }
   });
 

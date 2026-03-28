@@ -1188,54 +1188,58 @@
     });
 
     btnVerify.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
-      const code = getCode();
+  const email = emailInput.value.trim();
+  const code = getCode();
 
-      clearEmailInvalid();
-      clearOtpInvalid();
+  clearEmailInvalid();
+  clearOtpInvalid();
 
-      if (!email) {
-        showEmailStep();
-        markEmailInvalid("Please enter your email.");
-        return;
-      }
+  if (!email) {
+    showEmailStep();
+    markEmailInvalid("Please enter your email.");
+    return;
+  }
 
-      if (!isValidEmail(email)) {
-        showEmailStep();
-        markEmailInvalid("Please enter a valid email address.");
-        return;
-      }
+  if (!isValidEmail(email)) {
+    showEmailStep();
+    markEmailInvalid("Please enter a valid email address.");
+    return;
+  }
 
-      if (code.length !== 6 || otpInputs.some(i => !i.value)) {
-        markOtpInvalid("Enter the full 6-digit code.");
-        return;
-      }
+  if (code.length !== 6 || otpInputs.some(i => !i.value)) {
+    markOtpInvalid("Enter the full 6-digit code.");
+    return;
+  }
 
-      OZButtons.start(btnVerify, { keepWidth: true });
+  let shouldStop = true;
+  OZButtons.start(btnVerify, { keepWidth: true });
 
-      try {
-        const result = await ApiGuard.postJson("{% url 'offers:otp_verify' %}", {
-          email,
-          code,
-          next: "{{ request.GET.next|default:'' }}"
-        }, {
-          suppressGlobalError: true,
-        });
-
-        if (!result || !result.ok) {
-          markOtpInvalid(result?.message || "Verify failed.");
-          return;
-        }
-
-        clearOtpDraftState();
-        window.location.replace(result.next || "{% url 'offers:user_home' %}");
-      } catch (err) {
-        markOtpInvalid("Unable to verify OTP. Please try again.");
-      } finally {
-        OZButtons.stop(btnVerify, { keepWidth: true });
-      }
+  try {
+    const result = await ApiGuard.postJson("{% url 'offers:otp_verify' %}", {
+      email,
+      code,
+      next: "{{ request.GET.next|default:'' }}"
+    }, {
+      suppressGlobalError: true,
     });
 
+    if (!result || !result.ok) {
+      markOtpInvalid(result?.message || "Verify failed.");
+      return;
+    }
+
+    clearOtpDraftState();
+    shouldStop = false;
+    window.location.replace(result.next || "{% url 'offers:user_home' %}");
+  } catch (err) {
+    markOtpInvalid("Unable to verify OTP. Please try again.");
+  } finally {
+    if (shouldStop) {
+      OZButtons.stop(btnVerify, { keepWidth: true });
+    }
+  }
+});
+    
     btnChange.addEventListener("click", showEmailStep);
 
     btnResend.addEventListener("click", async () => {
