@@ -1,0 +1,25 @@
+.oz-inline-loading{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  flex:0 0 auto;
+}
+
+.oz-inline-loading__spinner{
+  width:16px;
+  height:16px;
+  display:inline-block;
+  box-sizing:border-box;
+  border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:oz-inline-loading-spin .7s linear infinite;
+  vertical-align:middle;
+}
+
+@keyframes oz-inline-loading-spin{
+  to{
+    transform:rotate(360deg);
+  }
+}

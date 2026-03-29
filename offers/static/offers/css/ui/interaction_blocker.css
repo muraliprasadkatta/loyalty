@@ -1,0 +1,11 @@
+#ozInteractionBlocker{
+  position:fixed;
+  inset:0;
+  z-index:9998;
+  background:transparent;
+  pointer-events:auto;
+}
+
+#ozInteractionBlocker[hidden]{
+  display:none !important;
+}

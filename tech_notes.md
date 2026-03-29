@@ -196,3 +196,25 @@ Currently linked / intended for:
 Reason:
 Instead of duplicating spinner/loading button CSS inside each template, a common UI stylesheet
 is used so all login pages follow the same behavior and appearance.
+
+
+____________________________________________________________
+
+<script src="{% static 'offers/js/ui/interaction_blocker.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/interaction_blocker.css' %}">
+<div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
+
+
+e file valla use enti ante idi oka blocker lantidhi 
+asalu endhuku ante e blocker anedhi suppose oka spuner anedhi run avautundhi ante appudu migatah ancor links lantivi kaniinka emina unte kani vatini temperay ga block cheyataniki use avuthaya
+so dhenini prsent home page lo link chesam 
+and dhenikisam ok  e link (id="ozInteractionBlocker) e linnk pettali mandataory gaaa page lo kavali anate aa page lo 
+present e link ni scan to qr ane button ki add chesanu user home page lo 
+
+_______________________________________________________________
+
+<script src="{% static 'offers/js/ui/inline_loading.js' %}"></script>
+D:\restarent_application66\offers\static\offers\css\ui\inline_loading.css
+D:\restarent_application66\offers\templates\ui_states\spinners\inline_loading.html
+
+e file anedhiinline lo spin kosam use avutudhi nate edina modal lantidhisame pagelo openavatanikitime padutuhdinate e file niconncet chesukovali mava

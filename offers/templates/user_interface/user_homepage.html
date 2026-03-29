@@ -5,6 +5,12 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>User • OfferZone</title>
+
+  <link rel="stylesheet" href="{% static 'offers/css/ui/inline_loading.css' %}">
+  <link rel="stylesheet" href="{% static 'offers/css/ui/interaction_blocker.css' %}">
+
+  <script src="{% static 'offers/js/ui/inline_loading.js' %}"></script>
+  <script src="{% static 'offers/js/ui/interaction_blocker.js' %}"></script>
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
 
 
@@ -469,6 +475,8 @@ footer.nav{
     </div>
   </header>
 
+  <div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
+
   <main class="wrap">
     {% if messages %}
       {% for m in messages %}
@@ -493,7 +501,8 @@ footer.nav{
         <span class="scan-hero__corner br"></span>
       </div>
 
-      <div class="scan-hero__inner">
+    <div class="scan-hero__inner">
+      <div class="oz-inline-loading__content">
         <div class="scan-hero__qr">
           <span class="qr-ic">
             <svg viewBox="0 0 24 24" fill="none">
@@ -507,6 +516,12 @@ footer.nav{
         <div class="scan-hero__text">Tap to scan</div>
         <div class="scan-hero__sub">Scan counter QR to open branch offers</div>
       </div>
+
+      <div class="oz-inline-loading__state" hidden>
+        {% include "ui_states/spinners/inline_loading.html" %}
+        <span class="oz-inline-loading__text">Opening...</span>
+      </div>
+    </div>
     </div>
 
   <div id="scanInlineMsg" class="msg scan-inline-error" style="display:none; margin-top:12px"></div>

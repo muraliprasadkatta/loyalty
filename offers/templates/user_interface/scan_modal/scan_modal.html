@@ -1365,6 +1365,24 @@ window.OZScan = window.OZScan || {};
       return location.hash === cfg.SCAN_HASH;
     }
 
+    function startTapInlineLoading(text) {
+      const el = document.getElementById("tapToScan");
+      if (el && window.OZInlineLoading) {
+        window.OZInlineLoading.setText(el, text || "Opening...");
+        window.OZInlineLoading.start(el);
+      }
+      window.OZInteractionBlocker?.show();
+    }
+
+    function stopTapInlineLoading() {
+      const el = document.getElementById("tapToScan");
+      if (el && window.OZInlineLoading) {
+        window.OZInlineLoading.stop(el);
+      }
+      window.OZInteractionBlocker?.hide();
+    }
+
+
     ns.openModal = function (opts = {}) {
       const { fromHash = false } = opts || {};
       const d = ns.dom;
@@ -1388,6 +1406,8 @@ window.OZScan = window.OZScan || {};
       d.modal.classList.add('show');
       d.modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+
+      stopTapInlineLoading();
 
       ns.hideStatus?.();
       ns.closePopup?.();
@@ -1453,6 +1473,7 @@ window.OZScan = window.OZScan || {};
 
       ns.hideStatus?.();
       ns.closePopup?.();
+      stopTapInlineLoading();
 
       // close ayyaka verifying/scanning text malli set kakudadhu
       if (d.scanEdge) d.scanEdge.classList.remove('scan--verifying');
@@ -1498,6 +1519,8 @@ window.OZScan = window.OZScan || {};
 
       function openOrLogin(e) {
         e?.preventDefault?.();
+        startTapInlineLoading("Opening...");
+
 
         const inlineMsg = document.getElementById("scanInlineMsg");
 

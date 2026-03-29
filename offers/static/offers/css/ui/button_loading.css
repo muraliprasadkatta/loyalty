@@ -17,6 +17,7 @@
   align-items:center;
   justify-content:center;
   gap:8px;
+  line-height:1;
 }
 
 .oz-btn__loading[hidden]{
@@ -29,4 +30,30 @@
 
 .oz-btn-loading .oz-btn__loading{
   display:inline-flex !important;
+}
+
+.oz-btn-spinner-wrap{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  flex:0 0 auto;
+}
+
+.oz-btn-spinner{
+  width:16px;
+  height:16px;
+  display:inline-block;
+  border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:oz-btn-spin .7s linear infinite;
+  vertical-align:middle;
+  box-sizing:border-box;
+}
+
+@keyframes oz-btn-spin{
+  to{
+    transform:rotate(360deg);
+  }
 }
