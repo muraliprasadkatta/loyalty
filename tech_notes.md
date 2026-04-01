@@ -217,4 +217,4 @@ _______________________________________________________________
 D:\restarent_application66\offers\static\offers\css\ui\inline_loading.css
 D:\restarent_application66\offers\templates\ui_states\spinners\inline_loading.html
 
-e file anedhiinline lo spin kosam use avutudhi nate edina modal lantidhisame pagelo openavatanikitime padutuhdinate e file niconncet chesukovali mava
+e file anedhiinline lo spin kosam use avutudhi ante edina ok click valla modal open avvalsi unte a modal open avataniki time padutuhdinate e file ni conncet chesukovali mava

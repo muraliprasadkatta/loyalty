@@ -1520,23 +1520,6 @@ window.OZScan = window.OZScan || {};
       function openOrLogin(e) {
         e?.preventDefault?.();
         startTapInlineLoading("Opening...");
-
-
-        const inlineMsg = document.getElementById("scanInlineMsg");
-
-        if (!navigator.onLine) {
-          if (inlineMsg) {
-            inlineMsg.textContent = "No internet connection. Please check your network.";
-            inlineMsg.style.display = "block";
-          }
-          return;
-        }
-
-        if (inlineMsg) {
-          inlineMsg.textContent = "";
-          inlineMsg.style.display = "none";
-        }
-
         ns.openModal();
       }
 

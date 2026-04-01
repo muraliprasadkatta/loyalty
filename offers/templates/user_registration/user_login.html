@@ -354,7 +354,6 @@
     box-shadow:0 0 0 4px rgba(108,165,255,.14);
   }
 
-
   .hint{
     margin-top:14px;
     font-size:13px;
@@ -496,13 +495,12 @@
     animation:ozShake .36s ease;
   }
 
-    #btn-resend[disabled]{
+  #btn-resend[disabled]{
     opacity:.45;
     cursor:not-allowed;
     pointer-events:none;
     text-decoration:none;
   }
-
 
   @keyframes ozShake{
     0%{ transform:translateX(0); }
@@ -550,7 +548,6 @@
       {% endfor %}
     {% endif %}
 
-    <!-- Step 1: Enter Email -->
     <div id="step-email">
       <div class="header-row">
         <div class="header-copy">
@@ -593,10 +590,10 @@
 
       <button class="btn oz-btn-inline-flex" id="btn-send-otp" type="button">
         <span class="oz-btn__content">Get OTP</span>
-      <span class="oz-btn__loading" hidden>
-        {% include "ui_states/spinners/button_spinner.html" %}
-        <span>Sending...</span>
-      </span>
+        <span class="oz-btn__loading" hidden>
+          {% include "ui_states/spinners/button_spinner.html" %}
+          <span>Sending...</span>
+        </span>
       </button>
 
       <div class="hint hint--with-icon">
@@ -608,7 +605,6 @@
       </div>
     </div>
 
-    <!-- Step 2: Verify OTP -->
     <div id="step-otp" class="hidden" aria-hidden="true">
       <div class="header-row">
         <div class="header-copy">
@@ -710,41 +706,6 @@
 </div>
 
 <script>
-  (function () {
-    function showOfflineNavMessage() {
-      if (window.ApiGuard && typeof window.ApiGuard.presentError === "function") {
-        window.ApiGuard.presentError("You are offline. Please reconnect to continue.");
-        return;
-      }
-      alert("You are offline. Please reconnect to continue.");
-    }
-
-    function handleProtectedNav(link, useReplace) {
-      if (!link) return;
-
-      link.addEventListener("click", function (e) {
-        e.preventDefault();
-
-        if (!navigator.onLine) {
-          showOfflineNavMessage();
-          return;
-        }
-
-        if (useReplace) {
-          location.replace(this.href);
-        } else {
-          location.href = this.href;
-        }
-      });
-    }
-
-    handleProtectedNav(document.getElementById("link-branch"), true);
-    handleProtectedNav(document.getElementById("link-admin"), false);
-  })();
-</script>
-
-
-<script>
   (function(){
     const RESEND_COOLDOWN_SECS = 60;
 
@@ -762,6 +723,8 @@
 
     const authDivider = document.getElementById("auth-divider");
     const authLinks = document.getElementById("auth-links");
+    const linkAdmin = document.getElementById("link-admin");
+    const linkBranch = document.getElementById("link-branch");
 
     const otpBox = document.getElementById("otp-box");
     const otpError = document.getElementById("otp-error");
@@ -812,6 +775,34 @@
     function clearOtpInvalid(){
       otpBox.classList.remove("otp-invalid");
       otpError.classList.remove("show");
+    }
+
+    function clearAllInlineErrors(){
+      clearEmailInvalid();
+      clearOtpInvalid();
+    }
+
+    function showInlinePageError(message){
+      clearAllInlineErrors();
+
+      if (!stepOtp.classList.contains("hidden")) {
+        markOtpInvalid(message || "Something went wrong. Please try again.");
+      } else {
+        markEmailInvalid(message || "Something went wrong. Please try again.");
+      }
+    }
+
+    function handleProtectedNav(link){
+      if (!link) return;
+
+      link.addEventListener("click", function (e) {
+        clearAllInlineErrors();
+
+        if (navigator.onLine) return;
+
+        e.preventDefault();
+        showInlinePageError("No internet connection. Please check your network.");
+      });
     }
 
     function setFooterVisibility(show){
@@ -873,8 +864,10 @@
       timerEl.textContent = "";
       clearOtpInvalid();
 
-      OZButtons.stop(btnSend, { keepWidth: true });
-      OZButtons.stop(btnVerify, { keepWidth: true });
+      if (window.OZButtons?.stop) {
+        window.OZButtons.stop(btnSend, { keepWidth: true });
+        window.OZButtons.stop(btnVerify, { keepWidth: true });
+      }
 
       if (btnResend) btnResend.disabled = false;
 
@@ -1167,7 +1160,9 @@
         return;
       }
 
-      OZButtons.start(btnSend, { keepWidth: true });
+      if (window.OZButtons?.start) {
+        window.OZButtons.start(btnSend, { keepWidth: true });
+      }
 
       try {
         const result = await ApiGuard.postJson("{% url 'offers:otp_send' %}", { email }, {
@@ -1183,62 +1178,67 @@
       } catch (err) {
         markEmailInvalid("Unable to send OTP. Please try again.");
       } finally {
-        OZButtons.stop(btnSend, { keepWidth: true });
+        if (window.OZButtons?.stop) {
+          window.OZButtons.stop(btnSend, { keepWidth: true });
+        }
       }
     });
 
     btnVerify.addEventListener("click", async () => {
-  const email = emailInput.value.trim();
-  const code = getCode();
+      const email = emailInput.value.trim();
+      const code = getCode();
 
-  clearEmailInvalid();
-  clearOtpInvalid();
+      clearEmailInvalid();
+      clearOtpInvalid();
 
-  if (!email) {
-    showEmailStep();
-    markEmailInvalid("Please enter your email.");
-    return;
-  }
+      if (!email) {
+        showEmailStep();
+        markEmailInvalid("Please enter your email.");
+        return;
+      }
 
-  if (!isValidEmail(email)) {
-    showEmailStep();
-    markEmailInvalid("Please enter a valid email address.");
-    return;
-  }
+      if (!isValidEmail(email)) {
+        showEmailStep();
+        markEmailInvalid("Please enter a valid email address.");
+        return;
+      }
 
-  if (code.length !== 6 || otpInputs.some(i => !i.value)) {
-    markOtpInvalid("Enter the full 6-digit code.");
-    return;
-  }
+      if (code.length !== 6 || otpInputs.some(i => !i.value)) {
+        markOtpInvalid("Enter the full 6-digit code.");
+        return;
+      }
 
-  let shouldStop = true;
-  OZButtons.start(btnVerify, { keepWidth: true });
+      let shouldStop = true;
 
-  try {
-    const result = await ApiGuard.postJson("{% url 'offers:otp_verify' %}", {
-      email,
-      code,
-      next: "{{ request.GET.next|default:'' }}"
-    }, {
-      suppressGlobalError: true,
+      if (window.OZButtons?.start) {
+        window.OZButtons.start(btnVerify, { keepWidth: true });
+      }
+
+      try {
+        const result = await ApiGuard.postJson("{% url 'offers:otp_verify' %}", {
+          email,
+          code,
+          next: "{{ request.GET.next|default:'' }}"
+        }, {
+          suppressGlobalError: true,
+        });
+
+        if (!result || !result.ok) {
+          markOtpInvalid(result?.message || "Verify failed.");
+          return;
+        }
+
+        clearOtpDraftState();
+        shouldStop = false;
+        window.location.replace(result.next || "{% url 'offers:user_home' %}");
+      } catch (err) {
+        markOtpInvalid("Unable to verify OTP. Please try again.");
+      } finally {
+        if (shouldStop && window.OZButtons?.stop) {
+          window.OZButtons.stop(btnVerify, { keepWidth: true });
+        }
+      }
     });
-
-    if (!result || !result.ok) {
-      markOtpInvalid(result?.message || "Verify failed.");
-      return;
-    }
-
-    clearOtpDraftState();
-    shouldStop = false;
-    window.location.replace(result.next || "{% url 'offers:user_home' %}");
-  } catch (err) {
-    markOtpInvalid("Unable to verify OTP. Please try again.");
-  } finally {
-    if (shouldStop) {
-      OZButtons.stop(btnVerify, { keepWidth: true });
-    }
-  }
-});
     
     btnChange.addEventListener("click", showEmailStep);
 
@@ -1319,6 +1319,9 @@
       clearOtpDraftState();
       showEmailStep();
     }
+
+    handleProtectedNav(linkAdmin);
+    handleProtectedNav(linkBranch);
   })();
 </script>
 
