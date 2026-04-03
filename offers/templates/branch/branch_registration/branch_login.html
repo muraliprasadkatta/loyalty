@@ -8,6 +8,10 @@
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
   <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
   <script src="{% static 'offers/js/ui/button_loading.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/interaction_blocker.css' %}">
+  <script src="{% static 'offers/js/ui/interaction_blocker.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/page_loading.css' %}">
+  <script src="{% static 'offers/js/ui/page_loading.js' %}"></script>
   
 <style>
   :root{
@@ -130,7 +134,7 @@
   }
 
   .lg-msg{
-    margin-top:12px;
+    margin:10px 0 12px;
     font-size:13px;
     color:#b9c4ff;
   }
@@ -214,6 +218,8 @@
       <span class="lg-chip" id="lgBranchChip">Not checked</span>
       <small id="lgBranchMsg">Type to check…</small>
     </div>
+        <div id="lgMsg" class="lg-msg" role="status" aria-live="polite"></div>
+
 
     <div style="margin-top:8px">
       <label for="lgLoginFor">Login for</label>
@@ -287,7 +293,6 @@
       </span>
     </button>
 
-    <div id="lgMsg" class="lg-msg" role="status" aria-live="polite"></div>
 
     <div style="margin-top:12px; display:flex; justify-content:space-between; gap:12px;">
       <a href="{% url 'offers:user_login' %}" id="link-user">User Login</a>
@@ -296,31 +301,11 @@
   </form>
 </div>
 
-<script>
-  (function () {
-    function showOfflineNavMessage() {
-      if (window.ApiGuard && typeof window.ApiGuard.presentError === "function") {
-        window.ApiGuard.presentError("You are offline. Please reconnect to continue.");
-        return;
-      }
-      alert("You are offline. Please reconnect to continue.");
-    }
+<div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
 
-    function navReplace(e){
-      e.preventDefault();
+{% include "ui_states/errors/global_toast.html" %}
+{% include "ui_states/spinners/page_loader.html" %}    
 
-      if (!navigator.onLine) {
-        showOfflineNavMessage();
-        return;
-      }
-
-      location.replace(this.href);
-    }
-
-    document.getElementById('link-user')?.addEventListener('click', navReplace);
-    document.getElementById('link-admin')?.addEventListener('click', navReplace);
-  })();
-</script>
 
 <script>
 (() => {
@@ -339,6 +324,8 @@
   const branchChip = document.getElementById('lgBranchChip');
   const branchMsg  = document.getElementById('lgBranchMsg');
   const loginForEl = document.getElementById('lgLoginFor');
+  const linkUser   = document.getElementById('link-user');
+  const linkAdmin  = document.getElementById('link-admin');
 
   const sanitizeBranch = v =>
     (v || '').toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
@@ -414,6 +401,59 @@
     msgEl.className = 'lg-msg ' + (type || '');
   }
 
+  function clearInlinePageError(){
+    showMsg('');
+  }
+
+  function showInlinePageError(message){
+    showMsg(message || 'No internet connection. Please check your network.', 'lg-err');
+  }
+
+  function hideGlobalError(){
+    const pairs = [
+      ['globalError', 'globalErrorText'],
+      ['apiGlobalError', 'apiErrorText'],
+      ['commonError', 'commonErrorText'],
+      ['scanPopup', 'scanPopMsg']
+    ];
+
+    for (const [wrapId, textId] of pairs) {
+      const wrap = document.getElementById(wrapId);
+      const text = document.getElementById(textId);
+      if (text) text.textContent = '';
+      if (wrap) wrap.hidden = true;
+    }
+  }
+
+  function showGlobalOnly(message) {
+    clearInlinePageError();
+
+    const msg = message || 'You are offline. Please reconnect to continue.';
+
+    if (window.ApiGuard?.presentError) {
+      window.ApiGuard.presentError(msg);
+      return;
+    }
+
+    alert(msg);
+  }
+
+  function showInteractionBlocker() {
+    window.OZInteractionBlocker?.show();
+  }
+
+  function hideInteractionBlocker() {
+    window.OZInteractionBlocker?.hide();
+  }
+
+  function showPageLoader(text) {
+    window.OZPageLoader?.show(text || 'Loading...');
+  }
+
+  function hidePageLoader() {
+    window.OZPageLoader?.hide();
+  }
+
   function setOtpInputEnabled(enabled){
     otpEl.disabled = !enabled;
     if (!enabled) otpEl.blur();
@@ -426,12 +466,28 @@
   let otpRequestInFlight = false;
   let verifyRequestInFlight = false;
   let otpSent = false;
+  let cooldownTimer = null;
+  let remaining = 0;
+
+  function updateGetOtpButtonState(){
+    const online = navigator.onLine;
+    const branchReady = isBranchReady();
+    const cooling = !!cooldownTimer;
+
+    getBtn.disabled = !(
+      online &&
+      branchReady &&
+      !cooling &&
+      !otpRequestInFlight
+    );
+  }
 
   function updateVerifyButtonState(){
     const branchOk = isBranchReady();
     const otpOk = /^\d{6}$/.test(sanitizeOtp(otpEl.value));
 
     verifyBtn.disabled = !(
+      navigator.onLine &&
       branchOk &&
       otpSent &&
       !otpRequestInFlight &&
@@ -440,36 +496,143 @@
     );
   }
 
+  function refreshActionStates(){
+    updateGetOtpButtonState();
+    updateVerifyButtonState();
+  }
+
+  function clearCooldown(){
+    if (cooldownTimer) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+    updateGetOtpButtonState();
+  }
+
+  function startCooldown(){
+    clearCooldown();
+    remaining = COOLDOWN_SECS;
+    tick();
+    cooldownTimer = setInterval(tick, 1000);
+
+    function tick(){
+      getBtn.disabled = true;
+      setGetOtpLabel(`Resend ${remaining}s`);
+
+      if (--remaining < 0){
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+        setGetOtpLabel('Get OTP');
+        updateGetOtpButtonState();
+      }
+    }
+  }
+
   function resetOtpUi(){
     otpSent = false;
     otpRequestInFlight = false;
     verifyRequestInFlight = false;
     otpEl.value = '';
     setOtpInputEnabled(false);
-    OZButtons.stop(getBtn, { keepWidth: true });
-    OZButtons.stop(verifyBtn, { keepWidth: true });
-    updateVerifyButtonState();
+    hideInteractionBlocker();
+    hidePageLoader();
+    if (window.OZButtons?.stop) {
+      window.OZButtons.stop(getBtn, { keepWidth: true });
+      window.OZButtons.stop(verifyBtn, { keepWidth: true });
+    }
+    refreshActionStates();
+  }
+
+  function handleProtectedNav(link){
+    if (!link) return;
+
+    link.addEventListener('click', function (e) {
+      if (e.defaultPrevented) return;
+
+      const href = link.getAttribute('href') || '';
+
+      if (!href || href === '#' || href.startsWith('#')) {
+        return;
+      }
+
+      if (
+        link.target === '_blank' ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey ||
+        link.hasAttribute('download')
+      ) {
+        return;
+      }
+
+      if (!navigator.onLine) {
+        e.preventDefault();
+        hidePageLoader();
+        hideInteractionBlocker();
+        showGlobalOnly('You are offline. Please reconnect to continue.');
+        return;
+      }
+
+      e.preventDefault();
+      showInteractionBlocker();
+      showPageLoader('Loading...');
+      window.location.href = href;
+    });
   }
 
   setOtpInputEnabled(false);
+
+  handleProtectedNav(linkUser);
+  handleProtectedNav(linkAdmin);
+
+  window.addEventListener('offline', () => {
+    hideInteractionBlocker();
+    hidePageLoader();
+    if (window.OZButtons?.stop) {
+      window.OZButtons.stop(getBtn, { keepWidth: true });
+      window.OZButtons.stop(verifyBtn, { keepWidth: true });
+    }
+    refreshActionStates();
+  });
+
+  window.addEventListener('online', () => {
+    hideInteractionBlocker();
+    hidePageLoader();
+    hideGlobalError();
+    refreshActionStates();
+
+    const v = sanitizeBranch(branchEl.value);
+    if (v && validBranch(v)) {
+      checkBranch(v);
+    }
+  });
+
+  window.addEventListener('pageshow', () => {
+    hideInteractionBlocker();
+    hidePageLoader();
+  });
 
   if (loginForEl) {
     loginForEl.addEventListener('change', () => {
       const opt = loginForEl.options[loginForEl.selectedIndex];
       const email = opt?.dataset.email || "";
 
+      hideGlobalError();
+      clearInlinePageError();
       lockEmail(email || '');
       resetOtpUi();
-      showMsg('');
     });
   }
 
   otpEl.addEventListener('input', () => {
+    hideGlobalError();
     otpEl.value = sanitizeOtp(otpEl.value);
     updateVerifyButtonState();
   });
 
   otpEl.addEventListener('paste', (e) => {
+    hideGlobalError();
     e.preventDefault();
     const pasted = e.clipboardData?.getData('text') || '';
     otpEl.value = sanitizeOtp(pasted);
@@ -492,6 +655,9 @@
   });
 
   branchEl.addEventListener('input', () => {
+    hideGlobalError();
+    clearInlinePageError();
+
     const before = branchEl.value;
     const after = sanitizeBranch(before);
     if (before !== after) branchEl.value = after;
@@ -499,9 +665,10 @@
     activeBranchQuery = after;
     clearCooldown();
     lockEmail('');
-    OZButtons.stop(getBtn, { keepWidth: true });
-    OZButtons.stop(verifyBtn, { keepWidth: true });
-    getBtn.disabled = true;
+    if (window.OZButtons?.stop) {
+      window.OZButtons.stop(getBtn, { keepWidth: true });
+      window.OZButtons.stop(verifyBtn, { keepWidth: true });
+    }
     setGetOtpLabel('Get OTP');
     populateLoginFor([], "");
     resetOtpUi();
@@ -540,6 +707,13 @@
       return;
     }
 
+    if (!navigator.onLine) {
+      setBranchState('idle');
+      showInlinePageError('No internet connection. Please check your network.');
+      refreshActionStates();
+      return;
+    }
+
     if (cache.has(q)) {
       if (activeBranchQuery !== q) return;
       applyBranchResult(cache.get(q));
@@ -558,7 +732,9 @@
     if (activeBranchQuery !== q) return;
 
     if (!resData || resData.ok === false) {
-      setBranchState('net_err');
+      setBranchState('idle');
+      showInlinePageError('No internet connection. Please check your network.');
+      refreshActionStates();
       return;
     }
 
@@ -577,15 +753,13 @@
       lockEmail(res.email);
       populateLoginFor(res.staff, res.email);
       setBranchState('ok', res.email);
-      getBtn.disabled = false;
     } else {
       lockEmail('');
       populateLoginFor([], "");
       setBranchState('not_found');
-      getBtn.disabled = true;
       resetOtpUi();
     }
-    updateVerifyButtonState();
+    refreshActionStates();
   }
 
   function setBranchState(state, email) {
@@ -620,45 +794,24 @@
         branchMsg.textContent = 'This branch is not registered.';
         break;
       default:
-        branchEl.classList.add('lg-is-err');
-        branchChip.classList.add('err');
-        branchChip.textContent = 'Network issue';
-        branchMsg.textContent = 'Could not validate right now. Try again.';
+        branchChip.textContent = 'Not checked';
+        branchMsg.textContent = 'Type to check…';
     }
 
-    updateVerifyButtonState();
-  }
-
-  let cooldownTimer = null;
-  let remaining = 0;
-
-  function clearCooldown(){
-    if (cooldownTimer) {
-      clearInterval(cooldownTimer);
-      cooldownTimer = null;
-    }
-  }
-
-  function startCooldown(){
-    clearCooldown();
-    remaining = COOLDOWN_SECS;
-    tick();
-    cooldownTimer = setInterval(tick, 1000);
-
-    function tick(){
-      getBtn.disabled = true;
-      setGetOtpLabel(`Resend ${remaining}s`);
-
-      if (--remaining < 0){
-        clearCooldown();
-        getBtn.disabled = !isBranchReady();
-        setGetOtpLabel('Get OTP');
-      }
-    }
+    refreshActionStates();
   }
 
   getBtn.addEventListener('click', async () => {
-    if (otpRequestInFlight) return;
+    hideGlobalError();
+    clearInlinePageError();
+
+    if (otpRequestInFlight || !navigator.onLine) {
+      refreshActionStates();
+      if (!navigator.onLine) {
+        showInlinePageError('No internet connection. Please check your network.');
+      }
+      return;
+    }
 
     const branch = sanitizeBranch(branchEl.value);
     const codeTo = idEl.dataset.real || '';
@@ -678,10 +831,13 @@
     otpSent = false;
     otpEl.value = '';
     setOtpInputEnabled(false);
-    updateVerifyButtonState();
+    refreshActionStates();
 
+    showInteractionBlocker();
     showMsg('Sending OTP…');
-    OZButtons.start(getBtn, { keepWidth: true });
+    if (window.OZButtons?.start) {
+      window.OZButtons.start(getBtn, { keepWidth: true });
+    }
 
     try {
       const res = await ApiGuard.postJson(
@@ -709,8 +865,6 @@
 
       otpSent = false;
       setOtpInputEnabled(false);
-      getBtn.disabled = !isBranchReady();
-      updateVerifyButtonState();
 
       if (res?.error_code === 'offline') {
         showMsg('No internet connection. Please check your network.', 'lg-err');
@@ -722,17 +876,21 @@
     } catch (err) {
       otpSent = false;
       setOtpInputEnabled(false);
-      getBtn.disabled = !isBranchReady();
-      updateVerifyButtonState();
       showMsg('Something went wrong while sending OTP.', 'lg-err');
     } finally {
+      hideInteractionBlocker();
       otpRequestInFlight = false;
-      OZButtons.stop(getBtn, { keepWidth: true });
+      if (window.OZButtons?.stop) {
+        window.OZButtons.stop(getBtn, { keepWidth: true });
+      }
+      refreshActionStates();
     }
   });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    hideGlobalError();
+    clearInlinePageError();
 
     if (verifyRequestInFlight) return;
 
@@ -764,11 +922,20 @@
       return;
     }
 
+    if (!navigator.onLine) {
+      refreshActionStates();
+      showInlinePageError('No internet connection. Please check your network.');
+      return;
+    }
+
     let shouldStop = true;
     verifyRequestInFlight = true;
+    showInteractionBlocker();
     showMsg('Verifying…');
-    OZButtons.start(verifyBtn, { keepWidth: true });
-    updateVerifyButtonState();
+    if (window.OZButtons?.start) {
+      window.OZButtons.start(verifyBtn, { keepWidth: true });
+    }
+    refreshActionStates();
 
     try {
       const res = await ApiGuard.postJson(
@@ -807,9 +974,12 @@
       showMsg('Something went wrong while verifying OTP.', 'lg-err');
     } finally {
       if (shouldStop) {
+        hideInteractionBlocker();
         verifyRequestInFlight = false;
-        OZButtons.stop(verifyBtn, { keepWidth: true });
-        updateVerifyButtonState();
+        if (window.OZButtons?.stop) {
+          window.OZButtons.stop(verifyBtn, { keepWidth: true });
+        }
+        refreshActionStates();
       }
     }
   });
@@ -823,7 +993,7 @@
     const v = sanitizeBranch(branchEl.value);
     if (v) checkBranch(v);
   } else {
-    updateVerifyButtonState();
+    refreshActionStates();
   }
 })();
 </script>

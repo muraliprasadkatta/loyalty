@@ -4,9 +4,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="{% static 'offers/js/api-guard.js' %}" defer></script>
+  <script src="{% static 'offers/js/api-guard.js' %}"></script>
   <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
-  <script src="{% static 'offers/js/ui/button_loading.js' %}" defer></script>
+  <script src="{% static 'offers/js/ui/button_loading.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/interaction_blocker.css' %}">
+  <script src="{% static 'offers/js/ui/interaction_blocker.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/page_loading.css' %}">
+  <script src="{% static 'offers/js/ui/page_loading.js' %}"></script>
   <title>Sign in</title>
 
   <style>
@@ -124,21 +128,78 @@
       </div>
     </form>
   </div>
+  <div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
+
+  {% include "ui_states/errors/global_toast.html" %}
+  {% include "ui_states/spinners/page_loader.html" %}    
+
+
 
 <script>
+  function showGlobalOnly(message) {
+    const msg = message || "No internet connection. Please check your network.";
+
+    if (window.ApiGuard?.presentError) {
+      window.ApiGuard.presentError(msg);
+    } else {
+      alert(msg);
+    }
+  }
+
+  function hideGlobalError() {
+    const pairs = [
+      ['globalError', 'globalErrorText'],
+      ['apiGlobalError', 'apiErrorText'],
+      ['commonError', 'commonErrorText'],
+      ['scanPopup', 'scanPopMsg']
+    ];
+
+    for (const [wrapId, textId] of pairs) {
+      const wrap = document.getElementById(wrapId);
+      const text = document.getElementById(textId);
+      if (text) text.textContent = '';
+      if (wrap) wrap.hidden = true;
+    }
+  }
+
+  function showInteractionBlocker() {
+    window.OZInteractionBlocker?.show();
+  }
+
+  function hideInteractionBlocker() {
+    window.OZInteractionBlocker?.hide();
+  }
+
+  function showPageLoader(text) {
+    window.OZPageLoader?.show(text || "Loading...");
+  }
+
+  function hidePageLoader() {
+    window.OZPageLoader?.hide();
+  }
+
+  function startBusyUi(text) {
+    showInteractionBlocker();
+    showPageLoader(text);
+  }
+
+  function stopBusyUi() {
+    hideInteractionBlocker();
+    hidePageLoader();
+  }
+
   function navReplace(e) {
     e.preventDefault();
 
     if (!navigator.onLine) {
-      if (window.ApiGuard?.presentError) {
-        window.ApiGuard.presentError("No internet connection. Please check your network.");
-      } else {
-        alert("No internet connection. Please check your network.");
-      }
+      stopBusyUi();
+      showGlobalOnly("No internet connection. Please check your network.");
       return;
     }
 
-    location.replace(this.href);
+    hideGlobalError();
+    startBusyUi("Opening page...");
+    window.location.replace(this.href);
   }
 
   document.getElementById('link-user')?.addEventListener('click', navReplace);
@@ -161,8 +222,8 @@
     }
 
     function setExternalBtnLoading(button, isLoading) {
-      if (window.ButtonLoading && typeof window.ButtonLoading.setLoading === 'function') {
-        window.ButtonLoading.setLoading(button, isLoading);
+      if (window.OZButtons && typeof window.OZButtons.setLoading === 'function') {
+        window.OZButtons.setLoading(button, isLoading, { keepWidth: true });
         return true;
       }
       return false;
@@ -191,47 +252,60 @@
       updateBtnState();
     }
 
-    usernameEl.addEventListener('input', updateBtnState);
-    passwordEl.addEventListener('input', updateBtnState);
+    usernameEl.addEventListener('input', function () {
+      hideGlobalError();
+      updateBtnState();
+    });
+
+    passwordEl.addEventListener('input', function () {
+      hideGlobalError();
+      updateBtnState();
+    });
 
     form.addEventListener('submit', function (e) {
-  if (!form.checkValidity()) {
-    e.preventDefault();
-    setBtnLoading(false);
-    return;
-  }
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        stopBusyUi();
+        setBtnLoading(false);
+        return;
+      }
 
-  if (btn.disabled) {
-    e.preventDefault();
-    setBtnLoading(false);
-    return;
-  }
+      if (btn.disabled) {
+        e.preventDefault();
+        stopBusyUi();
+        setBtnLoading(false);
+        return;
+      }
 
-  if (!navigator.onLine) {
-    e.preventDefault();
-    setBtnLoading(false);
+      if (!navigator.onLine) {
+        e.preventDefault();
+        stopBusyUi();
+        setBtnLoading(false);
+        showGlobalOnly("No internet connection. Please check your network.");
+        return;
+      }
 
-    if (window.ApiGuard?.presentError) {
-      window.ApiGuard.presentError("No internet connection. Please check your network.");
-    } else {
-      alert("No internet connection. Please check your network.");
-    }
-    return;
-  }
-
-  setBtnLoading(true);
-});
+      hideGlobalError();
+      startBusyUi("Signing in...");
+      setBtnLoading(true);
+    });
 
     window.addEventListener('pageshow', function () {
+      stopBusyUi();
       setBtnLoading(false);
     });
 
     window.addEventListener('offline', function () {
+      stopBusyUi();
       setBtnLoading(false);
+      showGlobalOnly("You are offline. Please check your network.");
+    });
 
-      if (window.ApiGuard?.presentError) {
-        window.ApiGuard.presentError("You are offline. Please check your network.");
-      }
+    window.addEventListener('online', function () {
+      stopBusyUi();
+      hideGlobalError();
+      setBtnLoading(false);
+      updateBtnState();
     });
 
     updateBtnState();

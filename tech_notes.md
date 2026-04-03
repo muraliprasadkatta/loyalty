@@ -218,3 +218,22 @@ D:\restarent_application66\offers\static\offers\css\ui\inline_loading.css
 D:\restarent_application66\offers\templates\ui_states\spinners\inline_loading.html
 
 e file anedhiinline lo spin kosam use avutudhi ante edina ok click valla modal open avvalsi unte a modal open avataniki time padutuhdinate e file ni conncet chesukovali mava
+
+________________________________________________________________
+
+
+
+D:\restarent_application66\offers\templates\ui_states\errors\global_toast.html
+single templatelo neni css and js and html structure undhi 
+
+dhenini universal network error ga design chesi ok pop up la pettataniki design chesam so idi inline network tho kakudna universal network error ni ok pop la chudpiatnki use avuudhi
+ekkadithe api guard linkundho akkda mandatoryavuudhi 
+
+e file in direat ga kuda api guard ki link ayi undhi 
+
+________________________________________________________________
+
+D:\restarent_application66\offers\static\offers\css\ui\page_loading.css D:\restarent_application66\offers\static\offers\js\ui\page_loading.js 
+{% include "ui_states/spinners/page_loader.html" %}
+
+idi page spinner kosam design chesamu aslau ee page spinner dheikosam use chestamu ante ancor tag daggara redirectayinappdu lanti page kosam ee page loaderniuse chestamu 

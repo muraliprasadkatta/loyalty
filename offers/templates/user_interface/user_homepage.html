@@ -12,6 +12,8 @@
   <script src="{% static 'offers/js/ui/inline_loading.js' %}"></script>
   <script src="{% static 'offers/js/ui/interaction_blocker.js' %}"></script>
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/page_loading.css' %}">
+  <script src="{% static 'offers/js/ui/page_loading.js' %}"></script>
 
 
   <!-- libs -->
@@ -485,7 +487,7 @@ footer.nav{
 
     <!-- Tap to Scan -->
     <div
-      class="scan-hero"
+      class="scan-hero oz-inline-loading"
       id="tapToScan"
       role="button"
       tabindex="0"
@@ -656,6 +658,8 @@ footer.nav{
     </div>
   </footer>
 
+  {% include "ui_states/spinners/page_loader.html" %}    
+
   {% if request.user.is_authenticated %}
     {% include "user_interface/user_name_modal.html" %}
     {% include "user_interface/free_treat_calendar_modal.html" %}
@@ -825,5 +829,28 @@ footer.nav{
       window.history.replaceState(null, '', window.location.href);
     }
   </script>
+  <script>
+  (function () {
+    function shouldHandleNav(el) {
+      if (!el) return false;
+      const href = el.getAttribute("href");
+      if (!href) return false;
+      if (href === "#" || href.startsWith("#")) return false;
+      if (el.hasAttribute("download")) return false;
+      if (el.target && el.target !== "_self") return false;
+      return true;
+    }
+
+    document.addEventListener("click", function (e) {
+      const link = e.target.closest("a");
+      if (!shouldHandleNav(link)) return;
+
+      if (!navigator.onLine) return;
+
+      window.OZInteractionBlocker?.show();
+      window.OZPageLoader?.show("Loading...");
+    }, true);
+  })();
+</script>
 </body>
 </html>

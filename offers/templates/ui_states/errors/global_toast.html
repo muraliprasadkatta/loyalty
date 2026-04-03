@@ -1,0 +1,145 @@
+<div id="globalError" class="oz-global-toast" hidden role="alert" aria-live="assertive">
+  <div class="oz-global-toast__inner">
+    <div id="globalErrorText" class="oz-global-toast__text"></div>
+    <button
+      type="button"
+      class="oz-global-toast__close"
+      aria-label="Close error"
+      onclick="document.getElementById('globalError').hidden = true; document.getElementById('globalErrorText').textContent='';"
+    >
+      ×
+    </button>
+  </div>
+</div>
+
+<style>
+#globalError.oz-global-toast{
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92vw, 420px);
+  z-index: 10050;
+}
+
+  #globalError.oz-global-toast[hidden]{
+    display: none !important;
+  }
+
+  #globalError .oz-global-toast__inner{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid #f3b3b3;
+    background: #ffe8e8;
+    box-shadow: 0 10px 30px rgba(0,0,0,.16);
+    box-sizing: border-box;
+  }
+
+  #globalError .oz-global-toast__text{
+    flex: 1 1 auto;
+    min-width: 0;
+    color: #9f2d2d;
+    font-size: 14px;
+    line-height: 1.45;
+    font-weight: 600;
+    word-break: normal;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+
+  #globalError .oz-global-toast__close{
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: #9f2d2d;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    opacity: .8;
+  }
+
+  #globalError .oz-global-toast__close:hover{
+    opacity: 1;
+  }
+
+  @media (max-width: 480px){
+    #globalError.oz-global-toast{
+      top: 12px;
+      width: min(94vw, 420px);
+    }
+
+    #globalError .oz-global-toast__inner{
+      padding: 13px 14px;
+      border-radius: 14px;
+    }
+
+    #globalError .oz-global-toast__text{
+      font-size: 13.5px;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    const wrap = document.getElementById('globalError');
+    const text = document.getElementById('globalErrorText');
+
+    if (!wrap || !text) return;
+
+    if (wrap.parentElement !== document.body) {
+      document.body.appendChild(wrap);
+    }
+
+    let hideTimer = null;
+
+    function clearToastTimer() {
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+    }
+
+    function hideToast() {
+      clearToastTimer();
+      text.textContent = '';
+      wrap.hidden = true;
+    }
+
+    function showToast(message, duration) {
+      clearToastTimer();
+      text.textContent = message || 'Something went wrong.';
+      wrap.hidden = false;
+
+      const ms = Number(duration);
+      const delay = Number.isFinite(ms) && ms > 0 ? ms : 3200;
+
+      hideTimer = setTimeout(hideToast, delay);
+    }
+
+    wrap.addEventListener('mouseenter', clearToastTimer);
+    wrap.addEventListener('mouseleave', function () {
+      if (!wrap.hidden && text.textContent.trim()) {
+        hideTimer = setTimeout(hideToast, 1800);
+      }
+    });
+
+    window.OZGlobalToast = window.OZGlobalToast || {};
+    window.OZGlobalToast.show = showToast;
+    window.OZGlobalToast.hide = hideToast;
+  })();
+</script>

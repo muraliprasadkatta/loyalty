@@ -1,9 +1,10 @@
-(function (window) {
+(function (window, document) {
   "use strict";
 
   const OZPageLoader = window.OZPageLoader || {};
+  const DEFAULT_TEXT = "Loading...";
 
-  function getRoot() {
+  function getEl() {
     return document.getElementById("ozPageLoader");
   }
 
@@ -11,78 +12,52 @@
     return document.getElementById("ozPageLoaderText");
   }
 
-  function setText(message) {
+  function setText(text) {
     const textEl = getTextEl();
     if (!textEl) return;
 
-    textEl.textContent = (message && String(message).trim()) || "Loading...";
+    const value = typeof text === "string" ? text : DEFAULT_TEXT;
+    textEl.textContent = value.trim() || DEFAULT_TEXT;
   }
 
-  function show(message) {
-    const root = getRoot();
-    if (!root) return;
+  function show(text) {
+    const el = getEl();
+    if (!el) return;
 
-    setText(message);
-    root.hidden = false;
-    root.setAttribute("aria-busy", "true");
+    setText(text);
+    el.hidden = false;
+    el.setAttribute("aria-hidden", "false");
+    el.setAttribute("aria-busy", "true");
   }
 
   function hide() {
-    const root = getRoot();
-    if (!root) return;
+    const el = getEl();
+    if (!el) return;
 
-    root.hidden = true;
-    root.setAttribute("aria-busy", "false");
+    el.hidden = true;
+    el.setAttribute("aria-hidden", "true");
+    el.setAttribute("aria-busy", "false");
+    setText(DEFAULT_TEXT);
   }
 
   function isVisible() {
-    const root = getRoot();
-    if (!root) return false;
-    return !root.hidden;
-  }
-
-  function showForRedirect(url, message) {
-    if (!url) return;
-
-    show(message || "Opening...");
-    window.location.assign(url);
-  }
-
-  function replaceForRedirect(url, message) {
-    if (!url) return;
-
-    show(message || "Opening...");
-    window.location.replace(url);
-  }
-
-  function bindLinks(selector, options) {
-    const opts = options || {};
-    const message = opts.message || "Opening...";
-
-    document.querySelectorAll(selector).forEach(function (el) {
-      el.addEventListener("click", function (e) {
-        if (
-          e.defaultPrevented ||
-          el.target === "_blank" ||
-          el.hasAttribute("download") ||
-          el.getAttribute("href") === "#" ||
-          !el.href
-        ) {
-          return;
-        }
-
-        show(message);
-      });
-    });
+    const el = getEl();
+    if (!el) return false;
+    return !el.hidden;
   }
 
   OZPageLoader.show = show;
   OZPageLoader.hide = hide;
-  OZPageLoader.setText = setText;
   OZPageLoader.isVisible = isVisible;
-  OZPageLoader.showForRedirect = showForRedirect;
-  OZPageLoader.replaceForRedirect = replaceForRedirect;
-  OZPageLoader.bindLinks = bindLinks;
+  OZPageLoader.setText = setText;
 
   window.OZPageLoader = OZPageLoader;
-})(window);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    hide();
+  });
+
+  window.addEventListener("pageshow", function () {
+    hide();
+  });
+})(window, document);

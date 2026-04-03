@@ -62,6 +62,19 @@
       }
     }
 
+    if (window.OZGlobalToast && typeof window.OZGlobalToast.show === "function") {
+      try {
+        const duration = Number(meta.duration);
+        window.OZGlobalToast.show(
+          text,
+          Number.isFinite(duration) && duration > 0 ? duration : 3200
+        );
+        return;
+      } catch (err) {
+        // continue
+      }
+    }
+
     function isActuallyVisible(el) {
       if (!el) return false;
       if (el.hidden) return false;

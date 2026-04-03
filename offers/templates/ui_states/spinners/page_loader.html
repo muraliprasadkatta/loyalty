@@ -1,7 +1,14 @@
-<div id="ozPageLoader" class="oz-page-loader" hidden aria-live="polite" aria-busy="true" aria-label="Loading">
+<div
+  id="ozPageLoader"
+  class="oz-page-loader"
+  hidden
+  aria-hidden="true"
+  aria-live="polite"
+  aria-busy="false"
+>
   <div class="oz-page-loader__backdrop"></div>
 
-  <div class="oz-page-loader__dialog" role="status">
+  <div class="oz-page-loader__dialog" role="status" aria-label="Page loading">
     <div class="oz-page-loader__spinner" aria-hidden="true"></div>
     <div class="oz-page-loader__text" id="ozPageLoaderText">Loading...</div>
   </div>
