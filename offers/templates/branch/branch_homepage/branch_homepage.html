@@ -4,6 +4,18 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="{% static 'offers/js/ui/inline_loading.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/inline_loading.css' %}">
+
+  <script src="{% static 'offers/js/ui/interaction_blocker.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/interaction_blocker.css' %}">
+
+  <link rel="stylesheet" href="{% static 'offers/css/ui/button_loading.css' %}">
+  <script src="{% static 'offers/js/ui/button_loading.js' %}"></script>
+
+  <script src="{% static 'offers/js/api-guard.js' %}"></script>
+
+
   <title>Branch · Home</title>
 
   <style>
@@ -67,7 +79,7 @@
       gap:12px;
     }
     .btn{
-      display:inline-block;
+      display:inline-flex;
       background:var(--prim);
       color:white;
       text-decoration:none;
@@ -76,6 +88,8 @@
       font-weight:700;
       border:none;
       cursor:pointer;
+      align-items:center;
+      justify-content:center;
     }
     .muted{
       color:var(--muted);
@@ -115,6 +129,18 @@
       height:18px;
       display:block;
     }
+
+    #openQrBtn .oz-inline-loading__spinner{
+      border:2px solid rgba(76, 116, 255, .20);
+      border-top-color:#274bdb;
+    }
+
+    #openQrBtn[aria-disabled="true"]{
+      pointer-events:none;
+      opacity:.65;
+    }
+
+
     @media (max-width:520px){
       a.btn[data-open="#qrcodeModal"]{
         padding:9px 11px;
@@ -147,11 +173,13 @@
     }
   </style>
 
+
 </head>
 <body
   data-branch-id="{{ branch.id }}"
   data-branch-uid="{{ branch.public_id }}"
 >
+<div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
 <div class="wrap">
 
   <!-- Top bar -->
@@ -178,14 +206,22 @@
 
     <!-- right side: ONLY QR button (logout moved to bottom) -->
     <div class="row">
-      <a class="btn btn--mini btn--icon btn--ghost"
-         href="#"
-         data-open="#qrcodeModal"
-         data-qr="offerzone://branch={{ branch.public_id|default:'' }}&desk={{ branch.default_desk|default:'A1' }}">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M7 3h3v2H7v3H5V5a2 2 0 0 1 2-2Zm7 0h3a2 2 0 0 1 2 2v3h-2V5h-3V3ZM5 16h2v3h3v2H7a2 2 0 0 1-2-2v-3Zm12 3v-3h2v3a2 2 0 0 1-2 2h-3v-2h3ZM8 8h8v8H8V8Z"/>
-        </svg>
-        qrcode
+      <a id="openQrBtn"
+        class="btn btn--mini btn--icon btn--ghost"
+        href="#"
+        data-open="#qrcodeModal"
+        data-qr="offerzone://branch={{ branch.public_id|default:'' }}&desk={{ branch.default_desk|default:'A1' }}">
+
+        <span class="oz-inline-loading__content">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M7 3h3v2H7v3H5V5a2 2 0 0 1 2-2Zm7 0h3a2 2 0 0 1 2 2v3h-2V5h-3V3ZM5 16h2v3h3v2H7a2 2 0 0 1-2-2v-3Zm12 3v-3h2v3a2 2 0 0 1-2 2h-3v-2h3ZM8 8h8v8H8V8Z"/>
+          </svg>
+          <span>qrcode</span>
+        </span>
+
+        <span class="oz-inline-loading__state" hidden>
+          {% include "ui_states/spinners/inline_loading.html" %}
+        </span>
       </a>
     </div>
   </header>
@@ -217,11 +253,11 @@
 
 
           <!-- NEW: Add Staff button (future modal ki hook pedthaam) -->
-  <button type="button"
-          class="btn"
-          data-open="#addStaffModal">
-    Add staff
-  </button>
+        <button type="button"
+                class="btn"
+                data-open="#addStaffModal">
+          Add staff
+        </button>
 
   
         <!-- TEST BUTTON: open visitor details modal -->
@@ -259,7 +295,19 @@
 
     <!-- Bottom logout card -->
     <section class="card" style="display:flex;justify-content:flex-end">
-      <a class="btn" href="{% url 'offers:branch_logout' %}">Logout</a>
+      <a
+        id="branchLogoutBtn"
+        class="btn oz-btn-inline-flex"
+        href="{% url 'offers:branch_logout' %}"
+        data-requires-network="1"
+      >
+        <span class="oz-btn__content">Logout</span>
+
+        <span class="oz-btn__loading" hidden>
+          {% include "ui_states/spinners/button_loading.html" %}
+          <span>Logging out...</span>
+        </span>
+      </a>
     </section>
 
   </main>
@@ -272,13 +320,11 @@
 
 
 
-</body>
-</html>
-
 <script>
   // history trap
   history.replaceState(null, '', location.pathname);
   history.pushState(null, '', location.pathname);
+
   window.addEventListener('popstate', function () {
     location.replace("{% url 'offers:branch_home' %}");
   });
@@ -288,15 +334,58 @@
     const openBtn = e.target.closest("[data-open]");
     if (openBtn) {
       e.preventDefault(); // avoid # jump
+
       const selector = openBtn.getAttribute("data-open");
+
+      // QR modal has its own dedicated open/build logic.
+      // Skip generic open handling here.
+      if (selector === "#qrcodeModal") {
+        return;
+      }
+
       const modal = document.querySelector(selector);
-      if (modal) modal.classList.add("is-open");
+      if (modal) {
+        modal.classList.add("is-open");
+      }
+      return;
     }
 
     const closeBtn = e.target.closest("[data-close]");
     if (closeBtn) {
       const modal = closeBtn.closest("[data-modal]");
-      if (modal) modal.classList.remove("is-open");
+      if (modal) {
+        modal.classList.remove("is-open");
+      }
     }
   });
 </script>
+
+
+<script>
+  (function () {
+    const logoutBtn = document.getElementById("branchLogoutBtn");
+    if (!logoutBtn) return;
+
+    logoutBtn.addEventListener("click", function (e) {
+      if (logoutBtn.classList.contains("oz-btn-loading")) {
+        e.preventDefault();
+        return;
+      }
+
+      if (window.OZButtons) {
+        window.OZButtons.start(logoutBtn, { keepWidth: true });
+      }
+
+      logoutBtn.setAttribute("aria-disabled", "true");
+
+      if (window.OZInteractionBlocker) {
+        window.OZInteractionBlocker.show();
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>
+
+

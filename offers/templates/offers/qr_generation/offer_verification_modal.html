@@ -1,4 +1,4 @@
-{# offers/qr_generation/offer_verification_modal.html #}
+<!-- {# offers/qr_generation/offer_verification_modal.html #} -->
 
 <style>
   /* hide by default */
@@ -172,7 +172,13 @@
 
       <div class="ovActions">
         <button type="button" class="ovBtn" data-close>Close</button>
-        <button type="button" class="ovBtn ovBtnPrimary" id="ovVerifyBtn">Verify</button>
+        <button type="button" class="ovBtn ovBtnPrimary oz-btn-inline-flex" id="ovVerifyBtn">
+        <span class="oz-btn__content">Verify</span>
+        <span class="oz-btn__loading" hidden>
+          {% include "ui_states/spinners/button_loading.html" %}
+          <span>Verifying...</span>
+        </span>
+      </button>
       </div>
     </div>
   </div>
@@ -185,13 +191,6 @@
   const statusEl = document.getElementById("ovStatus");
   const ids = ["ov1","ov2","ov3","ov4"];
   const boxes = ids.map(id => document.getElementById(id)).filter(Boolean);
-
-  function getCookie(name){
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return '';
-  }
 
   function setStatus(msg, type){
     if(!statusEl) return;
@@ -213,6 +212,7 @@
   function closeModal(){
     modal?.classList.remove("is-open");
     modal?.setAttribute("aria-hidden","true");
+    window.OZModal?.resync?.();
   }
 
   function openModal(){
@@ -221,8 +221,6 @@
     setTimeout(() => boxes[0]?.focus(), 50);
   }
 
-  // ✅ if you already have generic data-open/data-close system, this won't break it.
-  // But we ensure close works even if generic handler not present.
   function wireCloseButtons(){
     modal?.querySelectorAll("[data-close]").forEach(el => {
       el.addEventListener("click", () => {
@@ -231,7 +229,6 @@
       });
     });
 
-    // click outside card to close
     modal?.addEventListener("click", (e) => {
       if (e.target === modal){
         closeModal();
@@ -265,7 +262,6 @@
         }
       });
 
-      // paste support
       box.addEventListener("paste", (e) => {
         const t = (e.clipboardData?.getData("text") || "").replace(/\D/g,"").slice(0,4);
         if(!t) return;
@@ -279,36 +275,40 @@
   }
 
   async function verify(){
+    if (btn.classList.contains("oz-btn-loading") || btn.disabled) return;
+
     const pin = getPin();
     if(pin.length !== 4){
       setStatus("Please enter a valid 4-digit PIN.", "bad");
       return;
     }
 
-    btn.disabled = true;
+    if (window.OZButtons) {
+      window.OZButtons.start(btn, { keepWidth: true });
+    } else {
+      btn.disabled = true;
+    }
+
     setStatus("Verifying…", "neutral");
 
     try{
-      const res = await fetch("{% url 'offers:branch_verify_offer_pin' %}", {
-        method:"POST",
-        credentials:"same-origin",
-        headers:{
-          "Content-Type":"application/json",
-          "Accept":"application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-          "X-Requested-With":"XMLHttpRequest",
-        },
-        body: JSON.stringify({ pin }),
-      });
+      const result = await window.ApiGuard.postJson(
+        "{% url 'offers:branch_verify_offer_pin' %}",
+        { pin },
+        {
+          suppressGlobalError: true,
+          autoRedirect: false,
+          timeoutMs: 15000,
+        }
+      );
 
-      const data = await res.json().catch(()=>({}));
+      const data = result?.data || {};
 
-      if(!res.ok || !data.ok){
-        const err = data?.error || ("http_" + res.status);
+      if (!result.ok || !data.ok) {
+        const err = data?.error || result?.error_code || ("http_" + (result?.status || 0));
         throw new Error(err);
       }
 
-      // ✅ handle already-claimed-today (new server behavior)
       if (data.already_claimed_today){
         setStatus("Already counted today ✅ (PIN consumed)", "good");
       } else {
@@ -318,8 +318,6 @@
       setTimeout(() => {
         closeModal();
         clearPin();
-        // optional: refresh page counters if you show counts on branch screen
-        // window.location.reload();
       }, 650);
 
     }
@@ -339,6 +337,8 @@
         qr_pin_already_used: "This QR PIN has already been used.",
         missing_qr_token: "QR token is missing. Please scan again.",
         branch_login_required: "Branch login is required.",
+        offline: "No internet connection. Please check your network.",
+        timeout: "Request timed out. Please try again.",
         http_400: "Invalid request. Please try again.",
         http_401: "Branch session expired. Please log in again.",
         http_404: "PIN not found or expired.",
@@ -350,15 +350,17 @@
         "bad"
       );
     }
-
     finally{
-      btn.disabled = false;
+      if (window.OZButtons) {
+        window.OZButtons.stop(btn, { keepWidth: true });
+      } else {
+        btn.disabled = false;
+      }
     }
   }
 
   btn?.addEventListener("click", verify);
 
-  // autofocus on open (supports class/aria opens)
   const obs = new MutationObserver(() => {
     const open = modal?.classList.contains("is-open") && modal?.getAttribute("aria-hidden") === "false";
     if(open) setTimeout(() => boxes[0]?.focus(), 50);
@@ -368,7 +370,6 @@
   wirePinBoxes();
   wireCloseButtons();
 
-  // expose helpers if needed
   window.OfferVerifyModal = { open: openModal, close: closeModal, clear: clearPin };
 })();
 </script>

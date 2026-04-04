@@ -180,6 +180,8 @@ Added shared button loading stylesheet at:
 _________________________________________________
 
 offers/static/offers/css/ui/button_loading.css
+(offers/static/offers/js/ui/button_loading.js)
+D:\restarent_application66\offers\templates\ui_states\spinners\button_loading.html
 _________________________________________________
 
 e file commog ga rasi spinner ga anniki temple lo kiattach chestunnam 
@@ -201,7 +203,7 @@ is used so all login pages follow the same behavior and appearance.
 ____________________________________________________________
 
 <script src="{% static 'offers/js/ui/interaction_blocker.js' %}"></script>
-  <link rel="stylesheet" href="{% static 'offers/css/ui/interaction_blocker.css' %}">
+<link rel="stylesheet" href="{% static 'offers/css/ui/interaction_blocker.css' %}">
 <div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
 
 

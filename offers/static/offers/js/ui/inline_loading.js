@@ -1,3 +1,4 @@
+// 'offers/js/ui/inline_loading.js'
 (function (window) {
   "use strict";
 

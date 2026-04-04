@@ -1,3 +1,4 @@
+<!-- D:\restarent_application66\offers\templates\offers\qr_generation\visitor_pin_generatemodal.html -->
 <!-- ===== Visit PIN Generate Modal (customer side) ===== -->
 <div id="visitPinGenerateModal"
      class="oz-modal"
@@ -186,10 +187,11 @@
   function closeVisitPinGenerateModal() {
     const modal = document.getElementById('visitPinGenerateModal');
     if (!modal) return;
+
+    modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
 
-    // ❌ old timers clear
     if (vpCountdownInterval) {
       clearInterval(vpCountdownInterval);
       vpCountdownInterval = null;
@@ -198,16 +200,18 @@
       clearTimeout(vpAutoCloseTimeout);
       vpAutoCloseTimeout = null;
     }
+
+    window.OZModal?.resync?.();
   }
 
-  // ✅ live timer helper
+
+  // live timer helper
   function startVisitPinTimer(expiresInSec, branchName) {
     const pinEl  = document.getElementById('vpPinDisplay');
     const helpEl = document.getElementById('vpHelp');
 
     if (!pinEl || !helpEl) return;
 
-    // old timers clear
     if (vpCountdownInterval) {
       clearInterval(vpCountdownInterval);
       vpCountdownInterval = null;
@@ -219,7 +223,7 @@
 
     pinEl.classList.remove('expired');
 
-    const ttl = expiresInSec || 120; // backend 2 min
+    const ttl = expiresInSec || 120;
     const startMs = Date.now();
 
     function tick() {
@@ -233,7 +237,6 @@
           `${remaining} seconds (~${approxMins} minutes) lopala use cheyyali, ` +
           `tarvatha expire aipothundi mava.`;
       } else {
-        // ✅ expire state
         helpEl.textContent =
           'Ee PIN expire ayyindi mava. Kotha PIN generate cheyyi.';
 
@@ -242,20 +245,25 @@
         clearInterval(vpCountdownInterval);
         vpCountdownInterval = null;
 
-        // 10s tarvatha auto-close
         vpAutoCloseTimeout = setTimeout(() => {
           closeVisitPinGenerateModal();
-        }, 10_000);
+        }, 10000);
       }
     }
 
-    // immediate render + every 1s
     tick();
     vpCountdownInterval = setInterval(tick, 1000);
   }
 
+  function getCookie(name){
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
-    const openBtn  = document.getElementById('visitorPinGenerator');   // QR modal lo button
+    const openBtn  = document.getElementById('visitorPinGenerator');
     const modal    = document.getElementById('visitPinGenerateModal');
 
     if (!openBtn || !modal) return;
@@ -264,13 +272,18 @@
     const helpEl  = document.getElementById('vpHelp');
     const noteEl  = document.getElementById('vpNote');
 
-    // Button click → PIN generate + modal open
     openBtn.addEventListener('click', async function (e) {
       e.preventDefault();
 
-      openBtn.disabled = true;
-      const oldLabel = openBtn.textContent;   // "Visit PIN generated"
-      openBtn.textContent = 'Generating…';
+      if (openBtn.classList.contains('oz-btn-loading') || openBtn.disabled) {
+        return;
+      }
+
+      if (window.OZButtons) {
+        window.OZButtons.start(openBtn, { keepWidth: true });
+      } else {
+        openBtn.disabled = true;
+      }
 
       try {
         const res = await fetch("{% url 'offers:branch_generate_visit_pin' %}", {
@@ -280,6 +293,7 @@
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken'),
             'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
           },
           body: JSON.stringify({})
         });
@@ -293,10 +307,8 @@
           throw new Error(data.error || 'PIN generate avvaledu mava');
         }
 
-        // PIN display
         pinEl.textContent = data.pin || '----';
 
-        // Note (already_today unte) – ippatiki branch side kosam false
         if (data.already_today) {
           noteEl.style.display = 'block';
           noteEl.textContent =
@@ -307,20 +319,33 @@
           noteEl.textContent = '';
         }
 
-        // Modal open + live countdown
-        openVisitPinGenerateModal();
+        if (window.OZModal?.open) {
+          window.OZModal.open('#visitPinGenerateModal');
+        } else {
+          openVisitPinGenerateModal();
+        }
         startVisitPinTimer(data.expires_in || 120, data.branch_name || 'ee branch');
       } catch (err) {
         console.error('Visit PIN error:', err);
         alert('PIN generate avvaledu mava. Konchem tarvatha malli try cheyyi.');
       } finally {
-        // ✅ ikkade button normal ki tirigi ostundi
-        openBtn.disabled = false;
-        openBtn.textContent = oldLabel;
-      }
+          const modalOpen =
+            modal.classList.contains('is-open') &&
+            modal.getAttribute('aria-hidden') === 'false';
+
+          if (window.OZButtons) {
+            window.OZButtons.stop(openBtn, { keepWidth: true });
+          } else {
+            openBtn.disabled = false;
+          }
+
+          if (modalOpen) {
+            openBtn.disabled = true;
+            openBtn.setAttribute('aria-disabled', 'true');
+          }
+        }
     });
 
-    // Backdrop click → close
     modal.addEventListener('click', function (e) {
       if (e.target === modal) {
         closeVisitPinGenerateModal();
@@ -328,4 +353,3 @@
     });
   });
 </script>
-
