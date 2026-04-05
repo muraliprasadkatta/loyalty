@@ -5,54 +5,63 @@
      data-modal
      id="userTrackModal">
 
-  <!-- ✅ Mobile top bar -->
   <div class="usertrack-mobilebar">
     <div class="usertrack-mobiletitle">User Tracking</div>
     <button class="btn--outline-mini" type="button" data-close>Close</button>
   </div>
 
-  <div class="card usertrack-card">
+  <div id="utModalLoadHost" class="card usertrack-card" aria-busy="false">
 
-    <!-- LEFT -->
-    <div class="card usertrack-left">
-      <div class="usertrack-left-head">
-        <h4 style="margin:0">Users</h4>
-
-        <!-- ✅ Filter buttons -->
-        <div class="usertrack-filters" role="tablist" aria-label="User filters">
-          <button type="button" class="ut-filter active" data-filter="all">All</button>
-          <button type="button" class="ut-filter" data-filter="today">Today</button>
-        </div>
+    <div class="oz-inline-loading__state" hidden>
+      <div class="ut-modal-loading">
+        <span class="oz-inline-loading" aria-hidden="true">
+          <span class="oz-inline-loading__spinner"></span>
+        </span>
+        <span class="oz-inline-loading__text">Loading user details...</span>
       </div>
-
-      <input class="usertrack-search"
-             id="usertrackSearch"
-             type="text"
-             placeholder="Search user…">
-
-      <ul id="todayUserList" style="list-style:none; padding:0; margin:0">
-        <!-- JS will inject users here -->
-      </ul>
     </div>
 
-    <!-- RIGHT -->
-    <div class="card usertrack-right">
-      <div class="usertrack-right-head">
-        <h4 style="margin:0">User Profile</h4>
-        <button class="btn--outline-mini usertrack-desktop-close" type="button" data-close>Close</button>
+    <div class="oz-inline-loading__content">
+      <!-- LEFT -->
+      <div class="card usertrack-left">
+        <div class="usertrack-left-head">
+          <h4 style="margin:0">Users</h4>
+
+          <div class="usertrack-filters" role="tablist" aria-label="User filters">
+            <button type="button" class="ut-filter active" data-filter="all">All</button>
+            <button type="button" class="ut-filter" data-filter="today">Today</button>
+          </div>
+        </div>
+
+        <input class="usertrack-search"
+               id="usertrackSearch"
+               type="text"
+               placeholder="Search user…">
+
+        <ul id="todayUserList" style="list-style:none; padding:0; margin:0">
+          <!-- JS will inject users here -->
+        </ul>
       </div>
 
-      <div class="usertrack-details">
-        <p><b>Name:</b> <span id="ut-name">—</span></p>
-        <p><b>Total visits:</b> <span id="ut-total">—</span></p>
-        <p><b>Today visits:</b> <span id="ut-today">—</span></p>
-        <p><b>Last visit:</b> <span id="ut-last">—</span></p>
+      <!-- RIGHT -->
+      <div class="card usertrack-right">
+        <div class="usertrack-right-head">
+          <h4 style="margin:0">User Profile</h4>
+          <button class="btn--outline-mini usertrack-desktop-close" type="button" data-close>Close</button>
+        </div>
 
-        <hr style="border-color:var(--border); margin:14px 0">
+        <div class="usertrack-details">
+          <p><b>Name:</b> <span id="ut-name">—</span></p>
+          <p><b>Total visits:</b> <span id="ut-total">—</span></p>
+          <p><b>Today visits:</b> <span id="ut-today">—</span></p>
+          <p><b>Last visit:</b> <span id="ut-last">—</span></p>
 
-        <p class="muted" style="margin:0 0 6px">Offer status (dummy)</p>
-        <p style="margin:0 0 6px"><b>Eligible:</b> <span id="ut-eligible">—</span></p>
-        <p style="margin:0"><b>Offer taken:</b> <span id="ut-taken">—</span></p>
+          <hr style="border-color:var(--border); margin:14px 0">
+
+          <p class="muted" style="margin:0 0 6px">Offer status (dummy)</p>
+          <p style="margin:0 0 6px"><b>Eligible:</b> <span id="ut-eligible">—</span></p>
+          <p style="margin:0"><b>Offer taken:</b> <span id="ut-taken">—</span></p>
+        </div>
       </div>
     </div>
 
@@ -60,7 +69,6 @@
 </div>
 
 <style>
-  /* ✅ MODAL BASE (works with .is-open from branch_homepage.html) */
   #userTrackModal{
     display:none;
     position:fixed;
@@ -70,30 +78,60 @@
     padding:18px;
     align-items:center;
     justify-content:center;
+    cursor:pointer;
+    box-sizing:border-box;
   }
-  #userTrackModal.is-open{ display:flex; }
 
-  /* close on backdrop click - show pointer */
-  #userTrackModal{ cursor:pointer; }
+  #userTrackModal.is-open{
+    display:flex;
+  }
+
   #userTrackModal .usertrack-card,
-  #userTrackModal .usertrack-mobilebar{ cursor:default; }
+  #userTrackModal .usertrack-mobilebar{
+    cursor:default;
+  }
 
-  /* ✅ DESKTOP */
+  /* ===== DESKTOP / TABLET ===== */
   #userTrackModal .usertrack-card{
-    width:min(1100px, 96vw);
+    width:min(1120px, 96vw);
     height:min(86vh, 720px);
-    display:grid;
-    grid-template-columns:320px 1fr;
-    gap:14px;
-    overflow:hidden;
     border-radius:16px;
+    overflow:hidden;
+    min-width:0;
+    min-height:0;
+    box-sizing:border-box;
+  }
+
+  #userTrackModal .oz-inline-loading__content{
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    display:grid;
+    grid-template-columns:320px minmax(0, 1fr);
+    gap:14px;
+    align-items:stretch;
+    box-sizing:border-box;
   }
 
   #userTrackModal .usertrack-left,
   #userTrackModal .usertrack-right{
     padding:16px;
-    overflow-y:auto;
+    min-width:0;
     min-height:0;
+    height:100%;
+    overflow:auto;
+    box-sizing:border-box;
+  }
+
+  #userTrackModal .usertrack-left{
+    display:flex;
+    flex-direction:column;
+  }
+
+  #userTrackModal .usertrack-right{
+    display:flex;
+    flex-direction:column;
   }
 
   .usertrack-left-head{
@@ -102,12 +140,14 @@
     justify-content:space-between;
     gap:10px;
     margin:0 0 8px;
+    flex-wrap:wrap;
   }
 
   .usertrack-filters{
     display:flex;
     gap:6px;
     align-items:center;
+    flex-wrap:wrap;
   }
 
   .ut-filter{
@@ -120,7 +160,11 @@
     font-size:13px;
     line-height:1;
   }
-  .ut-filter:hover{ background:#1a2255; }
+
+  .ut-filter:hover{
+    background:#1a2255;
+  }
+
   .ut-filter.active{
     background:#26308a;
     border-color:#26308a;
@@ -135,6 +179,14 @@
     color:var(--text);
     outline:none;
     margin:8px 0 10px;
+    box-sizing:border-box;
+    flex:0 0 auto;
+  }
+
+  #todayUserList{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
   }
 
   #userTrackModal .usertrack-right-head{
@@ -145,7 +197,13 @@
     position:sticky;
     top:0;
     background:inherit;
-    padding-bottom:8px;
+    padding-bottom:4px;
+    z-index:1;
+  }
+
+  #userTrackModal .usertrack-details{
+    min-width:0;
+    word-break:break-word;
   }
 
   .user-row{
@@ -153,83 +211,236 @@
     cursor:pointer;
     border-radius:10px;
   }
-  .user-row:hover{ background:#1a2255; }
-  .user-row.active{ background:#26308a; }
 
-  /* mobile bar hidden on desktop */
-  #userTrackModal .usertrack-mobilebar{ display:none; }
-
-  /* ✅ MOBILE */
-  @media (max-width: 640px){
-    #userTrackModal.is-open{
-      flex-direction:column;
-      align-items:stretch;
-      justify-content:flex-start;
-      padding:0;
-    }
-
-    #userTrackModal .usertrack-mobilebar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:12px 12px 10px;
-      background:#0c1230;
-      border-bottom:1px solid var(--border);
-      position:sticky;
-      top:0;
-      z-index:10;
-      width:100%;
-    }
-
-    #userTrackModal .usertrack-desktop-close{ display:none; }
-
-    #userTrackModal .usertrack-card{
-      width:100%;
-      height:calc(100dvh - 52px);
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      padding:10px;
-      border-radius:0;
-      overflow:hidden;
-    }
-
-    #userTrackModal .usertrack-left{
-      padding:10px;
-      overflow:auto;
-      flex:1 1 auto;
-      min-height:0;
-    }
-
-    #userTrackModal .usertrack-right{
-      padding:10px;
-      overflow:auto;
-      flex:0 0 auto;
-      max-height:34vh;
-      min-height:170px;
-    }
-
-    #userTrackModal .usertrack-search{
-      padding:9px 10px;
-      margin:6px 0 8px;
-      font-size:14px;
-    }
-
-    #userTrackModal .usertrack-details p{
-      margin:0 0 10px;
-      line-height:1.25;
-    }
+  .user-row:hover{
+    background:#1a2255;
   }
+
+  .user-row.active{
+    background:#26308a;
+  }
+
+  /* ===== LOADING STATE ===== */
+  #userTrackModal #utModalLoadHost.oz-is-inline-loading{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  #userTrackModal #utModalLoadHost.oz-is-inline-loading .oz-inline-loading__content{
+    display:none !important;
+  }
+
+  #userTrackModal #utModalLoadHost:not(.oz-is-inline-loading) .oz-inline-loading__state{
+    display:none !important;
+  }
+
+  #userTrackModal .ut-modal-loading{
+    min-height:180px;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    text-align:center;
+    color:var(--text);
+    padding:24px;
+    box-sizing:border-box;
+  }
+
+  #userTrackModal .ut-modal-loading .oz-inline-loading__text{
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  /* hidden on desktop */
+  #userTrackModal .usertrack-mobilebar{
+    display:none;
+  }
+
+  /* ===== MOBILE ===== */
+@media (max-width: 640px){
+  #userTrackModal{
+    padding:0;
+    align-items:stretch;
+    justify-content:flex-start;
+    overflow:hidden;
+    flex-direction:column;
+  }
+
+  #userTrackModal .usertrack-mobilebar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 12px 10px;
+    background:#0c1230;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:20;
+    width:100%;
+    box-sizing:border-box;
+    flex:0 0 auto;
+  }
+
+  #userTrackModal .usertrack-desktop-close{
+    display:none;
+  }
+
+  #userTrackModal .usertrack-card{
+    width:100%;
+    flex:1 1 auto;
+    height:auto;
+    min-height:0;
+    border-radius:0;
+    padding:10px;
+    box-sizing:border-box;
+    overflow:hidden;
+    display:block;
+  }
+
+  #userTrackModal .oz-inline-loading__content{
+    display:flex !important;
+    flex-direction:column;
+    gap:8px;
+    width:100%;
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+  }
+
+  #userTrackModal .usertrack-left,
+  #userTrackModal .usertrack-right{
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+    overflow:auto;
+  }
+
+  #userTrackModal .usertrack-left{
+    flex:0 0 auto;
+    min-height:0;
+    max-height:46vh;
+    padding:10px;
+    overflow:auto;
+  }
+
+  #userTrackModal .usertrack-right{
+    flex:1 1 auto;
+    min-height:0;
+    padding:8px 10px;
+    overflow:auto;
+  }
+
+  #userTrackModal .usertrack-right-head{
+    position:static;
+    padding-bottom:4px;
+    margin-bottom:2px;
+  }
+
+  #userTrackModal .usertrack-search{
+    padding:9px 10px;
+    margin:6px 0 8px;
+    font-size:14px;
+  }
+
+  #userTrackModal .usertrack-details p{
+    margin:0 0 4px;
+    line-height:1.15;
+    font-size:14px;
+  }
+
+  #userTrackModal #utModalLoadHost.oz-is-inline-loading{
+    height:calc(100dvh - 52px);
+    width:100%;
+  }
+
+  #userTrackModal .ut-modal-loading{
+    min-height:120px;
+    padding:20px;
+  }
+}
 </style>
 
 <script>
-  // ============================
-  // User Tracking Modal Logic
-  // ============================
-  let UT_ALL_USERS = [];       // cache from API (already filtered by all/today)
+  let UT_ALL_USERS = [];
   let UT_ACTIVE_FILTER = "all";
-  let UT_LOADED_ONCE = false;  // prevent repeated open fetches
+  let UT_LOADED_ONCE = false;
+  let UT_RETRY_ON_ONLINE = false;
+  let UT_IS_LOADING = false;
+
+  function getUserTrackLoadHost() {
+    return document.getElementById("utModalLoadHost");
+  }
+
+  function showUserTrackLoading(text) {
+    const host = getUserTrackLoadHost();
+    UT_IS_LOADING = true;
+    if (!host || !window.OZInlineLoading) return;
+    window.OZInlineLoading.setText(host, text || "Loading user details...");
+    window.OZInlineLoading.start(host);
+  }
+
+  function hideUserTrackLoading() {
+    const host = getUserTrackLoadHost();
+    UT_IS_LOADING = false;
+    if (!host || !window.OZInlineLoading) return;
+    window.OZInlineLoading.stop(host);
+  }
+
+  async function getJsonWithGuard(url) {
+    if (!navigator.onLine) {
+      UT_RETRY_ON_ONLINE = true;
+      return {
+        ok: false,
+        message: "No internet connection. Reconnecting when network is back...",
+        error_code: "offline"
+      };
+    }
+
+    if (window.ApiGuard?.get) {
+      const result = await window.ApiGuard.get(url, {
+        suppressGlobalError: true,
+        autoRedirect: false,
+        timeoutMs: 15000
+      });
+
+      if (!result?.ok && (
+        result?.error_code === "offline" ||
+        result?.error_code === "network_error" ||
+        result?.error_code === "timeout"
+      )) {
+        UT_RETRY_ON_ONLINE = true;
+      }
+
+      return result;
+    }
+
+    try {
+      const res = await fetch(url, {
+        headers: { "Accept": "application/json" }
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        return {
+          ok: false,
+          message: "Server returned non-JSON response",
+          error_code: "invalid_response"
+        };
+      }
+
+      return await res.json();
+    } catch (e) {
+      UT_RETRY_ON_ONLINE = true;
+      return {
+        ok: false,
+        message: "Network error. Reconnecting when network is back...",
+        error_code: "network_error"
+      };
+    }
+  }
 
   function formatLastVisit(iso) {
     if (!iso) return "—";
@@ -257,6 +468,8 @@
     UT_ALL_USERS = [];
     UT_ACTIVE_FILTER = "all";
     UT_LOADED_ONCE = false;
+    UT_RETRY_ON_ONLINE = false;
+    UT_IS_LOADING = false;
 
     const search = document.getElementById("usertrackSearch");
     if (search) search.value = "";
@@ -269,80 +482,75 @@
     if (ul) ul.innerHTML = "";
 
     setRightPanelPlaceholders();
+    hideUserTrackLoading();
   }
 
   function fillRightPanelBasicFromApi(data) {
-  document.getElementById("ut-name").textContent = data?.name || "—";
-  document.getElementById("ut-total").textContent = (data?.total_visits ?? "—");
-  document.getElementById("ut-today").textContent = (data?.today_visits ?? "—");
-  document.getElementById("ut-last").textContent = formatLastVisit(data?.last_visit);
-
-  document.getElementById("ut-eligible").textContent = "—";
-  document.getElementById("ut-taken").textContent = "—";
-}
+    document.getElementById("ut-name").textContent = data?.name || "—";
+    document.getElementById("ut-total").textContent = (data?.total_visits ?? "—");
+    document.getElementById("ut-today").textContent = (data?.today_visits ?? "—");
+    document.getElementById("ut-last").textContent = formatLastVisit(data?.last_visit);
+    document.getElementById("ut-eligible").textContent = "—";
+    document.getElementById("ut-taken").textContent = "—";
+  }
 
   function renderUserList(list) {
     const ul = document.getElementById("todayUserList");
+    if (!ul) return;
+
     ul.innerHTML = "";
 
     if (!list || list.length === 0) {
       ul.innerHTML = `<li class="muted">No users found</li>`;
       setRightPanelPlaceholders();
+      hideUserTrackLoading();
       return;
     }
 
     list.forEach((u, i) => {
       const li = document.createElement("li");
       li.className = "user-row" + (i === 0 ? " active" : "");
-      li.textContent = u.name;
+      li.textContent = u.name || "Unnamed user";
       li.dataset.userId = u.user_id;
-      li.onclick = () => selectUser(li, u);
+      li.onclick = () => selectUser(li, u, false);
       ul.appendChild(li);
     });
 
-    // auto select first (and load real details)
     const firstLi = ul.querySelector(".user-row");
-    if (firstLi) selectUser(firstLi, list[0]);
-
+    if (firstLi) {
+      selectUser(firstLi, list[0], true);
+    } else {
+      hideUserTrackLoading();
+    }
   }
 
-  async function selectUser(li, user) {
-  document.querySelectorAll("#todayUserList .user-row")
-    .forEach(el => el.classList.remove("active"));
-  li.classList.add("active");
+  async function selectUser(li, user, stopGlobalLoader = false) {
+    document.querySelectorAll("#todayUserList .user-row")
+      .forEach(el => el.classList.remove("active"));
 
-  setRightPanelPlaceholders();
+    if (li) li.classList.add("active");
 
-  // show name quickly while loading
-  document.getElementById("ut-name").textContent = user?.name || "—";
-  document.getElementById("ut-last").textContent = formatLastVisit(user?.last_visit);
+    setRightPanelPlaceholders();
+    document.getElementById("ut-name").textContent = user?.name || "—";
+    document.getElementById("ut-last").textContent = formatLastVisit(user?.last_visit);
 
-  try {
-    const res = await fetch(`/branch/api/users/${user.user_id}/visits/`, {
-      headers: { "Accept": "application/json" }
-    });
+    const data = await getJsonWithGuard(`/branch/api/users/${user.user_id}/visits/`);
 
-    const contentType = res.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      console.log("Non-JSON response for visits API");
-      return;
-    }
-
-    const data = await res.json();
-    if (!data.ok) {
-      console.log("Visits API returned ok=false", data);
+    if (!data || !data.ok) {
+      console.log("Visits load failed", data);
+      if (stopGlobalLoader) hideUserTrackLoading();
       return;
     }
 
     fillRightPanelBasicFromApi(data);
 
-  } catch (e) {
-    console.log("Error fetching visit details", e);
+    if (stopGlobalLoader) {
+      hideUserTrackLoading();
+    }
   }
-}
 
   function applySearchFilter() {
-    const q = (document.getElementById("usertrackSearch").value || "").trim().toLowerCase();
+    const q = (document.getElementById("usertrackSearch")?.value || "").trim().toLowerCase();
     const filtered = UT_ALL_USERS.filter(u => (u.name || "").toLowerCase().includes(q));
     renderUserList(filtered);
   }
@@ -351,38 +559,39 @@
     UT_ACTIVE_FILTER = filterType;
 
     const ul = document.getElementById("todayUserList");
-    ul.innerHTML = `<li class="muted">Loading...</li>`;
+    showUserTrackLoading("Loading user details...");
+    if (ul) ul.innerHTML = "";
     setRightPanelPlaceholders();
 
     const url = filterType === "today"
       ? "/branch/api/users/?filter=today"
       : "/branch/api/users/";
 
-    try {
-      const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    const data = await getJsonWithGuard(url);
 
-      // Safety: if server returns HTML (login page), json() will error
-      const contentType = res.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) {
-        ul.innerHTML = `<li class="muted">Server returned non-JSON response</li>`;
-        return;
+    if (!data || !data.ok) {
+      if (ul) {
+        ul.innerHTML = `<li class="muted">${data?.message || "Failed to load users"}</li>`;
       }
-
-      const data = await res.json();
-
-      if (!data.ok) {
-        ul.innerHTML = `<li class="muted">Failed to load</li>`;
-        return;
-      }
-
-      UT_ALL_USERS = data.users || [];
-      applySearchFilter();
-    } catch (e) {
-      ul.innerHTML = `<li class="muted">Error loading users</li>`;
+      hideUserTrackLoading();
+      return;
     }
+
+    UT_ALL_USERS = data.users || [];
+    applySearchFilter();
   }
 
-  // Filter buttons
+  function retryUserTrackLoadOnReconnect() {
+    const modal = document.getElementById("userTrackModal");
+    if (!modal) return;
+    if (!modal.classList.contains("is-open")) return;
+    if (!UT_RETRY_ON_ONLINE) return;
+    if (UT_IS_LOADING) return;
+
+    UT_RETRY_ON_ONLINE = false;
+    loadBranchUsers(UT_ACTIVE_FILTER || "all");
+  }
+
   document.addEventListener("click", function(e){
     const btn = e.target.closest(".ut-filter");
     if (!btn) return;
@@ -394,14 +603,12 @@
     loadBranchUsers(f);
   });
 
-  // Search input (live filter)
   document.addEventListener("input", function(e){
     if (e.target && e.target.id === "usertrackSearch") {
       applySearchFilter();
     }
   });
 
-  // Close button (data-close) inside modal
   document.addEventListener("click", function(e){
     const closeBtn = e.target.closest("#userTrackModal [data-close]");
     if (!closeBtn) return;
@@ -411,13 +618,11 @@
     resetUserTrackState();
   });
 
-  // Backdrop click close + ESC close
   document.addEventListener("click", function (e) {
     const modal = e.target.closest("#userTrackModal[data-modal]");
     if (!modal) return;
 
-    const clickedBackdrop = (e.target === modal);
-    if (clickedBackdrop) {
+    if (e.target === modal) {
       modal.classList.remove("is-open");
       resetUserTrackState();
     }
@@ -432,14 +637,12 @@
     }
   });
 
-  // ✅ call this when modal opens
   function initUserTrackModalWhenOpened() {
     if (UT_LOADED_ONCE) return;
     UT_LOADED_ONCE = true;
-    loadBranchUsers("all"); // default all
+    loadBranchUsers("all");
   }
 
-  // Detect when modal becomes open:
   (function watchOpen(){
     const modal = document.getElementById("userTrackModal");
     if (!modal) return;
@@ -452,4 +655,8 @@
 
     obs.observe(modal, { attributes: true, attributeFilter: ["class"] });
   })();
+
+  window.addEventListener("online", function () {
+    retryUserTrackLoadOnReconnect();
+  });
 </script>

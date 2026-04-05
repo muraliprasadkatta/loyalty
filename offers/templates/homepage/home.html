@@ -1,8 +1,11 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="{% static 'offers/css/ui/page_loading.css' %}">
+  <script src="{% static 'offers/js/ui/page_loading.js' %}"></script>
   <title>Home • OfferZone</title>
 
   <style>
@@ -143,15 +146,7 @@
       &nbsp;•&nbsp; <a href="{% url 'offers:admin_logout' %}">Logout</a>
       &nbsp;&nbsp;
 
-      <a class="btn btn--mini btn--icon btn--ghost"
-         href="#"
-         data-open="#qrcodeModal"
-         data-qr="upi://pay?pa=8464020826@ptsbi&amp;pn=OfferZone&amp;cu=INR&amp;tn=Payment">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M7 3h3v2H7v3H5V5a2 2 0 0 1 2-2Zm7 0h3a 2 2 0 0 1 2 2v3h-2V5h-3V3ZM5 16h2v3h3v2H7a2 2 0 0 1-2-2v-3Zm12 3v-3h2v3a2 2 0 0 1-2 2h-3v-2h3ZM8 8h8v8H8V8Z"/>
-        </svg>
-        testqr
-      </a>
+
     </nav>
   </header>
 
@@ -211,6 +206,8 @@
 
   {% include "homepage/create_offers_modal.html" %}
   {% include "homepage/testqr_modal.html" %}
+  {% include "ui_states/spinners/page_loader.html" %}    
+
 
   <script>
     if (window.history && window.history.replaceState) {
@@ -218,15 +215,57 @@
     }
   </script>
 
-  <script>
-    document.addEventListener('click', (e) => {
+<script>
+  (function () {
+    let isNavigating = false;
+
+    function showNavBusy(text) {
+      window.OZInteractionBlocker?.show();
+      window.OZPageLoader?.show(text || "Opening branch...");
+    }
+
+    function hideNavBusy() {
+      window.OZInteractionBlocker?.hide();
+      window.OZPageLoader?.hide();
+    }
+
+    document.addEventListener('click', function (e) {
       const a = e.target.closest('a.branch-pill');
       if (!a) return;
+
+      if (e.defaultPrevented) return;
+      if (e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (a.target && a.target !== '_self') return;
+
+      if (isNavigating) {
+        e.preventDefault();
+        return;
+      }
+
+      e.preventDefault();
 
       if (location.hash) {
         history.replaceState(null, '', location.pathname + location.search);
       }
+
+      isNavigating = true;
+      showNavBusy("Opening branch...");
+      window.location.href = a.href;
     }, true);
-  </script>
+
+    window.addEventListener('pageshow', function () {
+      isNavigating = false;
+      hideNavBusy();
+    });
+
+    window.addEventListener('offline', function () {
+      isNavigating = false;
+      hideNavBusy();
+    });
+  })();
+</script>
+
+
 </body>
 </html>

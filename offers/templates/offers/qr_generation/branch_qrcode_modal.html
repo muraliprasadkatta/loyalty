@@ -25,6 +25,15 @@
       <div class="qr-left">
        <div class="qr-box" aria-live="polite" aria-label="QR area">
           <div id="qrCanvasHolder" class="qr-canvas-holder"></div>
+          <div id="qrModalLoading" class="qr-loading-overlay" hidden>
+            <div class="qr-loading-card" role="status" aria-live="polite">
+              <span class="oz-inline-loading" aria-hidden="true">
+                <span class="oz-inline-loading__spinner"></span>
+              </span>
+              <div class="qr-loading-title">Generating QR...</div>
+              <div class="qr-loading-text">Please wait a moment.</div>
+            </div>
+          </div>
 
           <div id="qrModalError" class="qr-error-overlay" hidden>
             <div class="qr-error-card">
@@ -259,6 +268,7 @@
   }
   @media (prefers-reduced-motion:reduce){ #qrcodeModal{ transition:none; } }
 </style>
+
 <style>
 #visitorPinGenerator .oz-btn-spinner{
   border:2px solid rgba(27, 34, 73, .18);
@@ -269,6 +279,54 @@
   color:#1b2249;
 }
 </style>
+
+<style>
+  .qr-loading-overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(248,250,255,.92);
+  z-index:1;
+  text-align:center;
+}
+
+.qr-loading-overlay[hidden]{
+  display:none !important;
+}
+
+.qr-loading-card{
+  min-width:180px;
+  max-width:220px;
+  background:#fff;
+  border:1px solid #d6defc;
+  border-radius:14px;
+  box-shadow:0 10px 24px rgba(27,34,73,.10);
+  padding:16px 14px;
+}
+
+.qr-loading-card .oz-inline-loading{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:8px;
+}
+
+.qr-loading-title{
+  font-weight:800;
+  color:#1b2249;
+  margin-bottom:4px;
+}
+
+.qr-loading-text{
+  font-size:13px;
+  line-height:1.4;
+  color:#5b648a;
+}
+</style>
+
 <script>
 /* Config */
 window.OZQR = {
@@ -300,6 +358,18 @@ window.OZQR = {
 
   OZ.hideError = () => {
     const box = OZ.$('#qrModalError');
+    if (!box) return;
+    box.hidden = true;
+  };
+
+  OZ.showQrLoading = () => {
+    const box = OZ.$('#qrModalLoading');
+    if (!box) return;
+    box.hidden = false;
+  };
+
+  OZ.hideQrLoading = () => {
+    const box = OZ.$('#qrModalLoading');
     if (!box) return;
     box.hidden = true;
   };
@@ -345,11 +415,34 @@ window.OZQR = {
     if(ttlChip) ttlChip.style.display = (window.OZQR.flags?.SHOW_DEBUG ? '' : 'none');
   };
 
-  OZ.renderQR=()=>{
-    const holder=OZ.$('#qrCanvasHolder'); if(!holder||!S.payload) return;
+  OZ.renderQR = () => {
+    const holder = OZ.$('#qrCanvasHolder');
+    if (!holder || !S.payload) return;
+
     OZ.hideError();
-    const url='https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data='+encodeURIComponent(S.payload)+'&t='+Date.now();
-    holder.innerHTML=`<img alt="QR" width="240" height="240" src="${url}">`;
+
+    const url =
+      'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=0&data=' +
+      encodeURIComponent(S.payload) +
+      '&t=' + Date.now();
+
+    const img = new Image();
+    img.alt = 'QR';
+    img.width = 240;
+    img.height = 240;
+
+    img.onload = () => {
+      holder.innerHTML = '';
+      holder.appendChild(img);
+      OZ.hideQrLoading();
+    };
+
+    img.onerror = () => {
+      OZ.hideQrLoading();
+      OZ.showError('Unable to load QR', 'Please try again in a moment.');
+    };
+
+    img.src = url;
   };
 
   OZ.renderPIN = () => {
@@ -459,6 +552,7 @@ window.OZQR = {
     OZ.stopTimer();
     OZ.clearQR();
     OZ.hideError();
+    OZ.showQrLoading();
 
     try {
       await OZ.mintFromServer(S.seed);
@@ -470,6 +564,7 @@ window.OZQR = {
       S.expUnix = 0;
       S.countdown = 0;
 
+      OZ.hideQrLoading();
       OZ.renderPIN();
       OZ.renderHead();
       OZ.setText('#qrCountdown', '00:00');
@@ -491,6 +586,7 @@ window.OZQR = {
       throw e;
     }
   };
+
 
   OZ.refresh = async () => { OZ.stopTimer(); await OZ.build(S.seed); };
 })();
@@ -589,11 +685,15 @@ window.OZQR = {
       e.preventDefault();
       OZ.clearOpenState();
       OZ.setOpen(false);
+      OZ.hideQrLoading();
+      OZ.hideError();
+      OZ.clearQR();
       setOpenQrBtnDisabled(false);
       window.OZInlineLoading?.stop(getOpenQrBtn());
       hideBlocker();
       window.OZQR.stopTimer?.();
     }
+
   });
 
   document.getElementById("qrRefresh")?.addEventListener("click", async (e) => {
