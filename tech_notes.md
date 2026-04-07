@@ -1,3 +1,9 @@
+D:\restarent_application66\offers\qr_generation\views.py
+
+e file lo qr and pin ki sambadhichina code undhi mainly qr panicheyakapoyina camera fail ayina generate ayy epin logic ikkade undhi mava
+
+_________________________________________________________
+
 ## Root Router
 ________________________________
 - **File:** `offers/views_root.py`

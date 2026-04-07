@@ -623,48 +623,68 @@ def pin_verify(request):
     except Exception:
         data = {}
 
-    raw_pin = str(data.get("pin") or "").strip()
-    pin = re.sub(r"\D", "", raw_pin)[:PIN_LEN]
+    CODE_LEN = 4
+    CODE_RE = re.compile(r"^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$")
 
-    if not re.fullmatch(rf"\d{{{PIN_LEN}}}", pin):
-        return JsonResponse({"ok": False, "error": "Enter a valid 4-digit PIN."}, status=400)
+    raw_pin = str(data.get("pin") or "").strip().upper()
+    pin = raw_pin[:CODE_LEN]
+
+    if not CODE_RE.fullmatch(pin):
+        return JsonResponse(
+            {"ok": False, "error": "Enter a valid 4-character code."},
+            status=400,
+        )
 
     now_ts = timezone.now()
     start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # small perf hint: try last branch first (but MUST fallback)
-    branch_hint = request.session.get("last_branch_id") or request.session.get("pending_qr_branch_id")
-
+    # -----------------------------------------------------
+    # AUTO BRANCH RESOLUTION:
+    # Manual code itself should locate the correct branch/context.
+    # This is safe only when active codes are unique.
+    # -----------------------------------------------------
     base_qs = (
         YashPin.objects
         .select_related("qr_token", "branch")
-        .filter(expires_at__gte=now_ts, used=False)
+        .filter(
+            expires_at__gte=now_ts,
+            used=False,
+        )
         .order_by("-created_at")
     )
 
-    def _find_match(qs, limit=80):
+    def _find_match(qs, limit=120):
         for row in qs[:limit]:
             if check_password(pin, row.pin_hash):
                 return row
         return None
 
-    matched = None
-
-    # 1) try branch hint first
-    if branch_hint:
-        matched = _find_match(base_qs.filter(branch_id=branch_hint), limit=80)
-
-    # 2) fallback global
-    if not matched:
-        matched = _find_match(base_qs, limit=120)
+    matched = _find_match(base_qs, limit=120)
 
     if not matched:
-        return JsonResponse({"ok": False, "error": "Invalid or expired PIN."}, status=400)
+        return JsonResponse(
+            {"ok": False, "error": "Invalid or expired code."},
+            status=400,
+        )
 
-    # Early clear: if QRToken already used, don’t proceed
+    # extra safety: linked QR token must belong to same branch
+    if not matched.qr_token or matched.qr_token.branch_id != matched.branch_id:
+        return JsonResponse(
+            {"ok": False, "error": "Invalid code context. Please ask staff for a new code."},
+            status=400,
+        )
+
+    # extra safety: linked QR token must still be alive
+    if matched.qr_token.expires_at and matched.qr_token.expires_at <= now_ts:
+        return JsonResponse(
+            {"ok": False, "error": "This code is expired. Please ask staff for a new code."},
+            status=400,
+        )
+
+    # QR token already used
     if matched.qr_token.used:
         return JsonResponse(
-            {"ok": False, "error": "This PIN is already used. Please ask staff for a new PIN."},
+            {"ok": False, "error": "This code is already used. Please ask staff for a new code."},
             status=400,
         )
 
@@ -689,7 +709,7 @@ def pin_verify(request):
     except Exception:
         pass
 
-    # set branch context
+    # set branch context from matched code
     request.session["last_branch_id"] = matched.branch_id
     request.session["last_branch_name"] = matched.branch.name
     request.session["last_branch_desk"] = matched.desk or ""
@@ -708,7 +728,10 @@ def pin_verify(request):
         )
 
         if not res.ok:
-            return JsonResponse({"ok": False, "error": res.error or "Unable to confirm visit."}, status=400)
+            return JsonResponse(
+                {"ok": False, "error": res.error or "Unable to confirm visit."},
+                status=400,
+            )
 
         if res.already_claimed_today:
             return JsonResponse({
@@ -717,10 +740,8 @@ def pin_verify(request):
                 "next": reverse("offers:user_status"),
             })
 
-        # clear any pending locks (safety)
         clear_pending_qr_session(request)
 
-        # success: go status directly (NO PIN modal)
         return JsonResponse({
             "ok": True,
             "already_claimed_today": False,
@@ -738,7 +759,6 @@ def pin_verify(request):
     request.session["pending_qr_desk"] = matched.desk or ""
     request.session["pending_qr_started_at"] = now_ts.isoformat()
 
-    # ✅ NEW: store/update pending attempt in DB
     upsert_pending_visit_attempt(
         user=request.user,
         branch=matched.branch,
@@ -747,7 +767,7 @@ def pin_verify(request):
         method="pin",
         desk=matched.desk or "",
         state=UserPendingVisitAttempt.STATE_AWAITING_BRANCH,
-        note="pin entered; awaiting branch verification",
+        note="code entered; awaiting branch verification",
     )
 
     return JsonResponse({
@@ -755,7 +775,6 @@ def pin_verify(request):
         "already_claimed_today": False,
         "next": reverse("offers:user_visit_pin_page"),
     })
-
 
 
 @login_required
@@ -796,6 +815,10 @@ def scan_verify(request):
 
     if qt.expires_at and qt.expires_at <= now_ts:
         return JsonResponse({"ok": False, "error": "QR expired."}, status=400)
+
+    # ✅ NEW: early used check so dead QR does not continue into pending flow
+    if qt.used:
+        return JsonResponse({"ok": False, "error": "QR already used."}, status=400)
 
     # quick same-day check (still final confirm does it again)
     if request.user.is_authenticated:
@@ -854,7 +877,7 @@ def scan_verify(request):
     request.session["pending_qr_started_at"] = now_ts.isoformat()
     request.session["pending_qr_branch_name"] = qt.branch.name
 
-    # ✅ NEW: store pending attempt in DB
+    # ✅ store pending attempt in DB
     upsert_pending_visit_attempt(
         user=request.user,
         branch=qt.branch,
@@ -878,7 +901,6 @@ def scan_verify(request):
     })
 
 
-
 @login_required
 @require_POST
 @csrf_protect
@@ -895,15 +917,85 @@ def confirm_branch_visit(request):
     except Exception:
         data = {}
 
+    now_ts = timezone.now()
+
+    def _mark_pending_failure(state, note="", qr_token=None, branch=None):
+        """
+        Close matching pending row on terminal failure so stale pending cards don't remain active.
+        state: cancelled | expired
+        """
+        try:
+            qs = (
+                UserPendingVisitAttempt.objects
+                .select_for_update()
+                .filter(
+                    user=request.user,
+                    state__in=[
+                        UserPendingVisitAttempt.STATE_STARTED,
+                        UserPendingVisitAttempt.STATE_AWAITING_BRANCH,
+                    ],
+                )
+                .order_by("-id")
+            )
+
+            # strongest match first
+            if qr_token is not None:
+                qs = qs.filter(qr_token=qr_token)
+            elif token:
+                qs = qs.filter(models.Q(qr_token__token=token) | models.Q(token=token))
+
+            if branch is not None:
+                qs = qs.filter(branch=branch)
+            else:
+                branch_id_hint = request.session.get("pending_qr_branch_id") or request.session.get("last_branch_id")
+                if branch_id_hint:
+                    qs = qs.filter(branch_id=branch_id_hint)
+
+            pending = qs.first()
+            if not pending:
+                return
+
+            pending.state = state
+            update_fields = ["state"]
+
+            field_names = {f.name for f in pending._meta.fields}
+
+            if state == UserPendingVisitAttempt.STATE_CANCELLED and "cancelled_at" in field_names:
+                pending.cancelled_at = now_ts
+                update_fields.append("cancelled_at")
+
+            if state == UserPendingVisitAttempt.STATE_EXPIRED and "expired_at" in field_names:
+                pending.expired_at = now_ts
+                update_fields.append("expired_at")
+
+            if note and "note" in field_names:
+                pending.note = note
+                update_fields.append("note")
+
+            if "updated_at" in field_names:
+                pending.updated_at = now_ts
+                update_fields.append("updated_at")
+
+            pending.save(update_fields=update_fields)
+        except Exception:
+            # never let cleanup failure hide the real response
+            pass
+
     token = (data.get("token") or "").strip() or request.session.get("pending_qr_token")
     if not token:
+        _mark_pending_failure(
+            UserPendingVisitAttempt.STATE_CANCELLED,
+            note="confirm_branch_visit: no pending token",
+        )
         return JsonResponse({"ok": False, "error": "No pending QR. Please scan again."}, status=400)
 
     # hard session match
     if token != request.session.get("pending_qr_token"):
+        _mark_pending_failure(
+            UserPendingVisitAttempt.STATE_CANCELLED,
+            note="confirm_branch_visit: token/session mismatch",
+        )
         return JsonResponse({"ok": False, "error": "Session mismatch. Please scan again."}, status=400)
-
-    now_ts = timezone.now()
 
     pending_method = request.session.get("pending_qr_method") or "scan"
     pending_pin_row_id = request.session.get("pending_pin_row_id")  # only for pin-flow
@@ -917,12 +1009,28 @@ def confirm_branch_visit(request):
             .first()
         )
         if not qt:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="confirm_branch_visit: qr token not found",
+            )
             return JsonResponse({"ok": False, "error": "QR not found. Please scan again."}, status=400)
 
         if qt.expires_at <= now_ts:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="confirm_branch_visit: qr expired",
+                qr_token=qt,
+                branch=qt.branch,
+            )
             return JsonResponse({"ok": False, "error": "QR expired. Please scan again."}, status=400)
 
         if qt.used:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="confirm_branch_visit: qr already used",
+                qr_token=qt,
+                branch=qt.branch,
+            )
             return JsonResponse({"ok": False, "error": "QR already used."}, status=400)
 
         # final one-per-day enforcement
@@ -933,6 +1041,13 @@ def confirm_branch_visit(request):
             created_at__gte=start_of_day,
         ).exists()
         if already:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_CANCELLED,
+                note="confirm_branch_visit: already counted today",
+                qr_token=qt,
+                branch=qt.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse({
                 "ok": True,
                 "already_claimed_today": True,
@@ -944,7 +1059,17 @@ def confirm_branch_visit(request):
         desk = qt.desk or ""
 
         # If PIN flow → burn YashPin also, and take staff/desk from pin row
-        if pending_method == "pin" and pending_pin_row_id:
+        if pending_method == "pin":
+            if not pending_pin_row_id:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_CANCELLED,
+                    note="confirm_branch_visit: missing pin session row id",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
+                return JsonResponse({"ok": False, "error": "PIN session expired. Please re-enter PIN."}, status=400)
+
             pin_row = (
                 YashPin.objects
                 .select_for_update()
@@ -953,13 +1078,34 @@ def confirm_branch_visit(request):
                 .first()
             )
             if not pin_row:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_CANCELLED,
+                    note="confirm_branch_visit: pin row missing",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
                 return JsonResponse({"ok": False, "error": "PIN session expired. Please re-enter PIN."}, status=400)
 
             # safety: same token + not expired + not used
             if pin_row.used or pin_row.expires_at < now_ts:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_EXPIRED,
+                    note="confirm_branch_visit: pin expired or already used",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
                 return JsonResponse({"ok": False, "error": "PIN expired. Please re-enter PIN."}, status=400)
 
             if pin_row.qr_token_id != qt.id:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_CANCELLED,
+                    note="confirm_branch_visit: pin/qr mismatch",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
                 return JsonResponse({"ok": False, "error": "PIN mismatch. Please re-enter PIN."}, status=400)
 
             # burn pin
@@ -980,7 +1126,7 @@ def confirm_branch_visit(request):
         qt.save(update_fields=["used", "used_at", "used_via", "used_by"])
 
         # create visit event
-        UserVisitEvent.objects.create(
+        ve = UserVisitEvent.objects.create(
             user=request.user,
             branch=qt.branch,
             token=qt.token,
@@ -1000,7 +1146,7 @@ def confirm_branch_visit(request):
         confirmed_at=now_ts,
     )
 
-    # ✅ NEW: mark pending attempt completed in DB
+    # success -> complete pending row
     mark_pending_visit_attempt_completed(
         user=request.user,
         qr_token=qt,
@@ -1016,7 +1162,6 @@ def confirm_branch_visit(request):
         "already_claimed_today": False,
         "redirect_url": reverse("offers:user_visit_pin_page"),
     })
-
 
 
 # ============================================
@@ -1390,11 +1535,80 @@ def user_verify_visit_pin(request):
 
     now_ts = timezone.now()
 
+    def _mark_pending_failure(state, note="", qr_token=None, branch=None):
+        """
+        Close matching pending row on terminal failure so stale pending rows do not remain active.
+        state: cancelled | expired
+        """
+        try:
+            qs = (
+                UserPendingVisitAttempt.objects
+                .select_for_update()
+                .filter(
+                    user=request.user,
+                    state__in=[
+                        UserPendingVisitAttempt.STATE_STARTED,
+                        UserPendingVisitAttempt.STATE_AWAITING_BRANCH,
+                    ],
+                )
+                .order_by("-id")
+            )
+
+            if qr_token is not None:
+                qs = qs.filter(qr_token=qr_token)
+            else:
+                token_hint = (request.session.get("pending_qr_token") or "").strip()
+                if token_hint:
+                    try:
+                        qs = qs.filter(models.Q(qr_token__token=token_hint) | models.Q(token=token_hint))
+                    except Exception:
+                        qs = qs.filter(qr_token__token=token_hint)
+
+            if branch is not None:
+                qs = qs.filter(branch=branch)
+            else:
+                branch_id_hint = request.session.get("pending_qr_branch_id") or request.session.get("last_branch_id")
+                if branch_id_hint:
+                    qs = qs.filter(branch_id=branch_id_hint)
+
+            pending = qs.first()
+            if not pending:
+                return
+
+            pending.state = state
+            update_fields = ["state"]
+
+            field_names = {f.name for f in pending._meta.fields}
+
+            if state == UserPendingVisitAttempt.STATE_CANCELLED and "cancelled_at" in field_names:
+                pending.cancelled_at = now_ts
+                update_fields.append("cancelled_at")
+
+            if state == UserPendingVisitAttempt.STATE_EXPIRED and "expired_at" in field_names:
+                pending.expired_at = now_ts
+                update_fields.append("expired_at")
+
+            if note and "note" in field_names:
+                pending.note = note
+                update_fields.append("note")
+
+            if "updated_at" in field_names:
+                pending.updated_at = now_ts
+                update_fields.append("updated_at")
+
+            pending.save(update_fields=update_fields)
+        except Exception:
+            pass
+
     # -------------------------
     # 1) MUST have pending QR context (scan_verify / pin_verify set these)
     # -------------------------
     token = (request.session.get("pending_qr_token") or "").strip()
     if not token:
+        _mark_pending_failure(
+            UserPendingVisitAttempt.STATE_CANCELLED,
+            note="user_verify_visit_pin: no pending qr token",
+        )
         return JsonResponse(
             {"ok": False, "error": "No pending QR found. Please scan again."},
             status=400,
@@ -1406,6 +1620,11 @@ def user_verify_visit_pin(request):
     # ✅ staff visit pin MUST be verified for same branch user came from
     branch_id = request.session.get("pending_qr_branch_id") or request.session.get("last_branch_id")
     if not branch_id:
+        _mark_pending_failure(
+            UserPendingVisitAttempt.STATE_CANCELLED,
+            note="user_verify_visit_pin: branch context missing",
+        )
+        clear_pending_qr_session(request)
         return JsonResponse({"ok": False, "error": "Branch context missing. Please scan QR again."}, status=400)
 
     # -------------------------
@@ -1451,12 +1670,24 @@ def user_verify_visit_pin(request):
         )
 
         if matched_visit_pin.used:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="user_verify_visit_pin: staff visit pin already used",
+                branch=matched_visit_pin.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse({"ok": False, "error": "PIN already used."}, status=409)
 
         if matched_visit_pin.expired or matched_visit_pin.expires_at <= now_ts:
             matched_visit_pin.expired = True
             matched_visit_pin.expired_at = now_ts
             matched_visit_pin.save(update_fields=["expired", "expired_at"])
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="user_verify_visit_pin: staff visit pin expired",
+                branch=matched_visit_pin.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse({"ok": False, "error": "PIN expired."}, status=410)
 
         # 4B) lock QR token (pending token)
@@ -1468,16 +1699,43 @@ def user_verify_visit_pin(request):
             .first()
         )
         if not qt:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="user_verify_visit_pin: qr token not found",
+                branch=matched_visit_pin.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse({"ok": False, "error": "QR not found. Please scan again."}, status=400)
 
         if qt.expires_at <= now_ts:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="user_verify_visit_pin: qr expired",
+                qr_token=qt,
+                branch=qt.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse({"ok": False, "error": "QR expired. Please scan again."}, status=400)
 
         if qt.used:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_EXPIRED,
+                note="user_verify_visit_pin: qr already used",
+                qr_token=qt,
+                branch=qt.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse({"ok": False, "error": "QR already used. Please generate again."}, status=400)
 
         # ✅ STRICT: QR branch and VisitPin branch must match
         if int(qt.branch_id) != int(matched_visit_pin.branch_id):
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_CANCELLED,
+                note="user_verify_visit_pin: branch mismatch between qr and visit pin",
+                qr_token=qt,
+                branch=qt.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse(
                 {"ok": False, "error": "Branch mismatch. Please scan correct branch QR and try again."},
                 status=400,
@@ -1491,6 +1749,13 @@ def user_verify_visit_pin(request):
             created_at__gte=start_of_day,
         ).exists()
         if already:
+            _mark_pending_failure(
+                UserPendingVisitAttempt.STATE_CANCELLED,
+                note="user_verify_visit_pin: already counted today",
+                qr_token=qt,
+                branch=qt.branch,
+            )
+            clear_pending_qr_session(request)
             return JsonResponse({
                 "ok": True,
                 "already_claimed_today": True,
@@ -1505,6 +1770,13 @@ def user_verify_visit_pin(request):
         if pending_method == "pin":
             # must have row id
             if not pending_pin_row_id:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_CANCELLED,
+                    note="user_verify_visit_pin: qr pin session missing",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
                 return JsonResponse({"ok": False, "error": "PIN session missing. Please re-enter QR PIN."}, status=400)
 
             pin_row = (
@@ -1515,12 +1787,33 @@ def user_verify_visit_pin(request):
                 .first()
             )
             if not pin_row:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_CANCELLED,
+                    note="user_verify_visit_pin: qr pin row missing",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
                 return JsonResponse({"ok": False, "error": "QR PIN session expired. Please re-enter."}, status=400)
 
             if pin_row.used or pin_row.expires_at <= now_ts:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_EXPIRED,
+                    note="user_verify_visit_pin: qr pin expired or already used",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
                 return JsonResponse({"ok": False, "error": "QR PIN expired. Please re-enter."}, status=400)
 
             if pin_row.qr_token_id != qt.id:
+                _mark_pending_failure(
+                    UserPendingVisitAttempt.STATE_CANCELLED,
+                    note="user_verify_visit_pin: qr pin mismatch",
+                    qr_token=qt,
+                    branch=qt.branch,
+                )
+                clear_pending_qr_session(request)
                 return JsonResponse({"ok": False, "error": "QR PIN mismatch. Please re-enter."}, status=400)
 
             # burn qr-pin row
@@ -1555,7 +1848,7 @@ def user_verify_visit_pin(request):
         UserVerifyVisitPin.objects.create(
             branch=matched_visit_pin.branch,
             desk=final_desk,
-            token=qt.token,                 # ✅ link visit pin audit to QR token
+            token=qt.token,
             pin_hash=matched_visit_pin.pin_hash,
             expires_at=matched_visit_pin.expires_at,
             used=True,
@@ -1588,7 +1881,7 @@ def user_verify_visit_pin(request):
         desk=final_desk,
         confirmed_at=now_ts,
     )
-    # ✅ NEW: mark pending attempt completed in DB
+
     mark_pending_visit_attempt_completed(
         user=request.user,
         qr_token=qt,
@@ -1604,5 +1897,4 @@ def user_verify_visit_pin(request):
         "branch_name": qt.branch.name,
         "redirect_url": reverse("offers:user_status"),
     })
-
 

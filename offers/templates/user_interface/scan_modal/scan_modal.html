@@ -574,8 +574,8 @@
 </style>
 
 
-<div id="scanModal" class="ozm" aria-hidden="true">
-  <div class="ozm__dialog">
+<div id="scanModal" class="ozm" aria-hidden="true" data-branch-id="" data-branch-public-id="">
+  <div class="ozm__dialog"> 
     <div class="ozm__head">
       <strong>Scan Branch QR</strong>
       <button class="ozm__close" type="button" id="scanCloseBtn">×</button>
@@ -633,11 +633,10 @@
 
 <div class="qr-form">
 
-  <div class="oz-sep">or enter PIN</div>
-  <label class="oz-label" for="qrPinInput">Enter 4-digit PIN</label>
-  <input id="qrPinInput" class="oz-input" type="tel" inputmode="numeric"
-        pattern="[0-9]*" data-pin-len="4"  maxlength="4" placeholder="1234" />
-
+<label class="oz-label" for="qrPinInput">Enter 4-character code</label>
+<input id="qrPinInput" class="oz-input" type="text" inputmode="text"
+       autocapitalize="characters" autocomplete="off" spellcheck="false"
+       data-pin-len="4" maxlength="4" placeholder="AK47" />
 
 <button type="button" id="qrPinSubmit" class="oz-btn oz-btn-inline-flex">
   <span class="oz-btn__content">
@@ -709,7 +708,6 @@ window.OZScan = window.OZScan || {};
     wasHolding: false,
     zoomBound: false,
 
-
     // ===== NEW: race-condition protection =====
     modalOpen: false,
     isStarting: false,
@@ -738,6 +736,33 @@ window.OZScan = window.OZScan || {};
     d.scanPopMsg    = document.getElementById('scanPopMsg');
     d.scanPopOkBtn  = document.getElementById('scanPopOkBtn');
     d.scanPopTitle  = document.getElementById('scanPopTitle');
+  };
+
+  // ===== NEW: selected branch context helpers =====
+  ns.getSelectedBranchContext = function () {
+    const modal = ns.dom?.modal;
+    if (!modal) return { branchId: "", branchPublicId: "" };
+
+    return {
+      branchId: String(modal.dataset.branchId || "").trim(),
+      branchPublicId: String(modal.dataset.branchPublicId || "").trim(),
+    };
+  };
+
+  ns.setSelectedBranchContext = function (branchId, branchPublicId) {
+    const modal = ns.dom?.modal;
+    if (!modal) return;
+
+    modal.dataset.branchId = branchId ? String(branchId) : "";
+    modal.dataset.branchPublicId = branchPublicId ? String(branchPublicId) : "";
+  };
+
+  ns.clearSelectedBranchContext = function () {
+    const modal = ns.dom?.modal;
+    if (!modal) return;
+
+    modal.dataset.branchId = "";
+    modal.dataset.branchPublicId = "";
   };
 
   // ===== Common helpers =====
@@ -1361,6 +1386,40 @@ window.OZScan = window.OZScan || {};
     const cfg = ns.cfg;
     const st  = ns.state;
 
+    // ===== guarded fallback helpers =====
+    // core script lo already unte malli overwrite cheyyaku
+    if (typeof ns.getSelectedBranchContext !== "function") {
+      ns.getSelectedBranchContext = function () {
+        const modal = ns.dom?.modal;
+        if (!modal) return { branchId: "", branchPublicId: "" };
+
+        return {
+          branchId: String(modal.dataset.branchId || "").trim(),
+          branchPublicId: String(modal.dataset.branchPublicId || "").trim(),
+        };
+      };
+    }
+
+    if (typeof ns.setSelectedBranchContext !== "function") {
+      ns.setSelectedBranchContext = function (branchId, branchPublicId) {
+        const modal = ns.dom?.modal;
+        if (!modal) return;
+
+        modal.dataset.branchId = branchId ? String(branchId) : "";
+        modal.dataset.branchPublicId = branchPublicId ? String(branchPublicId) : "";
+      };
+    }
+
+    if (typeof ns.clearSelectedBranchContext !== "function") {
+      ns.clearSelectedBranchContext = function () {
+        const modal = ns.dom?.modal;
+        if (!modal) return;
+
+        modal.dataset.branchId = "";
+        modal.dataset.branchPublicId = "";
+      };
+    }
+
     function isScanHash() {
       return location.hash === cfg.SCAN_HASH;
     }
@@ -1382,9 +1441,13 @@ window.OZScan = window.OZScan || {};
       window.OZInteractionBlocker?.hide();
     }
 
-
     ns.openModal = function (opts = {}) {
-      const { fromHash = false } = opts || {};
+      const {
+        fromHash = false,
+        branchId = "",
+        branchPublicId = "",
+      } = opts || {};
+
       const d = ns.dom;
 
       if (!d.modal) return;
@@ -1401,6 +1464,12 @@ window.OZScan = window.OZScan || {};
       // already open aithe duplicate start avoid cheyyi
       if (st.modalOpen && d.modal.classList.contains('show')) {
         return;
+      }
+
+      // selected branch context ni modal dataset lo store cheyyi
+      // explicit opts unte prefer cheyyi
+      if (branchId || branchPublicId) {
+        ns.setSelectedBranchContext?.(branchId, branchPublicId);
       }
 
       d.modal.classList.add('show');
@@ -1479,6 +1548,12 @@ window.OZScan = window.OZScan || {};
       if (d.scanEdge) d.scanEdge.classList.remove('scan--verifying');
       if (d.scanStateText) d.scanStateText.textContent = '';
 
+      // NOTE:
+      // branch context ni ikkade clear cheyyatledu intentionally.
+      // endhukante user same selected branch flow lo malli PIN try cheyyachu.
+      // full reset kavali anukunte below line uncomment cheyyi:
+      // ns.clearSelectedBranchContext?.();
+
       if (st.scanPushed && !fromPop) {
         st.scanPushed = false;
         if (isScanHash()) {
@@ -1519,8 +1594,16 @@ window.OZScan = window.OZScan || {};
 
       function openOrLogin(e) {
         e?.preventDefault?.();
+
+        // try to read branch context from tap tile itself if available
+        const branchId = d.tile?.dataset?.branchId || "";
+        const branchPublicId = d.tile?.dataset?.branchPublicId || "";
+
         startTapInlineLoading("Opening...");
-        ns.openModal();
+        ns.openModal({
+          branchId,
+          branchPublicId,
+        });
       }
 
       d.tile?.addEventListener('click', openOrLogin);
@@ -1553,7 +1636,6 @@ window.OZScan = window.OZScan || {};
     document.addEventListener('DOMContentLoaded', initModalTriggers);
   })(window.OZScan);
 </script>
-
 
 <!-- 4) scan-qr.js  (token helpers + QR → /qrg/scan-verify/) -->
 <script>
@@ -1734,8 +1816,8 @@ window.OZScan = window.OZScan || {};
 
     function normalizePin(raw) {
       const PIN_LEN = getPinLen();
-      let pin = String(raw || "").trim();
-      pin = pin.replace(/\D/g, "").slice(0, PIN_LEN);
+      let pin = String(raw || "").toUpperCase().trim();
+      pin = pin.replace(/[^23456789ABCDEFGHJKMNPQRSTUVWXYZ]/g, "").slice(0, PIN_LEN);
       return pin;
     }
 
@@ -1845,7 +1927,6 @@ window.OZScan = window.OZScan || {};
           showAlreadyPopupThenRedirect(next);
           return;
         }
-
 
         d.pinBtn.disabled = true;
 

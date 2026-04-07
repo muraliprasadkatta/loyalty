@@ -56,7 +56,7 @@
 
         <!-- Manual PIN -->
         <div class="qr-pin" aria-live="polite">
-          <div class="label">Manual PIN</div>
+          <div class="label">Manual Code</div>
 
           <div class="pin-top">
             <strong id="qrPin">————</strong>
@@ -81,7 +81,7 @@
           </div>
 
           <small class="muted">
-            If camera fails, customer can enter this 4-digit PIN on their phone.
+            If camera fails, customer can enter this 4-character code on their phone.
           </small>
         </div>
 
@@ -446,7 +446,7 @@ window.OZQR = {
   };
 
   OZ.renderPIN = () => {
-    const raw = String(S.pin || '').match(/\d{4}/)?.[0] || '';
+    const raw = String(S.pin || '').trim().toUpperCase();
     OZ.setText('#qrPin', raw || '————');
   };
 

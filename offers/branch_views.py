@@ -405,7 +405,7 @@ def branch_home_view(request):
     if visit_unit not in ("qr_pin", "qr_code"):
         visit_unit = "qr_pin"
 
-    visit_unit_label = "QR scan + PIN" if visit_unit == "qr_pin" else "QR code"
+    visit_unit_label = "QR scan + Code" if visit_unit == "qr_pin" else "QR code"
 
     return render(
         request,

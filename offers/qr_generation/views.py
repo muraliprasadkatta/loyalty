@@ -1,7 +1,8 @@
 # offers/qr_generation and pin/views.py
+
 import hashlib
 from datetime import timedelta
-from random import randint
+from random import choice
 
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -17,9 +18,17 @@ from offers.models import Branch, QRToken, YashPin
 from offers.services.qr.qr_token_utils import mint_qr_token, parse_qr_token
 
 
+# ========= code helpers =========
+
+CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+CODE_LEN = 4
+
+
+def _gen_qr_fallback_code() -> str:
+    return "".join(choice(CODE_CHARS) for _ in range(CODE_LEN))
+
 
 # ========= low-level helpers =========
-
 
 def _short_tag(branch: Branch) -> str:
     """
@@ -29,7 +38,7 @@ def _short_tag(branch: Branch) -> str:
     alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
 
     src = (
-        getattr(branch, "public_id", "") 
+        getattr(branch, "public_id", "")
         or str(branch.id)
         or branch.name
     ).encode("utf-8")
@@ -49,6 +58,7 @@ def _abs(request, path: str) -> str:
 
 
 # ========= views =========
+
 def QRTokenYashPindataSave(
     *,
     branch,
@@ -87,8 +97,6 @@ def QRTokenYashPindataSave(
     return qt
 
 
-
-
 @require_GET
 @never_cache
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
@@ -117,7 +125,7 @@ def start_counter_qr(request):
 
     staff_name = request.session.get("branch_staff_name") or ""
     staff_code = request.session.get("branch_staff_code") or ""
-    staff_id   = request.session.get("branch_staff_id")
+    staff_id = request.session.get("branch_staff_id")
 
     EXPIRES_IN = int(getattr(settings, "QR_TTL_SECS", 180))
     expires_at = timezone.now() + timedelta(seconds=EXPIRES_IN)
@@ -128,8 +136,8 @@ def start_counter_qr(request):
         reverse("qrgen:redeem_land", args=[token])
     )
 
-    # ---- pin ----
-    pin = f"{randint(0, 9999):04d}"
+    # ---- fallback code ----
+    pin = _gen_qr_fallback_code()
     pin_hash = make_password(pin)
 
     # ✅ USE helper
@@ -156,8 +164,6 @@ def start_counter_qr(request):
     })
 
 
-
-
 def redeem_land(request, token: str):
     try:
         info = parse_qr_token(token)
@@ -174,7 +180,3 @@ def redeem_land(request, token: str):
     request.session.modified = True
 
     return redirect(reverse("offers:user_home"))
-
-
-
-

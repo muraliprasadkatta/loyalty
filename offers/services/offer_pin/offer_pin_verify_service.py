@@ -93,7 +93,7 @@ def _validate_and_burn_related_visit_artifacts(
     """
     Ensure related QRToken / YashPin are still unused.
     If valid, burn them atomically.
-    If already used, return an error string.
+    If already used/invalid, return an error string.
     """
     token = (token or "").strip()
     if not token:
@@ -132,7 +132,7 @@ def _validate_and_burn_related_visit_artifacts(
         if pin_row.used:
             return "qr_pin_already_used"
 
-    # ---- burn QRToken ----
+    # burn QRToken
     qt_update_fields = ["used", "used_at", "used_via"]
     qt.used = True
     qt.used_at = now_ts
@@ -144,7 +144,7 @@ def _validate_and_burn_related_visit_artifacts(
 
     qt.save(update_fields=qt_update_fields)
 
-    # ---- burn linked YashPin if present ----
+    # burn linked YashPin if present
     if pin_row:
         pin_update_fields = ["used", "used_at"]
         pin_row.used = True
@@ -167,8 +167,8 @@ def branch_verify_offer_pin(request):
     """
     BRANCH SIDE:
       - Staff enters 4-digit OfferDay PIN
-      - Burns OfferDayPin
       - Validates & burns related QRToken / YashPin first
+      - Burns OfferDayPin only after related artifacts are valid
       - Creates UserVisitEvent (offer_day_pin)
       - Issues UserOfferClaim when milestone hits
       - Closes matching UserPendingVisitAttempt
@@ -177,9 +177,7 @@ def branch_verify_offer_pin(request):
     if not branch_id:
         return JsonResponse({"ok": False, "error": "branch_login_required"}, status=401)
 
-    # -------------------------
     # read pin (POST or JSON)
-    # -------------------------
     pin = (request.POST.get("pin") or "").strip()
 
     if (not pin) and request.content_type and ("application/json" in request.content_type.lower()):
@@ -195,7 +193,7 @@ def branch_verify_offer_pin(request):
 
     now_ts = timezone.now()
 
-    # small window scan (fast enough)
+    # small window scan
     cand = (
         OfferDayPin.objects
         .filter(branch_id=branch_id, used=False, expires_at__gt=now_ts)
@@ -231,21 +229,14 @@ def branch_verify_offer_pin(request):
         if row.used or row.expires_at <= now_ts:
             return JsonResponse({"ok": False, "error": "already_used_or_expired"}, status=409)
 
-        # ONE-PER-DAY per-branch enforcement
+        # one-per-day per branch enforcement
         already_today = UserVisitEvent.objects.filter(
             user=row.user,
             branch_id=int(branch_id),
             created_at__gte=start_of_day,
         ).exists()
 
-        # burn offer-day pin first
-        row.used = True
-        row.used_at = now_ts
-        row.used_by_staff_name = staff_name
-        row.used_by_staff_code = staff_code
-        row.save(update_fields=["used", "used_at", "used_by_staff_name", "used_by_staff_code"])
-
-        # validate + burn related QR / YashPin before creating visit
+        # validate + burn related QR / YashPin first
         artifact_error = _validate_and_burn_related_visit_artifacts(
             user=row.user,
             branch_id=int(branch_id),
@@ -257,6 +248,13 @@ def branch_verify_offer_pin(request):
                 {"ok": False, "error": artifact_error},
                 status=409,
             )
+
+        # burn OfferDayPin only after related artifacts passed
+        row.used = True
+        row.used_at = now_ts
+        row.used_by_staff_name = staff_name
+        row.used_by_staff_code = staff_code
+        row.save(update_fields=["used", "used_at", "used_by_staff_name", "used_by_staff_code"])
 
         if already_today:
             _close_matching_pending_attempt(
