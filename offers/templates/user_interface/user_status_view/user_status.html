@@ -367,7 +367,6 @@
               </div>
 
               <div class="pending-actions">
-                <span class="badge warn">{{ p.state_label|default:"Verification incomplete" }}</span>
                 <div style="color:var(--muted); font-size:12px; text-align:right; max-width:240px;">
                   {% if p.state == "awaiting_branch" %}
                     Please complete verification at the branch.

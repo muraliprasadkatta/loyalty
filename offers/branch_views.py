@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
+from offers.services.common.time_helpers import get_local_day_bounds
 
 from offers.models import ComplementaryOffer
 from offers.services.qr.qr_token_utils import mint_qr_token
@@ -477,12 +478,17 @@ def branch_staff_create_view(request):
 def branch_user_visit_list(request):
     branch_id = request.session.get("branch_id")
     today = timezone.localdate()
+    now_ts = timezone.now()
+    day_start, next_day_start = get_local_day_bounds(now_ts)
     filter_type = (request.GET.get("filter") or "all").lower()
 
     base = UserVisitEvent.objects.filter(branch_id=branch_id)
 
     if filter_type == "today":
-        base = base.filter(created_at__date=today)
+        base = base.filter(
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
+        )
 
     qs = (
         base.values("user_id")

@@ -5,7 +5,7 @@ from typing import Optional
 
 from django.db import transaction
 from django.utils import timezone
-
+from offers.services.common.time_helpers import get_local_day_bounds
 from offers.models import QRToken, UserVisitEvent, YashPin
 
 
@@ -67,11 +67,12 @@ def confirm_qr_code_visit(
             return ConfirmResult(ok=False, error="QR already used.")
 
         # one-per-day per-branch
-        start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_start, next_day_start = get_local_day_bounds(now_ts)
         already = UserVisitEvent.objects.filter(
             user=user,
             branch_id=qt.branch_id,
-            created_at__gte=start_of_day,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
         ).exists()
 
         if already:
@@ -180,11 +181,12 @@ def confirm_qr_code_visit_with_yashpin(
             return ConfirmResult(ok=False, error="QR already used.")
 
         # one-per-day per-branch
-        start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_start, next_day_start = get_local_day_bounds(now_ts)
         already = UserVisitEvent.objects.filter(
             user=user,
             branch_id=qt.branch_id,
-            created_at__gte=start_of_day,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
         ).exists()
 
         if already:

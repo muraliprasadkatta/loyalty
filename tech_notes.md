@@ -4,6 +4,26 @@ e file lo qr and pin ki sambadhichina code undhi mainly qr panicheyakapoyina cam
 
 _________________________________________________________
 
+D:\restarent_application66\offers\services\visit_unit
+D:\restarent_application66\offers\services\visit_unit\visit_confirm.py
+D:\restarent_application66\offers\services\visit_unit\visit_unit.py
+
+eppudina visit confiramation modifycheyali ante e files ni kuda touchcheyali endhukkuante a logic lu ikkade unnay kabbati
+
+---------------------------------------------------------
+D:\restarent_application66\offers\services\pending_visit_attempt
+
+e file anedhi user status pending kosam designchesamu so eppudina e fine user pending status ni touch cheste e file ni read cheyali
+
+
+_________________________________________________________________
+D:\restarent_application66\offers\services\common\time_helpers.py
+eppudina time niekkdina add cheyali antee file ni link chesukovali endhuku ante time ki sambadhichi e file lone logic undhi
+
+_________________________________________________________________
+
+
+
 ## Root Router
 ________________________________
 - **File:** `offers/views_root.py`

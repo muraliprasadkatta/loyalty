@@ -25,6 +25,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
+from offers.services.common.time_helpers import get_local_day_bounds
 
 from offers.services.qr.qr_token_utils import parse_qr_token as verify_qr_token
 from offers.services.offer_eligibility.offer_eligibility_service import build_offer_eligibility_context
@@ -221,8 +222,7 @@ def user_home_page(request):
     today = timezone.localdate()
 
     now_ts = timezone.now()
-    start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
-
+    day_start, next_day_start = get_local_day_bounds(now_ts)
     # defaults for guest users
     already_claimed_today = False
     disp = ""
@@ -242,7 +242,8 @@ def user_home_page(request):
 
         already_claimed_today = UserVisitEvent.objects.filter(
             user=request.user,
-            created_at__gte=start_of_day,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
         ).exists()
 
         prof = getattr(request.user, "profile", None)
@@ -636,8 +637,7 @@ def pin_verify(request):
         )
 
     now_ts = timezone.now()
-    start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
-
+    day_start, next_day_start = get_local_day_bounds(now_ts)
     # -----------------------------------------------------
     # AUTO BRANCH RESOLUTION:
     # Manual code itself should locate the correct branch/context.
@@ -692,7 +692,8 @@ def pin_verify(request):
     already = UserVisitEvent.objects.filter(
         user=request.user,
         branch=matched.branch,
-        created_at__gte=start_of_day,
+        created_at__gte=day_start,
+        created_at__lt=next_day_start,
     ).exists()
     if already:
         return JsonResponse({
@@ -822,11 +823,12 @@ def scan_verify(request):
 
     # quick same-day check (still final confirm does it again)
     if request.user.is_authenticated:
-        start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_start, next_day_start = get_local_day_bounds(now_ts)
         already = UserVisitEvent.objects.filter(
             user=request.user,
             branch_id=qt.branch_id,
-            created_at__gte=start_of_day,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
         ).exists()
         if already:
             return JsonResponse({
@@ -1034,11 +1036,12 @@ def confirm_branch_visit(request):
             return JsonResponse({"ok": False, "error": "QR already used."}, status=400)
 
         # final one-per-day enforcement
-        start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_start, next_day_start = get_local_day_bounds(now_ts)
         already = UserVisitEvent.objects.filter(
             user=request.user,
             branch=qt.branch,
-            created_at__gte=start_of_day,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
         ).exists()
         if already:
             _mark_pending_failure(
@@ -1178,12 +1181,12 @@ def branch_offers_in_userinterface(request, branch_id):
     request.session["last_branch_name"] = branch.name
 
 
-    now = timezone.now()
-    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    now_ts = timezone.now()
+    day_start, next_day_start = get_local_day_bounds(now_ts)
 
     base_qs = (
         ComplementaryOffer.objects
-        .filter(is_active=True, start_at__lte=now)
+        .filter(is_active=True, start_at__lte=now_ts)
         .filter(models.Q(all_branches=True) | models.Q(eligible_branches=branch))
         .distinct()
     )
@@ -1204,7 +1207,10 @@ def branch_offers_in_userinterface(request, branch_id):
     if request.user.is_authenticated:
         vqs = UserVisitEvent.objects.filter(user=request.user, branch=branch)
         branch_total_visits = vqs.count()
-        branch_today_visits = vqs.filter(created_at__gte=start_of_day).count()
+        branch_today_visits = vqs.filter(
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
+        ).count()
         branch_last_visit = vqs.aggregate(last=Max("created_at"))["last"]
         branch_has_visited = branch_total_visits > 0
     # =====================================================
@@ -1368,8 +1374,8 @@ def user_status_view(request):
     history_days = []
 
     # local day start
-    now_ts = timezone.localtime(timezone.now())
-    start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+    now_ts = timezone.now()
+    day_start, next_day_start = get_local_day_bounds(now_ts)
 
     method_label_map = {
         "qr_pin": "QR scan + PIN at outlet",
@@ -1384,7 +1390,10 @@ def user_status_view(request):
         total_all = base_all.count()
 
         # today across all branches
-        base_today = base_all.filter(created_at__gte=start_of_day)
+        base_today = base_all.filter(
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
+        )
         today_total_all = base_today.count()
         today_unique_branches = base_today.values("branch_id").distinct().count()
 
@@ -1400,7 +1409,10 @@ def user_status_view(request):
         if branch_id:
             qs = base_all.filter(branch_id=branch_id)
             this_branch_total = qs.count()
-            this_branch_today = qs.filter(created_at__gte=start_of_day).count()
+            this_branch_today = qs.filter(
+                created_at__gte=day_start,
+                created_at__lt=next_day_start,
+            ).count()
             last_obj = qs.order_by("-created_at").first()
             this_branch_last = last_obj.created_at if last_obj else None
 
@@ -1742,11 +1754,12 @@ def user_verify_visit_pin(request):
             )
 
         # 4C) final one-per-day enforcement (per-branch)
-        start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_start, next_day_start = get_local_day_bounds(now_ts)
         already = UserVisitEvent.objects.filter(
             user=request.user,
             branch=qt.branch,
-            created_at__gte=start_of_day,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
         ).exists()
         if already:
             _mark_pending_failure(

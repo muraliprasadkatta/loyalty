@@ -96,6 +96,7 @@ def upsert_pending_visit_attempt(
         note=note or "",
     )
 
+
 def mark_pending_visit_attempt_completed(
     *,
     user,
@@ -203,18 +204,41 @@ def mark_pending_visit_attempt_expired(
 def get_user_active_pending_attempts(*, user) -> QuerySet[UserPendingVisitAttempt]:
     """
     Fetch active pending attempts for status page / dashboards.
+
+    Before returning, auto-expire stale active rows whose linked QR token
+    has already expired. This prevents old pending cards from staying visible.
     """
     if not user or not getattr(user, "is_authenticated", False):
         return UserPendingVisitAttempt.objects.none()
 
+    now_ts = timezone.now()
+    active_states = [
+        UserPendingVisitAttempt.STATE_STARTED,
+        UserPendingVisitAttempt.STATE_AWAITING_BRANCH,
+    ]
+
+    # 1) Expire stale active rows for this user where linked QR token is expired
+    (
+        UserPendingVisitAttempt.objects
+        .filter(
+            user=user,
+            state__in=active_states,
+            qr_token__isnull=False,
+            qr_token__expires_at__lte=now_ts,
+        )
+        .update(
+            state=UserPendingVisitAttempt.STATE_EXPIRED,
+            expired_at=now_ts,
+            note="expired: qr token expired",
+        )
+    )
+
+    # 2) Return only still-active rows
     return (
         UserPendingVisitAttempt.objects
         .filter(
             user=user,
-            state__in=[
-                UserPendingVisitAttempt.STATE_STARTED,
-                UserPendingVisitAttempt.STATE_AWAITING_BRANCH,
-            ],
+            state__in=active_states,
         )
         .select_related("branch", "qr_token", "yashpin")
         .order_by("-started_at")
