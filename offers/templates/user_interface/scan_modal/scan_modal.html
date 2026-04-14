@@ -558,6 +558,14 @@
   background: linear-gradient(180deg, #4c74ff 0%, #315dff 100%);
   color: #fff;
   box-shadow: 0 10px 24px rgba(49, 93, 255, .28);
+  white-space: nowrap;
+
+}
+
+.oz-btn__content,
+.oz-btn__loading{
+  white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
 .oz-btn:hover{
@@ -642,10 +650,10 @@
   <span class="oz-btn__content">
     <span>Verify PIN</span>
   </span>
-  <span class="oz-btn__loading" hidden>
-    {% include "ui_states/spinners/button_loading.html" %}
-    <span>Verifying...</span>
-  </span>
+    <span class="oz-btn__loading" hidden>
+      {% include "ui_states/spinners/button_loading.html" %}
+      <span class="oz-btn__loading-text">Verifying...</span>
+    </span>
 </button>
 
   <div id="qrStatus" class="oz-status" style="display:none;margin-top:10px"></div>
@@ -1839,7 +1847,7 @@ window.OZScan = window.OZScan || {};
       if (!d.pinBtn) return;
 
       if (window.OZButtons?.setLoading) {
-        window.OZButtons.setLoading(d.pinBtn, !!on, { disable: true });
+        window.OZButtons.setLoading(d.pinBtn, !!on, { disable: true, keepWidth: true });
       } else {
         d.pinBtn.classList.toggle("oz-btn-loading", !!on);
         d.pinBtn.setAttribute("aria-busy", on ? "true" : "false");
@@ -1848,12 +1856,19 @@ window.OZScan = window.OZScan || {};
       const loadingEl = d.pinBtn.querySelector(".oz-btn__loading");
       if (loadingEl) loadingEl.hidden = !on;
 
+      const loadingText = d.pinBtn.querySelector(".oz-btn__loading-text");
+      if (loadingText && !on) {
+        loadingText.textContent = "Verifying...";
+      }
+
       if (on) {
         d.pinBtn.disabled = true;
       } else {
         syncPinBtnState();
       }
     }
+
+
 
     function showAlreadyPopupThenRedirect(nextUrl) {
       if (!isModalStillOpen()) return;
@@ -1930,8 +1945,8 @@ window.OZScan = window.OZScan || {};
 
         d.pinBtn.disabled = true;
 
-        const loadingText = d.pinBtn.querySelector(".oz-btn__loading span:last-child");
-        if (loadingText) loadingText.textContent = "Opening status...";
+        const loadingText = d.pinBtn.querySelector(".oz-btn__loading-text");
+        if (loadingText) loadingText.textContent = "Opening...";
 
         setTimeout(() => {
           window.location.replace(next);

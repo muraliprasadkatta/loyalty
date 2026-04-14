@@ -662,7 +662,6 @@ footer.nav{
 
   {% if request.user.is_authenticated %}
     {% include "user_interface/user_name_modal.html" %}
-    {% include "user_interface/free_treat_calendar_modal.html" %}
   {% endif %}
 
   {% include "user_interface/scan_modal/scan_modal.html" %}
@@ -829,6 +828,7 @@ footer.nav{
       window.history.replaceState(null, '', window.location.href);
     }
   </script>
+  
   <script>
   (function () {
     function shouldHandleNav(el) {

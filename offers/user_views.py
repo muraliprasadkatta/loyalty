@@ -26,7 +26,7 @@ from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 from offers.services.common.time_helpers import get_local_day_bounds
-
+from offers.services.offer_claim.claim_issue_service import issue_offer_claim_if_eligible
 from offers.services.qr.qr_token_utils import parse_qr_token as verify_qr_token
 from offers.services.offer_eligibility.offer_eligibility_service import build_offer_eligibility_context
 import offers.services.offer_eligibility.offers_progress_modal_helper as progress_helper
@@ -1139,6 +1139,18 @@ def confirm_branch_visit(request):
             staff_code=staff_code,
         )
 
+        # NEW: auto-issue claim if milestone reached
+        claim_result = issue_offer_claim_if_eligible(
+            user=request.user,
+            branch_id=qt.branch_id,
+            visit_event=ve,
+            now_ts=now_ts,
+            token=qt.token or "",
+            desk=desk or "",
+            staff_name=staff_name,
+            staff_code=staff_code,
+        )
+
     # confirmed session for status page
     set_last_branch_session(
         request,
@@ -1164,8 +1176,9 @@ def confirm_branch_visit(request):
         "ok": True,
         "already_claimed_today": False,
         "redirect_url": reverse("offers:user_visit_pin_page"),
+        "claim_issued": bool(claim_result.get("claim_issued")),
+        "claim_ids": list(claim_result.get("claim_ids") or []),
     })
-
 
 # ============================================
 # branch offers  view in user interface
@@ -1175,30 +1188,39 @@ def confirm_branch_visit(request):
 
 def branch_offers_in_userinterface(request, branch_id):
     branch = get_object_or_404(Branch, id=branch_id)
-    
-    # ✅ force context for pin page / eligibility
+
+    # force context for pin page / eligibility
     request.session["last_branch_id"] = branch.id
     request.session["last_branch_name"] = branch.name
-
 
     now_ts = timezone.now()
     day_start, next_day_start = get_local_day_bounds(now_ts)
 
     base_qs = (
         ComplementaryOffer.objects
-        .filter(is_active=True, start_at__lte=now_ts)
-        .filter(models.Q(all_branches=True) | models.Q(eligible_branches=branch))
+        .filter(
+            is_active=True,
+            start_at__lte=now_ts,
+        )
+        .filter(
+            models.Q(end_at__isnull=True) | models.Q(end_at__gte=now_ts)
+        )
+        .filter(
+            models.Q(all_branches=True) | models.Q(eligible_branches=branch)
+        )
         .distinct()
     )
 
-    offers = base_qs.order_by("id")
+    active_offer_count = base_qs.count()
 
-    free_plate_offer = base_qs.filter(kind="complementary_offer").order_by("-start_at", "-id").first()
+    free_plate_offer = (
+        base_qs
+        .filter(kind="complementary_offer")
+        .order_by("-start_at", "-id")
+        .first()
+    )
 
-
-    # =====================================================
-    # ✅ NEW: This branch visit stats (only this branch)
-    # =====================================================
+    # This branch visit stats (only this branch)
     branch_total_visits = 0
     branch_today_visits = 0
     branch_last_visit = None
@@ -1213,27 +1235,24 @@ def branch_offers_in_userinterface(request, branch_id):
         ).count()
         branch_last_visit = vqs.aggregate(last=Max("created_at"))["last"]
         branch_has_visited = branch_total_visits > 0
-    # =====================================================
 
     context = {
         "branch": branch,
-        "offers": offers,
-        "active_offer_count": offers.count(),
+        "active_offer_count": active_offer_count,
         "is_open_now": True,
         "free_plate_offer": free_plate_offer,
-
-        # send to template
         "branch_total_visits": branch_total_visits,
         "branch_today_visits": branch_today_visits,
         "branch_last_visit": branch_last_visit,
         "branch_has_visited": branch_has_visited,
     }
-        #  MILESTONE PROGRESS LOGIC HERE
+
+    # Progress / calendar logic
     max_preview = 60
     if free_plate_offer and free_plate_offer.start_at and free_plate_offer.end_at:
         window_days = (free_plate_offer.end_at.date() - free_plate_offer.start_at.date()).days + 1
         max_preview = max(15, min(60, window_days))
-        
+
         progress = progress_helper.offers_progress_modal_context(
             total_visits=branch_total_visits,
             nth=getattr(free_plate_offer, "nth", None),
@@ -1531,6 +1550,7 @@ def user_verify_visit_pin(request):
       5) create UserVerifyVisitPin audit row (admin)
       6) mark QRToken.used / used_via / used_by
       7) clear pending session locks
+      8) auto-issue claim if milestone reached
     """
 
     # -------------------------
@@ -1873,12 +1893,24 @@ def user_verify_visit_pin(request):
         )
 
         # 4H) create visit event (ONLY ONCE)
-        UserVisitEvent.objects.create(
+        ve = UserVisitEvent.objects.create(
             user=request.user,
             branch=qt.branch,
             token=qt.token,
             desk=final_desk,
             visit_method="qr_pin" if pending_method == "pin" else "qr_screenshot",
+            staff_name=final_staff_name,
+            staff_code=final_staff_code,
+        )
+
+        # NEW: auto-issue claim if milestone reached
+        claim_result = issue_offer_claim_if_eligible(
+            user=request.user,
+            branch_id=qt.branch_id,
+            visit_event=ve,
+            now_ts=now_ts,
+            token=qt.token or "",
+            desk=final_desk or "",
             staff_name=final_staff_name,
             staff_code=final_staff_code,
         )
@@ -1909,5 +1941,6 @@ def user_verify_visit_pin(request):
         "message": "Visit verified successfully ✅",
         "branch_name": qt.branch.name,
         "redirect_url": reverse("offers:user_status"),
+        "claim_issued": bool(claim_result.get("claim_issued")),
+        "claim_ids": list(claim_result.get("claim_ids") or []),
     })
-

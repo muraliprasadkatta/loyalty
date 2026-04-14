@@ -1,3 +1,21 @@
+D:\restarent_application66\offers\services\offer_eligibility\offer_eligibility_service.py
+D:\restarent_application66\offers\user_views.py
+D:\restarent_application66\offers\templates\user_interface\user_visit_count\user_visit_pin_verify_modal.html
+D:\restarent_application66\offers\templates\user_interface\user_visit_count\eligibility_preview_modal.html
+
+e files anevi offer day nadu check box kanipichali ante e files ne use avutunam  and  check box tharuvathe open ayye offer pin generate modal kuda dhenivllne generate avutunnay mava
+and inkokat ovetiki main helper file enti ante offer_eligibility_service.py
+
+________________________________________________________________
+
+D:\restarent_application66\offers\user_views.py
+D:\restarent_application66\offers\services\offer_eligibility\offer_eligibility_service.py
+
+branch offers in user inerfacce lo page lo emina modify cheyali ante e files ni kuda review cheyali mava
+
+
+_______________________________________________________________
+
 D:\restarent_application66\offers\qr_generation\views.py
 
 e file lo qr and pin ki sambadhichina code undhi mainly qr panicheyakapoyina camera fail ayina generate ayy epin logic ikkade undhi mava
@@ -15,14 +33,37 @@ D:\restarent_application66\offers\services\pending_visit_attempt
 
 e file anedhi user status pending kosam designchesamu so eppudina e fine user pending status ni touch cheste e file ni read cheyali
 
+_______________________________________________________________
+
+D:\restarent_application66\offers\services\offer_claim\claim_issue_service.py
+
+offer day nadu data base lo store avvataniki idhemain fial even qr/pin + verify ki aina pin less restarent ki aina
+
+D:\restarent_application66\offers\services\offer_pin\offer_pin_verify_service.py
+idi kuda offer day nadu db lo store avvataniki side lo idi kudaoka reason aa 
+
+D:\restarent_application66\offers\user_views.py
+and indhulo kuda 
+confirm_branch_visit()
+user_verify_visit_pin()
+e function lu use avuthay mava
 
 _________________________________________________________________
 D:\restarent_application66\offers\services\common\time_helpers.py
 eppudina time niekkdina add cheyali antee file ni link chesukovali endhuku ante time ki sambadhichi e file lone logic undhi
 
+--------------------------------
+
+UserOfferClaim ni create chese logic 
+offers/services/offer_pin/offer_pin_verify_service.py lo branch_verify_offer_pin()
+function lo undhi.
+
 _________________________________________________________________
 
+D:\restarent_application66\offers\services\offer_pin\offer_pin_verify_service.py
 
+e file anedhi pn verify cheyatanike kadhu indirect ga datanikuda store cheyatanikikuda use avutudhi
+(UserOfferClaim) e model lo data store avvataniki  
 
 ## Root Router
 ________________________________

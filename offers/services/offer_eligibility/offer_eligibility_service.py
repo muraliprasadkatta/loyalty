@@ -1,13 +1,11 @@
 # offers/services/offer_eligibility_service.py for the check box in user interface
 
 from __future__ import annotations
-
 from typing import Any, Dict, List, Optional
-
 from django.db.models import Q
 from django.utils import timezone
-
 from offers.models import ComplementaryOffer, UserVisitEvent
+from offers.services.common.time_helpers import get_local_day_bounds
 
 
 def _to_pos_int(v) -> Optional[int]:
@@ -45,7 +43,7 @@ def build_offer_eligibility_context(
     if now_ts is None:
         now_ts = timezone.now()
 
-    start_of_day = now_ts.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_start, next_day_start = get_local_day_bounds(now_ts)
 
     # ---------------------------------------------------------
     # Offer pick (latest ACTIVE offer for this branch)
@@ -73,7 +71,10 @@ def build_offer_eligibility_context(
         qs = qs.none()
 
     total_visits = qs.count()
-    today_visits = qs.filter(created_at__gte=start_of_day).count()
+    today_visits = qs.filter(
+        created_at__gte=day_start,
+        created_at__lt=next_day_start,
+    ).count()
 
     last_obj = qs.order_by("-created_at").first()
     last_visit_dt = last_obj.created_at if last_obj else None

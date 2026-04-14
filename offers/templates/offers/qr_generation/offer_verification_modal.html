@@ -302,17 +302,34 @@
         }
       );
 
-      const data = result?.data || {};
+      // ApiGuard shape + direct JSON shape rendu handle cheyyi
+      const data =
+        (result && typeof result.data === "object" && result.data)
+          ? result.data
+          : (result && typeof result === "object" ? result : {});
 
-      if (!result.ok || !data.ok) {
-        const err = data?.error || result?.error_code || ("http_" + (result?.status || 0));
+      // HTTP success + backend explicit ok false kaakapothe success ga treat cheyyi
+      const isHttpOk = result?.ok !== false;
+      const isBackendOk = data?.ok !== false;
+
+      if (!isHttpOk || !isBackendOk) {
+        const err =
+          data?.error ||
+          result?.error_code ||
+          ("http_" + (result?.status || 0));
         throw new Error(err);
       }
 
-      if (data.already_claimed_today){
-        setStatus("Already counted today ✅ (PIN consumed)", "good");
+      if (data.already_claimed_today) {
+        setStatus(
+          data.msg || "Already counted today ✅ (PIN consumed)",
+          "good"
+        );
       } else {
-        setStatus("Verified ✅ Visit recorded", "good");
+        setStatus(
+          data.msg || "Verified ✅ Visit recorded",
+          "good"
+        );
       }
 
       setTimeout(() => {

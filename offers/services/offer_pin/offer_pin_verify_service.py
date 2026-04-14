@@ -4,17 +4,19 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.cache import never_cache, cache_control
 from django.contrib.auth.hashers import check_password
-from django.db import transaction, models
-from django.db.utils import IntegrityError
+from django.db import transaction
+from offers.services.common.time_helpers import get_local_day_bounds
 
 from offers.models import (
     OfferDayPin,
     UserVisitEvent,
-    UserOfferClaim,
-    ComplementaryOffer,
     UserPendingVisitAttempt,
     QRToken,
     YashPin,
+)
+
+from offers.services.offer_claim.claim_issue_service import (
+    issue_offer_claim_if_eligible,
 )
 
 
@@ -170,7 +172,7 @@ def branch_verify_offer_pin(request):
       - Validates & burns related QRToken / YashPin first
       - Burns OfferDayPin only after related artifacts are valid
       - Creates UserVisitEvent (offer_day_pin)
-      - Issues UserOfferClaim when milestone hits
+      - Issues claim through shared claim service
       - Closes matching UserPendingVisitAttempt
     """
     branch_id = request.session.get("branch_id")
@@ -216,8 +218,7 @@ def branch_verify_offer_pin(request):
     claim_ids = []
 
     # local day start
-    now_local = timezone.localtime(now_ts)
-    start_of_day = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_start, next_day_start = get_local_day_bounds(now_ts)
 
     with transaction.atomic():
         # lock pin row
@@ -233,7 +234,8 @@ def branch_verify_offer_pin(request):
         already_today = UserVisitEvent.objects.filter(
             user=row.user,
             branch_id=int(branch_id),
-            created_at__gte=start_of_day,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
         ).exists()
 
         # validate + burn related QR / YashPin first
@@ -299,83 +301,19 @@ def branch_verify_offer_pin(request):
             visit_event=ve,
         )
 
-        # active offer for this branch (global OR eligible)
-        offer = (
-            ComplementaryOffer.objects
-            .filter(is_active=True, start_at__lte=now_ts)
-            .filter(models.Q(end_at__isnull=True) | models.Q(end_at__gte=now_ts))
-            .filter(models.Q(all_branches=True) | models.Q(eligible_branches__id=int(branch_id)))
-            .order_by("-id")
-            .distinct()
-            .first()
-        )
-
-        # count visits after this event (includes newly created ve)
-        visit_count = UserVisitEvent.objects.filter(
+        # shared claim issue service
+        claim_result = issue_offer_claim_if_eligible(
             user=row.user,
             branch_id=int(branch_id),
-        ).count()
-
-        hit_main = bool(
-            offer and offer.nth and offer.nth > 0 and (visit_count % offer.nth == 0)
+            visit_event=ve,
+            now_ts=now_ts,
+            token=row.token or "",
+            desk=row.desk or "",
+            staff_name=staff_name,
+            staff_code=staff_code,
         )
-
-        hit_extra = []
-        if offer:
-            for ex in (offer.extra_nths or []):
-                try:
-                    exn = int(ex)
-                except Exception:
-                    continue
-                if exn > 0 and visit_count == exn:
-                    hit_extra.append(exn)
-
-        try:
-            if offer and hit_main:
-                c = UserOfferClaim.objects.create(
-                    user=row.user,
-                    branch_id=int(branch_id),
-                    visit_event=ve,
-                    offer=offer,
-                    milestone_kind="main",
-                    milestone_n=offer.nth,
-                    offer_nth=offer.nth or None,
-                    offer_repeat=offer.repeat,
-                    offer_extra_nths=offer.extra_nths or [],
-                    offer_start_at=offer.start_at,
-                    offer_end_at=offer.end_at,
-                    token=row.token or "",
-                    desk=row.desk or "",
-                    staff_name=staff_name,
-                    staff_code=staff_code,
-                )
-                claim_ids.append(c.id)
-                claim_issued = True
-
-            for exn in hit_extra:
-                c = UserOfferClaim.objects.create(
-                    user=row.user,
-                    branch_id=int(branch_id),
-                    visit_event=ve,
-                    offer=offer,
-                    milestone_kind="extra",
-                    milestone_n=exn,
-                    offer_nth=offer.nth or None,
-                    offer_repeat=offer.repeat,
-                    offer_extra_nths=offer.extra_nths or [],
-                    offer_start_at=offer.start_at,
-                    offer_end_at=offer.end_at,
-                    token=row.token or "",
-                    desk=row.desk or "",
-                    staff_name=staff_name,
-                    staff_code=staff_code,
-                )
-                claim_ids.append(c.id)
-                claim_issued = True
-
-        except IntegrityError:
-            # ignore duplicate-claim races safely
-            pass
+        claim_issued = bool(claim_result.get("claim_issued"))
+        claim_ids = list(claim_result.get("claim_ids") or [])
 
     return JsonResponse({
         "ok": True,

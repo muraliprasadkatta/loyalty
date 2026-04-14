@@ -1,11 +1,10 @@
-# D:\restarent_application50\offers\services\visit_unit\visit_confirm.py
-
 from dataclasses import dataclass
 from typing import Optional
 
 from django.db import transaction
 from django.utils import timezone
 from offers.services.common.time_helpers import get_local_day_bounds
+from offers.services.offer_claim.claim_issue_service import issue_offer_claim_if_eligible
 from offers.models import QRToken, UserVisitEvent, YashPin
 
 
@@ -35,6 +34,7 @@ def confirm_qr_code_visit(
       - enforce one-per-day per-branch
       - burn QRToken
       - create UserVisitEvent with visit_method="qr_code"
+      - auto-issue claim if milestone reached
     """
     if not user or not getattr(user, "is_authenticated", False):
         return ConfirmResult(ok=False, error="Authentication required.")
@@ -92,12 +92,24 @@ def confirm_qr_code_visit(
         qt.save(update_fields=["used", "used_at", "used_via", "used_by"])
 
         # create visit event
-        UserVisitEvent.objects.create(
+        ve = UserVisitEvent.objects.create(
             user=user,
             branch_id=qt.branch_id,
             token=qt.token,
             desk=qt.desk or "",
             visit_method="qr_code",
+            staff_name=getattr(qt, "staff_name", "") or "",
+            staff_code=getattr(qt, "staff_code", "") or "",
+        )
+
+        # NEW: auto-issue claim if milestone reached
+        issue_offer_claim_if_eligible(
+            user=user,
+            branch_id=qt.branch_id,
+            visit_event=ve,
+            now_ts=now_ts,
+            token=qt.token or "",
+            desk=qt.desk or "",
             staff_name=getattr(qt, "staff_name", "") or "",
             staff_code=getattr(qt, "staff_code", "") or "",
         )
@@ -129,6 +141,7 @@ def confirm_qr_code_visit_with_yashpin(
       - enforce one-per-day per-branch
       - burn QRToken + mark YashPin used
       - create UserVisitEvent with visit_method="qr_code"
+      - auto-issue claim if milestone reached
     """
     if not user or not getattr(user, "is_authenticated", False):
         return ConfirmResult(ok=False, error="Authentication required.")
@@ -207,7 +220,6 @@ def confirm_qr_code_visit_with_yashpin(
 
         # burn YashPin (safe fields)
         yp.used = True
-        # only set these if model has them
         if hasattr(yp, "used_at"):
             yp.used_at = now_ts
         if hasattr(yp, "used_by"):
@@ -221,12 +233,24 @@ def confirm_qr_code_visit_with_yashpin(
         yp.save(update_fields=upd)
 
         # create visit event
-        UserVisitEvent.objects.create(
+        ve = UserVisitEvent.objects.create(
             user=user,
             branch_id=qt.branch_id,
             token=qt.token,
             desk=qt.desk or "",
             visit_method="qr_code",
+            staff_name=getattr(qt, "staff_name", "") or "",
+            staff_code=getattr(qt, "staff_code", "") or "",
+        )
+
+        # NEW: auto-issue claim if milestone reached
+        issue_offer_claim_if_eligible(
+            user=user,
+            branch_id=qt.branch_id,
+            visit_event=ve,
+            now_ts=now_ts,
+            token=qt.token or "",
+            desk=qt.desk or "",
             staff_name=getattr(qt, "staff_name", "") or "",
             staff_code=getattr(qt, "staff_code", "") or "",
         )

@@ -1,3 +1,4 @@
+# restarent_application66\offers\services\auth\otp_utils.py
 import hashlib
 import hmac
 import secrets

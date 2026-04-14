@@ -195,16 +195,11 @@
       .btn[disabled]{
         opacity:.6;
         cursor:wait;
-      }
+      }yyz
     </style>
   `);
 
-  // history trap
-  history.replaceState(null, '', location.pathname);
-  history.pushState(null, '', location.pathname);
-  window.addEventListener('popstate', function () {
-    location.replace("{% url 'offers:branch_home' %}");
-  });
+
 
   // generic modal open/close handler
   document.addEventListener("click", function (e) {
