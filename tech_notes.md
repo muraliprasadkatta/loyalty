@@ -35,6 +35,13 @@ e file anedhi user status pending kosam designchesamu so eppudina e fine user pe
 
 _______________________________________________________________
 
+D:\restarent_application66\offers\user_views.py
+D:\restarent_application66\offers\templates\user_interface\offers_progress_modal\offers_progress_modal.html
+D:\restarent_application66\offers\services\offer_eligibility\offers_progress_modal_helper.py
+e files branch offer in user inter face lo scroll bar and milestones ki samadhichi unna modalni run cheyatanikiuse authay so eppudina touchcheste vetini kuda touchcheyali 
+
+__________________________________________________________________________
+
 D:\restarent_application66\offers\services\offer_claim\claim_issue_service.py
 
 offer day nadu data base lo store avvataniki idhemain fial even qr/pin + verify ki aina pin less restarent ki aina

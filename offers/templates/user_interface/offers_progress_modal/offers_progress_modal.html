@@ -1,36 +1,27 @@
 <div class="og-card">
+  <div class="og-track-wrap" id="ogStickyWrap">
 
-  <div class="og-track-wrap">
-
-    <!-- ✅ SHELL (desktop-only arrows & padding) -->
     <div class="og-track-shell" id="ogTrackShell">
-
-      <!-- ✅ arrows (desktop only via CSS media query) -->
-      <button class="og-nav og-nav--left" type="button" aria-label="Scroll left">‹</button>
-      <button class="og-nav og-nav--right" type="button" aria-label="Scroll right">›</button>
-
-      <!-- ✅ scroller (mobile old view stays) -->
-      <div class="og-track-scroller" id="ogTrackScroller"
-           data-has-progress="{% if progress_pct and progress_pct > 0 %}1{% else %}0{% endif %}">
-
-        <div class="og-track" id="ogTrack">
+fv
+      <div class="og-track-scroller" id="ogTrackScroller">
+        <div class="og-track"
+             id="ogTrack"
+             style="{% if fit_mode %}width:100%;{% else %}width:{{ track_width_px|default:360 }}px;{% endif %}">
           <div class="og-fill"
-               style="width:{% if progress_pct and progress_pct > 0 %}{{ progress_pct }}%{% else %}8%{% endif %};">
-          </div>
+               style="{% if fit_mode and fill_width_pct is not None %}width: {{ fill_width_pct }}%;{% else %}width: {{ fill_width_px|default:10 }}px;{% endif %}"></div>
 
-          <div class="og-start">
+          <div class="og-start"
+               style="{% if fit_mode and start_marker_pct is not None %}left: {{ start_marker_pct }}%;{% else %}left: {{ start_marker_px|default:46 }}px;{% endif %}">
             <span class="og-start-dot"></span>
-            <span class="og-start-label">Start</span>
           </div>
 
           {% for m in milestones %}
             <div class="og-pin og-pin--{{ m.state }}"
-                 style="left: {{ m.left_pct }}%;"
+                 style="{% if fit_mode and m.left_pct is not None %}left: {{ m.left_pct }}%;{% else %}left: {{ m.left_px }}px;{% endif %};"
                  {% if m.state == "active" %}data-pin="active"{% endif %}>
-
               {% if m.state == "lock" %}
                 <div class="og-lock">🔒</div>
-              {% elif m.is_main %}
+              {% elif m.is_main and m.state != "done" %}
                 <div class="og-star">★</div>
                 <div class="og-star-num">{{ m.visit_no }}</div>
               {% else %}
@@ -39,11 +30,9 @@
             </div>
           {% endfor %}
         </div>
-
       </div>
     </div>
 
-    <!-- meta -->
     <div class="og-meta">
       <div class="og-pill">{{ points_label|default:"0+" }}</div>
       {% if progress_total %}
@@ -55,7 +44,6 @@
 
   </div>
 
-  <!-- rows -->
   <div class="og-list">
     {% for row in rows %}
       <div class="og-row og-row--{{ row.state }}">
@@ -82,7 +70,6 @@
       <div class="og-empty">No milestones configured.</div>
     {% endfor %}
   </div>
-
 </div>
 
 <style>
@@ -93,301 +80,623 @@
   --muted:rgba(234,240,255,.72);
   --gold:#ffc857;
   --green:#2ef08a;
+
+  --og-track-h: clamp(30px, 8vw, 52px);
+  --og-wrap-px: clamp(10px, 3.4vw, 16px);
+  --og-wrap-pt: clamp(10px, 3.2vw, 14px);
+  --og-wrap-pb: clamp(8px, 2.6vw, 12px);
+
+  --og-scroller-py: clamp(4px, 1.5vw, 6px);
+  --og-scroller-radius: clamp(12px, 2.6vw, 14px);
+
+  --og-pill-fz: clamp(11px, 2.8vw, 12px);
+  --og-ratio-fz: clamp(11px, 2.8vw, 12px);
+
+  --og-row-py: clamp(10px, 2.8vw, 12px);
+  --og-row-px: clamp(8px, 2.8vw, 10px);
+  --og-row-gap: clamp(10px, 2.8vw, 12px);
+
+  --og-icon-size: clamp(28px, 7.6vw, 34px);
+  --og-icon-radius: clamp(10px, 2.8vw, 12px);
+
+  --og-title-fz: clamp(12px, 3.2vw, 14px);
+  --og-reward-gap: clamp(6px, 1.8vw, 8px);
+  --og-date-fz: clamp(10px, 2.8vw, 12px);
+  --og-date-py: clamp(4px, 1.8vw, 6px);
+  --og-date-px: clamp(7px, 2.2vw, 10px);
+
+  --og-chip-fz: clamp(7px, 2.1vw, 10px);
+  --og-chip-px: clamp(5px, 1.8vw, 10px);
+  --og-chip-pt: clamp(7px, 2.2vw, 15px);
+  --og-chip-pb: clamp(2px, .8vw, 4px);
+
+  --og-star-size: clamp(20px, 5.8vw, 32px);
+  --og-star-fz: clamp(11px, 3.1vw, 15px);
+  --og-star-num-fz: clamp(8px, 2.2vw, 10px);
+  --og-star-num-mt: clamp(2px, .8vw, 4px);
+
+  --og-lock-size: clamp(20px, 5.8vw, 32px);
+  --og-lock-radius: clamp(9px, 2.4vw, 12px);
+  --og-lock-fz: clamp(11px, 3.1vw, 16px);
+
+  --og-start-dot: clamp(6px, 1.9vw, 8px);
+  --og-start-label-fz: clamp(8px, 2vw, 10px);
 }
 
 .og-card{
-  background: linear-gradient(180deg, rgba(79,124,255,.10), transparent 40%), var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
-  overflow:hidden;
+  background:#ffffff;
+  border:1px solid #e6eaf2;
+  border-radius:clamp(16px, 3.2vw, 18px);
+  overflow:visible;
+  box-shadow:0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .og-track-wrap{
-  padding:14px 16px 12px;
-  background: radial-gradient(800px 220px at 20% 0%, rgba(255,200,87,.14), transparent 50%),
-              radial-gradient(800px 220px at 70% 0%, rgba(79,124,255,.18), transparent 55%),
-              rgba(255,255,255,.02);
-  border-bottom:1px solid rgba(120,150,255,.12);
+  --og-expand-progress: 0;
+  --og-base-side-gap: clamp(10px, 3.2vw, 14px);
+  --og-base-radius: clamp(14px, 3vw, 18px);
+  --og-top-radius: clamp(14px, 3vw, 18px);
+  --og-min-radius: 12px;
+  --og-shadow-y: calc(8px + (var(--og-expand-progress) * 0px));
+  --og-shadow-blur: calc(20px + (var(--og-expand-progress) * 6px));
+  --og-shadow-alpha: calc(0.08 + (var(--og-expand-progress) * 0.05));
+
+  padding:var(--og-wrap-pt) var(--og-wrap-px) var(--og-wrap-pb);
+
+  margin-left:calc(var(--og-base-side-gap) * (1 - var(--og-expand-progress)));
+  margin-right:calc(var(--og-base-side-gap) * (1 - var(--og-expand-progress)));
+  margin-top:0;
+  margin-bottom:0;
+
+  background:
+    radial-gradient(820px 240px at 14% 0%, rgba(255, 183, 77, .22), transparent 44%),
+    radial-gradient(820px 240px at 48% 0%, rgba(244, 143, 177, .18), transparent 49%),
+    radial-gradient(820px 240px at 82% 0%, rgba(100, 181, 246, .22), transparent 52%),
+    linear-gradient(180deg, #fff9f7 0%, #f7f9ff 100%);
+
+  border:1px solid transparent;
+  background-clip:padding-box;
+
+  border-top-left-radius:calc(var(--og-top-radius) - ((var(--og-top-radius) - var(--og-min-radius)) * var(--og-expand-progress)));
+  border-top-right-radius:calc(var(--og-top-radius) - ((var(--og-top-radius) - var(--og-min-radius)) * var(--og-expand-progress)));
+  border-bottom-left-radius:calc(var(--og-base-radius) - ((var(--og-base-radius) - var(--og-min-radius)) * var(--og-expand-progress)));
+  border-bottom-right-radius:calc(var(--og-base-radius) - ((var(--og-base-radius) - var(--og-min-radius)) * var(--og-expand-progress)));
+
+  position:sticky;
+  top:74px;
+  z-index:20;
+
+  box-shadow:
+    0 var(--og-shadow-y) var(--og-shadow-blur) rgba(15, 23, 42, var(--og-shadow-alpha)),
+    0 0 0 1px rgba(255,255,255,.72) inset;
 }
 
-/* ✅ mobile default: NO padding reserve (old view) */
+.og-track-wrap::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  padding:1.5px;
+  border-radius:inherit;
+  background:linear-gradient(
+    90deg,
+    rgba(255, 183, 77, .95) 0%,
+    rgba(244, 143, 177, .82) 48%,
+    rgba(100, 181, 246, .95) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+}
+
+.og-track-wrap::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  padding:1px;
+  border-radius:inherit;
+  background:linear-gradient(
+    90deg,
+    rgba(255, 183, 77, .70) 0%,
+    rgba(244, 143, 177, .62) 48%,
+    rgba(100, 181, 246, .72) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+}
+
 .og-track-shell{
   position:relative;
-  padding: 0;
+  padding:0;
 }
 
-/* scroller (same as old) */
+.og-nav{
+  display:none !important;
+}
+
 .og-track-scroller{
   overflow-x:auto;
   overflow-y:hidden;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
-  padding-bottom:6px;
+  padding-top:var(--og-scroller-py);
+  padding-bottom:var(--og-scroller-py);
+  border:1px solid #d8dee9;
+  border-radius:var(--og-scroller-radius);
+  background:#f6f7fb;
 }
-.og-track-scroller::-webkit-scrollbar{ display:none; }
 
-/* track */
+.og-track-scroller::-webkit-scrollbar{
+  display:none;
+}
+
 .og-track{
   position:relative;
-  height:18px;
+  height:var(--og-track-h);
   border-radius:999px;
-  background: rgba(255,255,255,.06);
-  border:1px solid rgba(120,150,255,.18);
+  background:#ffffff;
+  border:1px solid #d7e0ea;
   overflow:hidden;
-  min-width:190%;
+  min-width:100%;
 }
 
-/* ✅ arrows default hidden */
-.og-nav{ display:none; }
+.og-fill{
+  position:absolute;
+  inset:0 auto 0 0;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(255,200,87,.95), rgba(79,124,255,.95), rgba(61,242,255,.95));
+  box-shadow:0 0 18px rgba(79,124,255,.22);
+  transition:width .28s ease;
+}
 
-/* ✅ DESKTOP ONLY (window view): reserve space + show arrows */
+.og-start{
+  position:absolute;
+  top:50%;
+  transform:translate(-50%, -50%);
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.og-start-dot{
+  display:block;
+  width:var(--og-start-dot);
+  height:var(--og-start-dot);
+  border-radius:99px;
+  background:#39de23f2;
+  box-shadow:0 0 10px rgba(255,200,87,.45);
+  opacity:.9;
+}
+
+.og-pin,
+.og-pin--active,
+.og-pin--done,
+.og-pin--lock{
+  border:none !important;
+  outline:none !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  border-radius:0 !important;
+  padding:0 !important;
+}
+
+.og-pin::before,
+.og-pin::after,
+.og-pin--active::before,
+.og-pin--active::after,
+.og-pin--done::before,
+.og-pin--done::after,
+.og-pin--lock::before,
+.og-pin--lock::after{
+  content:none !important;
+  display:none !important;
+}
+
+.og-pin{
+  position:absolute;
+  top:50%;
+  transform:translate(-50%,-50%);
+  z-index:3;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.og-chip{
+  padding:var(--og-chip-pt) var(--og-chip-px) var(--og-chip-pb);
+  border-radius:999px;
+  font-size:var(--og-chip-fz);
+  font-weight:500;
+  color:#111827;
+  white-space:nowrap;
+  line-height:1;
+}
+
+.og-star{
+  width:var(--og-star-size);
+  height:var(--og-star-size);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:none;
+  color:#f59e0b;
+  font-size:var(--og-star-fz);
+  line-height:1;
+  box-shadow:none;
+}
+
+.og-star-num{
+  margin-top:var(--og-star-num-mt);
+  color:#000;
+  font-weight:500;
+  font-size:var(--og-star-num-fz);
+  line-height:1;
+  text-align:center;
+  border:none !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+.og-lock{
+  width:var(--og-lock-size);
+  height:var(--og-lock-size);
+  border-radius:var(--og-lock-radius);
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(120,150,255,.18);
+  background:rgba(255,255,255,.50);
+  opacity:.72;
+  font-size:var(--og-lock-fz);
+  line-height:1;
+}
+
+.og-pin--done .og-chip{
+  color:#065f46;
+}
+
+.og-pin--lock .og-chip{
+  opacity:.55;
+}
+
+.og-meta{
+  margin-top:clamp(8px, 2vw, 10px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.og-pill{
+  padding:clamp(4px, 1.8vw, 6px) clamp(8px, 2.5vw, 10px);
+  border-radius:999px;
+  border:1px solid #e2e8f0;
+  background:#ffffff;
+  color:#0f172a;
+  font-size:var(--og-pill-fz);
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.og-ratio{
+  color:#64748b;
+  font-size:var(--og-ratio-fz);
+  white-space:nowrap;
+}
+
+.og-ratio b{
+  color:#0f172a;
+}
+
+.og-list{
+  padding:clamp(8px, 2.8vw, 10px) clamp(12px, 3.4vw, 16px) clamp(10px, 3vw, 14px);
+  background:#ffffff;
+}
+
+.og-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--og-row-gap);
+  padding:var(--og-row-py) var(--og-row-px);
+  border-radius:clamp(12px, 3vw, 14px);
+  border:1px solid #e6eaf2;
+  background:#ffffff;
+  margin-bottom:clamp(8px, 2.2vw, 10px);
+  box-shadow:0 2px 10px rgba(15, 23, 42, 0.05);
+  transition:border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.og-row--done{
+  border-color:rgba(34,197,94,.34);
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.05),
+    0 0 0 1px rgba(34,197,94,.07);
+  background:linear-gradient(180deg, rgba(34,197,94,.03), #ffffff 70%);
+}
+
+.og-row--active{
+  border-color:rgba(245,158,11,.38);
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.05),
+    0 0 0 1px rgba(245,158,11,.08);
+  background:linear-gradient(180deg, rgba(245,158,11,.035), #ffffff 70%);
+}
+
+.og-row--lock{
+  border-color:rgba(148,163,184,.30);
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.05),
+    0 0 0 1px rgba(148,163,184,.05);
+  background:linear-gradient(180deg, rgba(148,163,184,.02), #ffffff 70%);
+}
+
+.og-row:last-child{
+  margin-bottom:0;
+}
+
+.og-left{
+  display:flex;
+  align-items:center;
+  gap:clamp(10px, 2.6vw, 12px);
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.og-ico{
+  width:var(--og-icon-size);
+  height:var(--og-icon-size);
+  border-radius:var(--og-icon-radius);
+  display:grid;
+  place-items:center;
+  border:1px solid #e5e7eb;
+  background:#f8fafc;
+  color:#1e293b;
+  flex:0 0 auto;
+  font-size:clamp(14px, 3.6vw, 16px);
+}
+
+.og-ico--done{
+  border-color:rgba(34,197,94,.28);
+  background:rgba(34,197,94,.10);
+  color:#16a34a;
+}
+
+.og-ico--active{
+  border-color:rgba(245,158,11,.35);
+  background:rgba(245,158,11,.10);
+  color:#d97706;
+}
+
+.og-ico--lock{
+  border-color:#e5e7eb;
+  background:#f8fafc;
+  color:#64748b;
+  opacity:1;
+}
+
+.og-text{
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.og-title{
+  color:#0f172a;
+  font-size:var(--og-title-fz);
+  display:flex;
+  align-items:center;
+  gap:0;
+  flex-wrap:wrap;
+  line-height:1.25;
+}
+
+.og-title b{
+  white-space:nowrap;
+}
+
+.og-reward{
+  margin-left:var(--og-reward-gap);
+  color:#475569;
+  font-weight:800;
+  min-width:0;
+}
+
+.og-date{
+  padding:var(--og-date-py) var(--og-date-px);
+  border-radius:999px;
+  border:1px solid #e5e7eb;
+  background:#f8fafc;
+  color:#334155;
+  font-size:var(--og-date-fz);
+  font-weight:900;
+  white-space:nowrap;
+  flex:0 0 auto;
+}
+
+.og-date--done{
+  border-color:rgba(34,197,94,.28);
+  background:rgba(34,197,94,.10);
+  color:#15803d;
+}
+
+.og-date--active{
+  border-color:rgba(245,158,11,.35);
+  background:rgba(245,158,11,.10);
+  color:#b45309;
+}
+
+.og-date--lock{
+  border-color:#e5e7eb;
+  background:#f8fafc;
+  color:#64748b;
+  opacity:1;
+}
+
+.og-empty{
+  padding:clamp(12px, 3vw, 14px);
+  border-radius:clamp(12px, 3vw, 14px);
+  border:1px dashed #dbe2ea;
+  background:#ffffff;
+  color:#64748b;
+  text-align:center;
+  font-size:clamp(12px, 3vw, 14px);
+}
+
+@media (max-width: 420px){
+  .og-card{
+    --og-star-num-mt: -5px;
+    margin-top: 16px;
+  }
+
+  .og-track-wrap{
+    padding:9px 10px 8px;
+    margin-top: 16px;
+  }
+
+  .og-list{
+    padding:8px 10px 10px;
+  }
+
+  .og-track{
+    height:30px;
+  }
+
+  .og-chip{
+    white-space:nowrap;
+  }
+
+  .og-star{
+    transform: translateY(-5px);
+  }
+
+  .og-row{
+    padding:9px 8px;
+  }
+
+  .og-title{
+    font-size:11px;
+  }
+
+  .og-reward{
+    margin-left:5px;
+  }
+
+  .og-date{
+    font-size:10px;
+    padding:4px 7px;
+  }
+}
+
 @media (hover:hover) and (pointer:fine){
   .og-track-shell{
-    padding: 0 44px;
+    padding:0;
   }
+
   .og-nav{
     position:absolute;
-    top: 9px;
-    transform: translateY(-50%);
+    top:9px;
+    transform:translateY(-50%);
     width:32px;
     height:32px;
     border-radius:999px;
     border:1px solid rgba(120,150,255,.28);
-    background: rgba(7,11,22,.70);
-    color: var(--text);
+    background:rgba(7,11,22,.70);
+    color:var(--text);
     font-size:22px;
     line-height:1;
     display:flex;
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    z-index: 10;
-    backdrop-filter: blur(6px);
+    z-index:10;
+    backdrop-filter:blur(6px);
   }
+
   .og-nav--left{ left:6px; }
   .og-nav--right{ right:6px; }
 
-  /* ✅ UPDATED: real disable (click off + visual) */
   .og-nav.is-disabled{
     opacity:.28;
     cursor:not-allowed;
-    pointer-events:none;   /* ✅ IMPORTANT */
-    filter: grayscale(.2);
+    pointer-events:none;
+    filter:grayscale(.2);
   }
 }
-
-/* fill */
-.og-fill{
-  position:absolute; inset:0 auto 0 0;
-  height:100%;
-  border-radius:999px;
-  background: linear-gradient(90deg, rgba(255,200,87,.95), rgba(79,124,255,.95), rgba(61,242,255,.95));
-  box-shadow: 0 0 18px rgba(79,124,255,.30);
-}
-
-/* start */
-.og-start{
-  position:absolute;
-  left:10px;
-  top:50%;
-  transform: translateY(-50%);
-  z-index: 2;
-}
-.og-start-dot{
-  display:block;
-  width:8px;height:8px;border-radius:99px;
-  background: rgba(255,200,87,.95);
-  box-shadow: 0 0 10px rgba(255,200,87,.45);
-  opacity:.9;
-}
-.og-start-label{
-  position:absolute;
-  top:-16px;
-  left:-6px;
-  font-size:10px;
-  color: rgba(234,240,255,.55);
-  white-space:nowrap;
-}
-
-/* pins */
-.og-pin{
-  position:absolute;
-  top:50%;
-  transform:translate(-50%,-50%);
-  z-index: 3;
-}
-.og-chip{
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:900;
-  border:1px solid rgba(120,150,255,.22);
-  background: rgba(255,255,255,.06);
-  color: var(--text);
-  white-space:nowrap;
-}
-.og-star{
-  width:34px;height:34px;border-radius:12px;
-  display:grid;place-items:center;
-  background: rgba(255,200,87,.16);
-  border:1px solid rgba(255,200,87,.60);
-  color: var(--gold);
-  font-size:16px;
-  box-shadow: 0 0 16px rgba(255,200,87,.18);
-}
-.og-star-num{
-  position:absolute;
-  left:50%; bottom:-18px;
-  transform:translateX(-50%);
-  color: var(--text);
-  font-weight:900;
-  font-size:13px;
-  opacity:.95;
-}
-.og-lock{
-  width:32px;height:32px;border-radius:12px;
-  display:grid;place-items:center;
-  border:1px solid rgba(120,150,255,.18);
-  background: rgba(255,255,255,.05);
-  opacity:.65;
-}
-
-.og-pin--done .og-chip{ border-color: rgba(46,240,138,.42); background: rgba(46,240,138,.10); }
-.og-pin--active .og-chip{ border-color: rgba(255,200,87,.55); background: rgba(255,200,87,.12); }
-.og-pin--lock .og-chip{ opacity:.55; }
-
-/* meta + rows (unchanged) */
-.og-meta{ margin-top:10px; display:flex; align-items:center; justify-content:space-between; }
-.og-pill{
-  padding:6px 10px;border-radius:999px;
-  border:1px solid rgba(120,150,255,.18);
-  background: rgba(255,255,255,.05);
-  color: var(--text); font-size:12px; font-weight:900;
-}
-.og-ratio{ color: var(--muted); font-size:12px; }
-.og-ratio b{ color: var(--text); }
-
-.og-list{ padding:10px 16px 14px; }
-.og-row{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:12px 10px;
-  border-radius:14px;
-  border:1px solid rgba(120,150,255,.12);
-  background: rgba(255,255,255,.03);
-  margin-bottom:10px;
-}
-.og-left{ display:flex; align-items:center; gap:12px; min-width:0; }
-.og-ico{
-  width:34px;height:34px;border-radius:12px;
-  display:grid;place-items:center;
-  border:1px solid rgba(120,150,255,.22);
-  background: rgba(255,255,255,.05);
-  color: var(--text);
-  flex:0 0 auto;
-}
-.og-ico--done{ border-color: rgba(46,240,138,.45); background: rgba(46,240,138,.12); color: var(--green); }
-.og-ico--active{ border-color: rgba(255,200,87,.55); background: rgba(255,200,87,.14); color: var(--gold); }
-.og-ico--lock{ opacity:.60; }
-
-.og-title{ color: var(--text); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.og-reward{ margin-left:8px; color: rgba(234,240,255,.80); font-weight:800; }
-
-.og-date{
-  padding:6px 10px;border-radius:999px;
-  border:1px solid rgba(120,150,255,.20);
-  background: rgba(255,255,255,.05);
-  color: var(--text); font-size:12px; font-weight:900; white-space:nowrap;
-}
-.og-date--done{ border-color: rgba(46,240,138,.42); background: rgba(46,240,138,.10); }
-.og-date--active{ border-color: rgba(255,200,87,.55); background: rgba(255,200,87,.12); }
-.og-date--lock{ opacity:.60; }
-
-.og-empty{
-  padding:14px; border-radius:14px;
-  border:1px dashed rgba(120,150,255,.18);
-  background: rgba(255,255,255,.02);
-  color: var(--muted); text-align:center;
-}
 </style>
+
 
 <script>
 (function(){
   const shell = document.getElementById('ogTrackShell');
   const scroller = document.getElementById('ogTrackScroller');
-  if(!shell || !scroller) return;
+  const track = document.getElementById('ogTrack');
+  const stickyWrap = document.getElementById('ogStickyWrap');
 
-  const hasProgress = scroller.getAttribute('data-has-progress') === '1';
-  const btnL = shell.querySelector('.og-nav--left');
-  const btnR = shell.querySelector('.og-nav--right');
+  if (!shell || !scroller || !track || !stickyWrap) return;
 
-  const isDesktop = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+  const isFitMode = {{ fit_mode|yesno:"true,false" }};
+  const STICKY_TOP = 74;
+
+  /*
+    Expand should begin BEFORE actual sticky point.
+    Example:
+    start expanding when box top reaches 140px
+    finish expanding when box top reaches 74px
+  */
+  const EXPAND_START_TOP = 140;
+  const EXPAND_END_TOP = STICKY_TOP;
+
+  function clamp(num, min, max){
+    return Math.min(max, Math.max(min, num));
+  }
+
+  function syncStickyExpanded(){
+    const rect = stickyWrap.getBoundingClientRect();
+
+    // progress: 0 at EXPAND_START_TOP, 1 at EXPAND_END_TOP
+    const rawProgress =
+      (EXPAND_START_TOP - rect.top) / (EXPAND_START_TOP - EXPAND_END_TOP);
+
+    const progress = clamp(rawProgress, 0, 1);
+
+    stickyWrap.style.setProperty('--og-expand-progress', progress.toFixed(4));
+  }
 
   function maxScroll(){
     return Math.max(0, scroller.scrollWidth - scroller.clientWidth);
   }
 
-  /* ✅ UPDATED sync: edges lo only one active */
-  function syncArrows(){
-    if(!isDesktop || !btnL || !btnR) return;
+  function centerActivePin(){
+    if (isFitMode) return;
 
+    const activePin = track.querySelector('[data-pin="active"]');
+    if (!activePin) return;
+
+    const pinCenter = activePin.offsetLeft + (activePin.offsetWidth / 2);
+    const target = pinCenter - (scroller.clientWidth / 2);
     const max = maxScroll();
 
-    // overflow lekapothe arrows hide
-    if(max <= 2){
-      btnL.style.display = 'none';
-      btnR.style.display = 'none';
-      return;
-    }
-
-    // overflow unte arrows show (desktop css already display:flex, but safe)
-    btnL.style.display = 'flex';
-    btnR.style.display = 'flex';
-
-    const atStart = scroller.scrollLeft <= 2;
-    const atEnd   = scroller.scrollLeft >= (max - 2);
-
-    btnL.classList.toggle('is-disabled', atStart);
-    btnR.classList.toggle('is-disabled', atEnd);
+    scroller.scrollLeft = Math.max(0, Math.min(max, target));
   }
 
-  function pageAmount(){
-    return Math.max(260, Math.floor(scroller.clientWidth * 0.75));
-  }
+  window.addEventListener('scroll', syncStickyExpanded, { passive:true });
 
-  if(isDesktop && btnL && btnR){
-    btnL.addEventListener('click', () => {
-      if(btnL.classList.contains('is-disabled')) return;
-      scroller.scrollBy({ left: -pageAmount(), behavior: 'smooth' });
-    });
-    btnR.addEventListener('click', () => {
-      if(btnR.classList.contains('is-disabled')) return;
-      scroller.scrollBy({ left: pageAmount(), behavior: 'smooth' });
-    });
+  window.addEventListener('resize', function(){
+    syncStickyExpanded();
+    centerActivePin();
+  });
 
-    scroller.addEventListener('scroll', syncArrows, { passive:true });
-    window.addEventListener('resize', syncArrows);
-  }
-
-  // active pin centering (unchanged)
-  if(!hasProgress){
-    scroller.scrollLeft = 0;
-  } else {
-    const activePin = scroller.querySelector('[data-pin="active"]');
-    if(activePin){
-      requestAnimationFrame(() => {
-        const scrollerRect = scroller.getBoundingClientRect();
-        const pinRect = activePin.getBoundingClientRect();
-        const current = scroller.scrollLeft;
-
-        const pinCenter = (pinRect.left - scrollerRect.left) + (pinRect.width / 2);
-        const target = current + pinCenter - (scrollerRect.width / 2);
-
-        scroller.scrollLeft = Math.max(0, target);
-        syncArrows();
-      });
-    }
-  }
-
-  if(isDesktop) requestAnimationFrame(syncArrows);
+  requestAnimationFrame(function(){
+    syncStickyExpanded();
+    centerActivePin();
+  });
 })();
 </script>
