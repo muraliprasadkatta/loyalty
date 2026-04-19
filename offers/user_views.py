@@ -30,7 +30,7 @@ from offers.services.offer_claim.claim_issue_service import issue_offer_claim_if
 from offers.services.qr.qr_token_utils import parse_qr_token as verify_qr_token
 from offers.services.offer_eligibility.offer_eligibility_service import build_offer_eligibility_context
 import offers.services.offer_eligibility.offers_progress_modal_helper as progress_helper
-
+from .models import UserOfferClaim
 from .models import (
     QRToken,
     YashPin,
@@ -1185,7 +1185,6 @@ def confirm_branch_visit(request):
 # =============================================
 
 
-
 def branch_offers_in_userinterface(request, branch_id):
     branch = get_object_or_404(Branch, id=branch_id)
 
@@ -1225,6 +1224,7 @@ def branch_offers_in_userinterface(request, branch_id):
     branch_today_visits = 0
     branch_last_visit = None
     branch_has_visited = False
+    claimed_offer_count = 0
 
     if request.user.is_authenticated:
         vqs = UserVisitEvent.objects.filter(user=request.user, branch=branch)
@@ -1236,15 +1236,27 @@ def branch_offers_in_userinterface(request, branch_id):
         branch_last_visit = vqs.aggregate(last=Max("created_at"))["last"]
         branch_has_visited = branch_total_visits > 0
 
+        claimed_offer_count = UserOfferClaim.objects.filter(
+            user=request.user,
+            branch=branch,
+        ).count()
+
     context = {
         "branch": branch,
         "active_offer_count": active_offer_count,
+        "claimed_offer_count": claimed_offer_count,
         "is_open_now": True,
         "free_plate_offer": free_plate_offer,
         "branch_total_visits": branch_total_visits,
         "branch_today_visits": branch_today_visits,
         "branch_last_visit": branch_last_visit,
         "branch_has_visited": branch_has_visited,
+
+        # hero defaults
+        "current_progress": branch_total_visits,
+        "progress_total": None,
+        "next_reward_title": "Next Reward",
+        "next_reward_subtitle": "Next treat",
     }
 
     # Progress / calendar logic
@@ -1262,6 +1274,18 @@ def branch_offers_in_userinterface(request, branch_id):
             include_repeat_multiples=True,
         )
         context.update(progress)
+
+        rows = list(progress.get("rows") or [])
+        active_row = next((r for r in rows if r.get("state") == "active"), None)
+        next_lock_row = next((r for r in rows if r.get("state") == "lock"), None)
+        next_row = active_row or next_lock_row
+
+        if next_row:
+            context["next_reward_title"] = next_row.get("label") or "Next Reward"
+            context["next_reward_subtitle"] = next_row.get("title") or "Next treat"
+
+        context["current_progress"] = progress.get("current_progress", branch_total_visits)
+        context["progress_total"] = progress.get("progress_total")
 
     return render(
         request,
@@ -1392,6 +1416,11 @@ def user_status_view(request):
     pending_items = []
     history_days = []
 
+    # offer claim defaults
+    offers_claimed_total = 0
+    offers_claimed_today = 0
+    offers_claimed_label = "Total claimed offers"
+
     # local day start
     now_ts = timezone.now()
     day_start, next_day_start = get_local_day_bounds(now_ts)
@@ -1440,6 +1469,18 @@ def user_status_view(request):
         if last_any:
             last_visit_anywhere = timezone.localtime(last_any.created_at).strftime("%d %b %Y, %I:%M %p")
 
+        # real offer claim stats
+        claim_qs = (
+            UserOfferClaim.objects
+            .filter(user=request.user)
+            .exclude(status="cancelled")
+        )
+        offers_claimed_total = claim_qs.count()
+        offers_claimed_today = claim_qs.filter(
+            issued_at__gte=day_start,
+            issued_at__lt=next_day_start,
+        ).count()
+
         # history timeline
         events = (
             base_all
@@ -1476,7 +1517,6 @@ def user_status_view(request):
         # pending status (from DB)
         pending_rows = get_user_active_pending_attempts(user=request.user)
 
-
         for row in pending_rows:
             pending_items.append({
                 "branch_id": row.branch_id,
@@ -1492,11 +1532,6 @@ def user_status_view(request):
 
     # active visit_unit
     visit_unit = get_active_visit_unit(branch_id) if branch_id else "qr_pin"
-
-    # dummy offer claims (connect later)
-    offers_claimed_total = 0
-    offers_claimed_today = 0
-    offers_claimed_label = "Dummy (will connect later)"
 
     ctx = {
         "branch_name": branch_name,
@@ -1524,6 +1559,7 @@ def user_status_view(request):
         "user_interface/user_status_view/user_status.html",
         ctx,
     )
+
 # from .models import BranchGenerateVisitPin, UserVerifyVisitPin, UserVisitEvent
 
 

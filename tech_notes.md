@@ -42,6 +42,13 @@ e files branch offer in user inter face lo scroll bar and milestones ki samadhic
 
 __________________________________________________________________________
 
+
+D:\restarent_application66\offers\templates\partials\user_header.html
+dhenini header kosam dein chesamsoindlo back navition untadhi so dheniniekkadin use chesukovataniko reusbl g chesam mava
+
+__________________________________________________________________________
+
+
 D:\restarent_application66\offers\services\offer_claim\claim_issue_service.py
 
 offer day nadu data base lo store avvataniki idhemain fial even qr/pin + verify ki aina pin less restarent ki aina

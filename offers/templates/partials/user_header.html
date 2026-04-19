@@ -1,0 +1,171 @@
+<header class="user-header">
+<a href="{% url 'offers:user_home' %}"
+   class="user-back"
+   onclick="
+     try {
+       const ref = document.referrer || '';
+       const sameOrigin = ref && new URL(ref).origin === window.location.origin;
+       if (sameOrigin && window.history.length > 1) {
+         history.back();
+         return false;
+       }
+     } catch (e) {}
+   "
+   aria-label="Go back">
+
+  <svg viewBox="0 0 64 64" aria-hidden="true" class="user-back-icon">
+    <path d="M24 14L8 28l16 14" />
+    <path d="M11 28h16c14 0 25 7 31 20" />
+  </svg>
+
+</a>
+
+  <div class="user-head-copy">
+    <div class="user-head-title">{{ branch.name|default:"My Branch" }}</div>
+    <div class="user-head-sub">Offers &amp; Rewards</div>
+  </div>
+
+  <a href="#" class="user-profile" aria-label="Profile">
+    <span class="user-profile-circle"></span>
+  </a>
+</header>
+
+<style>
+  .user-header{
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) 44px;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px 12px;
+  background:linear-gradient(180deg, #0b1436 0%, #101c45 100%);
+  border-bottom:1px solid rgba(255,255,255,0.10);
+  position:sticky;
+  top:0;
+  z-index:20;
+  box-shadow:0 10px 26px rgba(15,23,42,0.20);
+}
+
+.user-back{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  border-radius:12px;
+}
+
+.user-back-icon{
+  width:28px;
+  height:28px;
+  display:block;
+}
+
+.user-back-icon path{
+  fill:none;
+  stroke:#ffffff;
+  stroke-width:4.2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.user-head-copy{
+  min-width:0;
+  color:#e8ecff;
+}
+
+.user-head-title{
+  color:#ffffff;
+  font-size:15px;
+  font-weight:700;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.user-head-sub{
+  margin-top:2px;
+  color:rgba(232,236,255,0.78);
+  font-size:11px;
+  font-weight:500;
+  line-height:1.2;
+}
+
+.user-profile{
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  justify-self:end;
+  text-decoration:none;
+}
+
+.user-profile-circle{
+  position:relative;
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.18);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.10);
+}
+
+.user-profile-circle::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:7px;
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:#ffffff;
+  transform:translateX(-50%);
+}
+
+.user-profile-circle::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:6px;
+  width:17px;
+  height:9px;
+  border-radius:10px 10px 8px 8px;
+  background:#ffffff;
+  transform:translateX(-50%);
+}
+
+@media (max-width:640px){
+  .user-header{
+    grid-template-columns:40px minmax(0,1fr) 40px;
+    gap:10px;
+    padding:12px 14px 10px;
+  }
+
+  .user-back{
+    width:40px;
+    height:40px;
+  }
+
+  .user-back-icon{
+    width:26px;
+    height:26px;
+  }
+
+  .user-head-title{
+    font-size:15px;
+  }
+
+  .user-head-sub{
+    font-size:11px;
+  }
+
+  .user-profile{
+    width:40px;
+    height:40px;
+  }
+
+  .user-profile-circle{
+    width:34px;
+    height:34px;
+  }
+}
+</style>
