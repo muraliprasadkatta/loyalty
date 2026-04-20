@@ -1,0 +1,47 @@
+<svg width="60" height="60" viewBox="18 14 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rt_bg" x1="18" y1="14" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7FA6FF"/>
+      <stop offset="1" stop-color="#4C74FF"/>
+    </linearGradient>
+
+    <linearGradient id="rt_cup" x1="33" y1="26" x2="57" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DDE7FF"/>
+    </linearGradient>
+
+    <linearGradient id="rt_base" x1="40" y1="56" x2="54" y2="66" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF4FF"/>
+      <stop offset="1" stop-color="#CBD9FF"/>
+    </linearGradient>
+
+    <filter id="rt_shadow" x="10" y="8" width="78" height="80" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#315AE6" flood-opacity="0.20"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#rt_shadow)">
+    <rect x="18" y="14" width="60" height="60" rx="18" fill="url(#rt_bg)"/>
+  </g>
+
+  <!-- trophy cup -->
+  <path d="M35 29H57V35C57 41.6274 51.6274 47 45 47H47C40.3726 47 35 41.6274 35 35V29Z" fill="url(#rt_cup)"/>
+
+  <!-- trophy handles -->
+  <path d="M35 32H31C31 37.5228 35.4772 42 41 42" stroke="#EAF0FF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M57 32H61C61 37.5228 56.5228 42 51 42" stroke="#EAF0FF" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- trophy stem -->
+  <rect x="42" y="47" width="8" height="7" rx="3" fill="#EAF0FF"/>
+
+  <!-- trophy base -->
+  <rect x="38" y="55" width="16" height="4" rx="2" fill="url(#rt_base)"/>
+  <rect x="36" y="60" width="20" height="4" rx="2" fill="#D5E1FF"/>
+
+  <!-- star in cup -->
+  <path d="M46 33.8L47.4 36.6L50.5 37.05L48.25 39.2L48.78 42.25L46 40.8L43.22 42.25L43.75 39.2L41.5 37.05L44.6 36.6L46 33.8Z" fill="#4C74FF"/>
+
+  <!-- top rating badge -->
+  <circle cx="63" cy="27" r="8" fill="#FFFFFF"/>
+  <path d="M63 23.8L64.2 26.2L66.85 26.6L64.93 28.45L65.38 31.05L63 29.8L60.62 31.05L61.07 28.45L59.15 26.6L61.8 26.2L63 23.8Z" fill="#4C74FF"/>
+</svg>

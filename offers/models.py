@@ -802,7 +802,7 @@ class UserOfferClaim(models.Model):
         related_name="offer_claims",
     )
 
-    # offer reference (optional but useful)
+    # offer reference
     offer = models.ForeignKey(
         "offers.ComplementaryOffer",
         null=True,
@@ -811,21 +811,29 @@ class UserOfferClaim(models.Model):
         related_name="claims",
     )
 
-    milestone_kind = models.CharField(max_length=8, choices=KIND_CHOICES)
-    milestone_n = models.PositiveIntegerField()  # e.g., 10th / 7th
+    milestone_kind = models.CharField(
+        max_length=8,
+        choices=KIND_CHOICES,
+    )
+    milestone_n = models.PositiveIntegerField()  # e.g. 5th / 10th / extra 2
 
-    # snapshot (future-proof)
+    # snapshot fields
     offer_nth = models.PositiveIntegerField(null=True, blank=True)
     offer_repeat = models.BooleanField(default=True)
     offer_extra_nths = models.JSONField(default=list, blank=True)
     offer_start_at = models.DateTimeField(null=True, blank=True)
     offer_end_at = models.DateTimeField(null=True, blank=True)
 
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="issued")
+    status = models.CharField(
+        max_length=12,
+        choices=STATUS_CHOICES,
+        default="issued",
+        db_index=True,
+    )
     issued_at = models.DateTimeField(default=timezone.now, db_index=True)
     redeemed_at = models.DateTimeField(null=True, blank=True)
 
-    # optional audit mirrors (easy debug)
+    # audit mirrors
     token = models.CharField(max_length=255, blank=True, default="")
     desk = models.CharField(max_length=50, blank=True, default="")
     staff_name = models.CharField(max_length=255, blank=True, default="")
@@ -833,13 +841,15 @@ class UserOfferClaim(models.Model):
 
     class Meta:
         ordering = ["-issued_at"]
+        indexes = [
+            models.Index(fields=["user", "branch", "issued_at"]),
+            models.Index(fields=["user", "status", "issued_at"]),
+            models.Index(fields=["branch", "status", "issued_at"]),
+            models.Index(fields=["offer", "issued_at"]),
+            models.Index(fields=["milestone_kind", "milestone_n"]),
+        ]
         constraints = [
-            # same user+branch+milestone shouldn't be issued twice for same offer snapshot
-            models.UniqueConstraint(
-                fields=["user", "branch", "offer", "milestone_kind", "milestone_n"],
-                name="uniq_user_branch_offer_milestone",
-            ),
-            # (extra safety) same visit can't create same milestone twice
+            # Same visit event nunchi same milestone duplicate create kakudadhu
             models.UniqueConstraint(
                 fields=["visit_event", "milestone_kind", "milestone_n"],
                 name="uniq_visit_milestone_once",
@@ -848,13 +858,23 @@ class UserOfferClaim(models.Model):
 
     def mark_redeemed(self, when=None):
         when = when or timezone.now()
-        self.status = "redeemed"
-        self.redeemed_at = when
-        self.save(update_fields=["status", "redeemed_at"])
+        if self.status != "redeemed":
+            self.status = "redeemed"
+            self.redeemed_at = when
+            self.save(update_fields=["status", "redeemed_at"])
+
+    def mark_cancelled(self):
+        if self.status != "cancelled":
+            self.status = "cancelled"
+            self.save(update_fields=["status"])
 
     def __str__(self):
-        return f"Claim({self.user_id}, {self.branch_id}, {self.milestone_kind}:{self.milestone_n})"
-
+        offer_id = self.offer_id or "no-offer"
+        return (
+            f"Claim(user={self.user_id}, branch={self.branch_id}, "
+            f"offer={offer_id}, {self.milestone_kind}:{self.milestone_n}, "
+            f"status={self.status})"
+        )
 
 
 # offers/models.py

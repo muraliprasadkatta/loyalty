@@ -1,0 +1,30 @@
+<svg width="60" height="60" viewBox="18 14 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">  <defs>
+    <linearGradient id="tv_bg" x1="18" y1="14" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7FA6FF"/>
+      <stop offset="1" stop-color="#4C74FF"/>
+    </linearGradient>
+
+    <linearGradient id="tv_user" x1="28" y1="24" x2="54" y2="66" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DDE7FF"/>
+    </linearGradient>
+
+    <filter id="tv_shadow" x="10" y="8" width="78" height="80" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#315AE6" flood-opacity="0.20"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#tv_shadow)">
+    <rect x="18" y="14" width="60" height="60" rx="18" fill="url(#tv_bg)"/>
+  </g>
+
+  <circle cx="37" cy="38" r="9" fill="url(#tv_user)"/>
+  <path d="M25 62C25 55.3726 30.3726 50 37 50C43.6274 50 49 55.3726 49 62V64H25V62Z" fill="url(#tv_user)"/>
+
+  <rect x="54" y="48" width="6" height="14" rx="3" fill="#EEF3FF"/>
+  <rect x="62" y="40" width="6" height="22" rx="3" fill="#EEF3FF"/>
+  <rect x="54" y="32" width="14" height="4" rx="2" fill="#D7E3FF"/>
+
+  <circle cx="69" cy="25" r="10" fill="#FFFFFF"/>
+  <text x="69" y="29.5" text-anchor="middle" font-size="10" font-weight="800" fill="#4C74FF" font-family="Arial, Helvetica, sans-serif">12</text>
+</svg>

@@ -1,0 +1,35 @@
+<svg width="60" height="60" viewBox="18 14 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rv_bg2" x1="18" y1="14" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7FA6FF"/>
+      <stop offset="1" stop-color="#4C74FF"/>
+    </linearGradient>
+
+    <linearGradient id="rv_panel2" x1="28" y1="28" x2="64" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DDE7FF"/>
+    </linearGradient>
+
+    <filter id="rv_shadow2" x="10" y="8" width="78" height="80" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#315AE6" flood-opacity="0.20"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#rv_shadow2)">
+    <rect x="18" y="14" width="60" height="60" rx="18" fill="url(#rv_bg2)"/>
+  </g>
+
+  <!-- review card -->
+  <rect x="29" y="29" width="34" height="24" rx="8" fill="url(#rv_panel2)"/>
+
+  <!-- big star -->
+  <path d="M46 34L48.2 38.45L53.1 39.15L49.55 42.55L50.4 47.35L46 45.05L41.6 47.35L42.45 42.55L38.9 39.15L43.8 38.45L46 34Z" fill="#4C74FF"/>
+
+  <!-- text lines -->
+  <rect x="35" y="56" width="22" height="3.2" rx="1.6" fill="#D4E0FF"/>
+  <rect x="35" y="61.2" width="16" height="3.2" rx="1.6" fill="#D4E0FF"/>
+
+  <!-- small highlight badge -->
+  <circle cx="62" cy="27" r="8" fill="#FFFFFF"/>
+  <path d="M62 23.7L63.2 26.1L65.9 26.5L63.95 28.4L64.4 31.1L62 29.85L59.6 31.1L60.05 28.4L58.1 26.5L60.8 26.1L62 23.7Z" fill="#4C74FF"/>
+</svg>

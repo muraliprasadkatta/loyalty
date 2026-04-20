@@ -1,0 +1,46 @@
+<svg width="60" height="60" viewBox="18 14 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ac_bg2" x1="18" y1="14" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7FA6FF"/>
+      <stop offset="1" stop-color="#4C74FF"/>
+    </linearGradient>
+
+    <linearGradient id="ac_box" x1="30" y1="32" x2="60" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DDE7FF"/>
+    </linearGradient>
+
+    <linearGradient id="ac_lid" x1="30" y1="26" x2="60" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF"/>
+      <stop offset="1" stop-color="#E8F0FF"/>
+    </linearGradient>
+
+    <filter id="ac_shadow2" x="10" y="8" width="78" height="80" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#315AE6" flood-opacity="0.20"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#ac_shadow2)">
+    <rect x="18" y="14" width="60" height="60" rx="18" fill="url(#ac_bg2)"/>
+  </g>
+
+  <!-- gift lid -->
+  <rect x="31" y="30" width="30" height="8" rx="4" fill="url(#ac_lid)"/>
+
+  <!-- gift box -->
+  <rect x="31" y="38" width="30" height="21" rx="6" fill="url(#ac_box)"/>
+
+  <!-- ribbon vertical -->
+  <rect x="44" y="30" width="4" height="29" rx="2" fill="#C8D7FF"/>
+
+  <!-- ribbon horizontal -->
+  <rect x="31" y="41.5" width="30" height="4" rx="2" fill="#C8D7FF"/>
+
+  <!-- top loops -->
+  <path d="M43.5 30C40 30 38.5 27.2 39.8 25.4C41 23.8 43.8 24.3 46 28.2" stroke="#EEF4FF" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M48.5 30C52 30 53.5 27.2 52.2 25.4C51 23.8 48.2 24.3 46 28.2" stroke="#EEF4FF" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- claim badge -->
+  <circle cx="63" cy="28" r="8" fill="#FFFFFF"/>
+  <path d="M59.8 28L61.7 29.9L66.2 25.6" stroke="#4C74FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

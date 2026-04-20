@@ -1,0 +1,41 @@
+<svg width="60" height="60" viewBox="18 14 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sg_bg" x1="18" y1="14" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7FA6FF"/>
+      <stop offset="1" stop-color="#4C74FF"/>
+    </linearGradient>
+
+    <linearGradient id="sg_bulb" x1="32" y1="26" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DDE7FF"/>
+    </linearGradient>
+
+    <linearGradient id="sg_base" x1="39" y1="50" x2="53" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF4FF"/>
+      <stop offset="1" stop-color="#CBD9FF"/>
+    </linearGradient>
+
+    <filter id="sg_shadow" x="10" y="8" width="78" height="80" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#315AE6" flood-opacity="0.20"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#sg_shadow)">
+    <rect x="18" y="14" width="60" height="60" rx="18" fill="url(#sg_bg)"/>
+  </g>
+
+  <!-- bulb -->
+  <path d="M46 28C38.8203 28 33 33.8203 33 41C33 45.0957 34.8948 48.7489 37.8571 51.1321C39.1606 52.1803 40 53.2267 40 54.5V55H52V54.5C52 53.2267 52.8394 52.1803 54.1429 51.1321C57.1052 48.7489 59 45.0957 59 41C59 33.8203 53.1797 28 46 28Z" fill="url(#sg_bulb)"/>
+
+  <!-- bulb shine -->
+  <path d="M41 36.5C41.8 34.2 43.9 32.7 46.4 32.7" stroke="#F7FAFF" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- bulb base -->
+  <rect x="40" y="55" width="12" height="4" rx="2" fill="url(#sg_base)"/>
+  <rect x="41.5" y="59.5" width="9" height="3" rx="1.5" fill="#D5E1FF"/>
+
+  <!-- small suggestion chat badge -->
+  <path d="M60 25C60 21.6863 62.6863 19 66 19C69.3137 19 72 21.6863 72 25C72 28.3137 69.3137 31 66 31H64.8L61.8 33V30C60.7 28.9 60 27.5 60 25Z" fill="#FFFFFF"/>
+  <rect x="63.5" y="23.3" width="5.2" height="1.8" rx="0.9" fill="#4C74FF"/>
+  <rect x="63.5" y="26.5" width="3.6" height="1.8" rx="0.9" fill="#4C74FF"/>
+</svg>

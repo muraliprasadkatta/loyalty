@@ -51,7 +51,7 @@ __________________________________________________________________________
 
 D:\restarent_application66\offers\services\offer_claim\claim_issue_service.py
 
-offer day nadu data base lo store avvataniki idhemain fial even qr/pin + verify ki aina pin less restarent ki aina
+offer day nadu data base lo store avvataniki idhe main fial even qr/pin + verify ki aina pin less restarent ki aina
 
 D:\restarent_application66\offers\services\offer_pin\offer_pin_verify_service.py
 idi kuda offer day nadu db lo store avvataniki side lo idi kudaoka reason aa 
@@ -74,7 +74,7 @@ function lo undhi.
 
 _________________________________________________________________
 
-D:\restarent_application66\offers\services\offer_pin\offer_pin_verify_service.py
+D:\restarent_application66\offers\services\offer_pin\offer_claim.claim_issue_service
 
 e file anedhi pn verify cheyatanike kadhu indirect ga datanikuda store cheyatanikikuda use avutudhi
 (UserOfferClaim) e model lo data store avvataniki  
