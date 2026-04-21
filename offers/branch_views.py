@@ -521,3 +521,79 @@ def branch_user_visit_list(request):
         "count": len(users),
         "users": users,
     })
+
+
+
+
+from collections import OrderedDict
+
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+
+from offers.models import Branch, UserVisitEvent
+
+
+def branch_all_visits(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    qs = (
+        UserVisitEvent.objects
+        .filter(branch=branch)
+        .select_related("user", "user__profile")
+        .order_by("-created_at")
+    )
+
+    q = (request.GET.get("q") or "").strip()
+    method = (request.GET.get("method") or "").strip()
+    date_str = (request.GET.get("date") or "").strip()
+
+    if q:
+        qs = qs.filter(
+            Q(user__email__icontains=q) |
+            Q(user__first_name__icontains=q) |
+            Q(token__icontains=q)
+        )
+
+    if method:
+        qs = qs.filter(visit_method=method)
+
+    if date_str:
+        qs = qs.filter(created_at__date=date_str)
+
+    total_visits = qs.count()
+    today_visits = qs.filter(created_at__date=timezone.localdate()).count()
+    unique_users = qs.exclude(user__isnull=True).values("user_id").distinct().count()
+    qr_pin_visits = qs.filter(visit_method="qr_pin").count()
+
+    grouped = OrderedDict()
+
+    for visit in qs:
+        if visit.user_id:
+            key = f"user-{visit.user_id}"
+        else:
+            key = f"guest-{visit.id}"
+
+        if key not in grouped:
+            grouped[key] = {
+                "user": visit.user,
+                "total_visits": 1,
+                "latest_visit": visit,
+                "history": [],
+            }
+        else:
+            grouped[key]["total_visits"] += 1
+            grouped[key]["history"].append(visit)
+
+    visits = list(grouped.values())
+
+    context = {
+        "branch": branch,
+        "visits": visits,
+        "total_visits": total_visits,
+        "today_visits": today_visits,
+        "unique_users": unique_users,
+        "qr_pin_visits": qr_pin_visits,
+    }
+    return render(request, "branch/branch_all_visits/branch_all_visits.html", context)

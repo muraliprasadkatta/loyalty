@@ -63,7 +63,7 @@ urlpatterns = [
     path("branch/staff/create/",bviews.branch_staff_create_view,name="branch_staff_create"),
     path("branch/api/users/", bviews.branch_user_visit_list, name="branch_user_visit_list"),
     path("branch/offer-pin/verify/",branch_verify_offer_pin, name="branch_verify_offer_pin"),
-
+    path("branch/visits/",bviews.branch_all_visits, name="branch_all_visits"),
 
     # offers/urls.py
 
