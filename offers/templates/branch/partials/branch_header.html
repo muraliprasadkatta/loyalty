@@ -1,0 +1,356 @@
+{% load static %}
+<header class="top top--compact" id="branchHeader">
+  <div class="top-left">
+    <div class="branch-brand">
+      <div class="branch-brand__icon" aria-hidden="true">
+        <img
+          src="{% static 'offers/branch_homepage/icons/branch_header.svg' %}"
+          alt=""
+          class="branch-brand__icon-img"
+        >
+      </div>
+
+      <div class="branch-copy">
+        <div class="branch-title-row">
+          <h1 class="branch-title">
+            {{ request.session.branch_name|default:"Branch" }}
+          </h1>
+
+          <span class="branch-live-status" aria-label="Branch is active">
+            <span class="branch-live-status__dot" aria-hidden="true"></span>
+            <span class="branch-live-status__text">Active</span>
+          </span>
+        </div>
+
+        <p class="branch-subtitle">Branch dashboard</p>
+      </div>
+    </div>
+  </div>
+
+<a id="openQrBtn"
+   class="top-right"
+   href="#"
+   data-open="#qrcodeModal"
+   data-qr="offerzone://branch={{ branch.public_id|default:'' }}&desk={{ branch.default_desk|default:'A1' }}"
+   aria-label="Open QR code">
+  <img
+    src="{% static 'offers/branch_homepage/icons/qr_bw.svg' %}"
+    alt=""
+    class="top-right-qr-icon"
+  >
+  <span class="top-right-qr-label">qrcode</span>
+</a>
+
+  <div class="top-meta">
+    {% if request.session.branch_staff_name %}
+      <span class="badge badge--staff">
+        Staff: {{ request.session.branch_staff_name }}
+        {% if request.session.branch_staff_code %}
+          · {{ request.session.branch_staff_code }}
+        {% endif %}
+      </span>
+    {% endif %}
+  </div>
+</header>
+
+<style>
+.top{
+  position:sticky;
+  top:0;
+  z-index:30;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:
+    "title qr"
+    "meta qr";
+  align-items:center;
+  gap:4px 10px;
+  width:100%;
+  padding:10px 14px 8px;
+  background:rgba(255,255,255,.96);
+  border-bottom:1px solid rgba(217,226,255,.92);
+  box-shadow:0 6px 14px rgba(34, 61, 143, 0.04);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+
+.top-left{
+  grid-area:title;
+  min-width:0;
+}
+
+.top-right{
+  grid-area:qr;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  align-self:center;
+  text-align:center;
+  text-decoration:none;
+  color:inherit;
+  cursor:pointer;
+}
+
+.top-right-qr-icon{
+  display:block;
+  width:34px;
+  height:34px;
+  object-fit:contain;
+  flex:0 0 auto;
+  opacity:.96;
+  transform:scale(1.5);
+  transform-origin:center;
+}
+
+.top-right-qr-label{
+  display:block;
+  margin:0;
+  padding:0;
+  color:#000000;
+  font-size:8px;
+  line-height:1;
+  font-weight:600;
+  letter-spacing:0;
+  text-transform:lowercase;
+}
+
+.top-meta{
+  grid-area:meta;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.top-right:hover .top-right-qr-label{
+  color:#1452ff;
+}
+
+.branch-brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.branch-brand__icon{
+  width:58px;
+  height:58px;
+  flex:0 0 58px;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 8px 20px rgba(76,116,255,.16);
+}
+
+.branch-brand__icon-img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.branch-copy{
+  min-width:0;
+}
+
+.branch-title-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  flex-wrap:wrap;
+}
+
+.branch-title{
+  margin:0;
+  color:#13245c;
+  font-size:20px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:-0.03em;
+  word-break:break-word;
+}
+
+.branch-subtitle{
+  margin:8px 0 0;
+  color:#6f7da8;
+  font-size:13px;
+  line-height:1.2;
+  font-weight:500;
+}
+
+.branch-live-status{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  flex:0 0 auto;
+  white-space:nowrap;
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid rgba(18, 183, 106, 0.16);
+  background:rgba(18, 183, 106, 0.10);
+  color:#12985a;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+}
+
+.branch-live-status__dot{
+  width:8px;
+  height:7px;
+  flex:0 0 9px;
+  border-radius:50%;
+  background:#19b463;
+  box-shadow:0 0 0 3px rgba(25,180,99,.10);
+}
+
+.branch-live-status__text{
+  display:block;
+}
+
+.badge{
+  max-width:100%;
+  white-space:nowrap;
+  padding:5px 11px;
+  border:1px solid #dbe4ff;
+  border-radius:999px;
+  background:#f6f8ff;
+  color:#5f6f9f;
+  font-size:11px;
+  line-height:1.1;
+  font-weight:500;
+}
+</style>
+
+<style>
+@media (max-width: 380px){
+  .top{
+    padding:12px 12px 10px;
+    gap:6px 8px;
+  }
+
+  .branch-brand{
+    gap:10px;
+  }
+
+  .branch-brand__icon{
+    width:50px;
+    height:50px;
+    flex-basis:50px;
+    border-radius:16px;
+  }
+
+  .branch-title-row{
+    gap:8px;
+  }
+
+  .branch-title{
+    font-size:17px;
+  }
+
+  .branch-subtitle{
+    margin-top:6px;
+    font-size:12px;
+  }
+
+  .branch-live-status{
+    gap:4px;
+    padding:5px 9px;
+    font-size:10px;
+  }
+
+  .branch-live-status__dot{
+    width:7px;
+    height:7px;
+    flex-basis:7px;
+  }
+
+  .badge{
+    font-size:10px;
+    padding:4px 8px;
+    font-weight:500;
+  }
+
+  .top-right{
+    gap:1px;
+  }
+
+  .top-right-qr-icon{
+    width:58px;
+    height:28px;
+  }
+
+  .top-right-qr-label{
+    font-size:10px;
+    padding-top: 10px;
+
+  }
+}
+</style>
+
+<style>
+@media (min-width: 768px){
+  .top{
+    padding:10px 5px 10px;
+    gap:0 20px;
+  }
+
+  .branch-brand{
+    gap:10px;
+  }
+
+  .branch-brand__icon{
+    width:54px;
+    height:54px;
+    flex-basis:54px;
+    border-radius:20px;
+  }
+
+  .branch-title{
+    font-size:18px;
+    padding: 0;
+  }
+
+  .branch-subtitle{
+    font-size:12px;
+  }
+
+  .branch-live-status{
+    padding:6px 13px;
+    font-size:10px;
+  }
+
+  .branch-live-status__dot{
+    width:8px;
+    height:8px;
+    flex-basis:8px;
+  }
+
+  .badge{
+    font-size:11px;
+    font-weight:500;
+  }
+
+  .top-right{
+    gap:2px;
+  }
+
+  .top-right-qr-icon{
+    width:58px;
+    height:38px;
+    transform:scale(1.2);
+
+  }
+
+  .top-right-qr-label{
+    font-size:10px;
+    padding-top: 5px;
+  }
+}
+</style>
+
+<style>
+    
+</style>

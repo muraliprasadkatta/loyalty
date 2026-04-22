@@ -21,6 +21,7 @@ from offers.services.common.time_helpers import get_local_day_bounds
 
 from offers.models import ComplementaryOffer
 from offers.services.qr.qr_token_utils import mint_qr_token
+from offers.models import Branch, UserVisitEvent, UserOfferClaim
 
 
 from offers.services.auth.otp_utils import (
@@ -567,6 +568,12 @@ def branch_all_visits(request):
     unique_users = qs.exclude(user__isnull=True).values("user_id").distinct().count()
     qr_pin_visits = qs.filter(visit_method="qr_pin").count()
 
+    claim_visit_ids = set(
+        UserOfferClaim.objects
+        .filter(visit_event__in=qs)
+        .values_list("visit_event_id", flat=True)
+    )
+
     grouped = OrderedDict()
 
     for visit in qs:
@@ -576,6 +583,8 @@ def branch_all_visits(request):
             key = f"guest-{visit.id}"
 
         if key not in grouped:
+            visit.has_offer_claim = visit.id in claim_visit_ids
+
             grouped[key] = {
                 "user": visit.user,
                 "total_visits": 1,

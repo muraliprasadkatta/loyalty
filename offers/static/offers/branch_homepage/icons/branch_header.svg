@@ -1,0 +1,40 @@
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="branchBg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6F8FFF"/>
+      <stop offset="1" stop-color="#4E74F6"/>
+    </linearGradient>
+    <filter id="branchShadow" x="4" y="4" width="56" height="56" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#3F67EA" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- blue rounded square -->
+  <g filter="url(#branchShadow)">
+    <rect x="8" y="8" width="48" height="48" rx="14" fill="url(#branchBg)"/>
+  </g>
+
+  <!-- store outline -->
+  <g stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- awning roof -->
+    <path d="M23 27.5L25.8 20.5H38.2L41 27.5" />
+
+    <!-- awning front -->
+    <path d="M23 27.5C23 29.7 24.6 31 26.3 31C27.8 31 29 30.2 29.5 28.9C30 30.2 31.2 31 32.5 31C33.8 31 35 30.2 35.5 28.9C36 30.2 37.2 31 38.7 31C40.4 31 42 29.7 42 27.5" />
+
+    <!-- body -->
+    <path d="M24.5 29.8V40.5C24.5 41.9 25.6 43 27 43H37C38.4 43 39.5 41.9 39.5 40.5V29.8" />
+
+    <!-- door -->
+    <path d="M29.3 43V36.6C29.3 35.8 29.9 35.2 30.7 35.2H33.3C34.1 35.2 34.7 35.8 34.7 36.6V43" />
+  </g>
+
+  <!-- tiny center mark like reference -->
+  <path
+    d="M30.8 38.8H33.2M31.3 37.6V40M32.7 37.6V40"
+    stroke="white"
+    stroke-width="1.15"
+    stroke-linecap="round"
+    opacity="0.95"
+  />
+</svg>

@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
   <script src="{% static 'offers/js/ui/inline_loading.js' %}"></script>
   <link rel="stylesheet" href="{% static 'offers/css/ui/inline_loading.css' %}">
 
@@ -14,7 +15,6 @@
   <script src="{% static 'offers/js/ui/button_loading.js' %}"></script>
 
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
-
 
   <title>Branch · Home</title>
 
@@ -54,9 +54,6 @@
     display:block;
   }
 
-  /* =========================================================
-     SHARED LAYOUT
-  ========================================================= */
   .main{
     width:100%;
     max-width:none;
@@ -83,9 +80,6 @@
     align-items:stretch;
   }
 
-  /* =========================================================
-     TYPOGRAPHY
-  ========================================================= */
   h2,
   h3{
     color:var(--text);
@@ -104,24 +98,9 @@
   }
 
   /* =========================================================
-     HEADER
+     HEADER - STATIC / NO SCROLL COLLAPSE
   ========================================================= */
   .top{
-    --collapse-progress:0;
-    --side-pad:calc(14px - (1px * var(--collapse-progress)));
-    --top-pad-top:calc(18px - (2px * var(--collapse-progress)));
-    --top-pad-bottom:calc(12px - (1px * var(--collapse-progress)));
-    --title-size:calc(21px - (2px * var(--collapse-progress)));
-    --meta-scale:calc(1 - (0.04 * var(--collapse-progress)));
-    --meta-opacity:calc(1 - (0.10 * var(--collapse-progress)));
-    --qr-size:calc(66px - (8px * var(--collapse-progress)));
-    --qr-icon-size:calc(31px - (3px * var(--collapse-progress)));
-    --qr-label-opacity:calc(.95 - (.12 * var(--collapse-progress)));
-    --header-shift:calc(-5px * var(--collapse-progress));
-    --header-radius:calc(0px + (12px * var(--collapse-progress)));
-    --live-pill-scale:calc(1 - (0.02 * var(--collapse-progress)));
-    --live-pill-opacity:calc(1 - (0.03 * var(--collapse-progress)));
-
     position:sticky;
     top:0;
     z-index:30;
@@ -135,30 +114,16 @@
     gap:8px 10px;
 
     width:100%;
-    padding:var(--top-pad-top) var(--side-pad) var(--top-pad-bottom);
+    padding:18px 14px 12px;
 
-    background:rgba(255,255,255,.90);
-    border-bottom:1px solid rgba(217,226,255,.95);
-    border-bottom-left-radius:var(--header-radius);
-    border-bottom-right-radius:var(--header-radius);
+    background:rgba(255,255,255,.96);
+    border-bottom:1px solid rgba(217,226,255,.98);
+    border-bottom-left-radius:0;
+    border-bottom-right-radius:0;
+    box-shadow:0 8px 18px rgba(34, 61, 143, 0.05);
 
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
-    transform:translateY(var(--header-shift));
-
-    transition:
-      padding .18s ease,
-      transform .18s ease,
-      background-color .18s ease,
-      border-color .18s ease,
-      box-shadow .18s ease,
-      border-radius .18s ease;
-  }
-
-  .top.is-condensed{
-    background:rgba(255,255,255,.97);
-    border-bottom-color:rgba(217,226,255,.98);
-    box-shadow:0 8px 18px rgba(34, 61, 143, 0.05);
   }
 
   .top-left{
@@ -174,12 +139,6 @@
     align-items:center;
     gap:6px;
     flex-wrap:wrap;
-    transform:scale(var(--meta-scale));
-    transform-origin:left top;
-    opacity:var(--meta-opacity);
-    transition:
-      transform .18s ease,
-      opacity .18s ease;
   }
 
   .top-right{
@@ -201,16 +160,11 @@
   .branch-title{
     margin:0;
     color:var(--text);
-    font-size:var(--title-size);
+    font-size:21px;
     line-height:1.05;
     font-weight:800;
     letter-spacing:-0.45px;
     word-break:break-word;
-    transition:
-      font-size .18s ease,
-      letter-spacing .18s ease,
-      opacity .18s ease,
-      transform .18s ease;
   }
 
   .branch-live-status{
@@ -229,17 +183,6 @@
     font-size:12px;
     font-weight:700;
     line-height:1;
-
-    transform:scale(var(--live-pill-scale));
-    transform-origin:left center;
-    opacity:var(--live-pill-opacity);
-
-    transition:
-      transform .18s ease,
-      opacity .18s ease,
-      padding .18s ease,
-      font-size .18s ease,
-      gap .18s ease;
   }
 
   .branch-live-status__dot{
@@ -277,42 +220,29 @@
   .badge{
     max-width:100%;
     white-space:nowrap;
-
     padding:5px 9px;
     border:1px solid var(--border);
     border-radius:999px;
     background:#f7faff;
     color:#4f5f95;
-
     font-size:11px;
     line-height:1.1;
     font-weight:600;
-
-    transition:
-      border-color .18s ease,
-      background-color .18s ease,
-      opacity .18s ease;
   }
 
-  /* =========================================================
-     BUTTONS
-  ========================================================= */
   .btn{
     display:inline-flex;
     align-items:center;
     justify-content:center;
     cursor:pointer;
     text-decoration:none;
-
     padding:11px 14px;
     border:none;
     border-radius:12px;
-
     color:#fff;
     font-weight:700;
     background:linear-gradient(135deg, #5d82ff 0%, #4c74ff 100%);
     box-shadow:0 8px 18px rgba(76,116,255,.18);
-
     transition:
       transform .18s ease,
       box-shadow .18s ease,
@@ -334,16 +264,13 @@
     width:100%;
     min-height:52px;
     padding:12px 14px;
-
     border:1px solid var(--border);
     border-radius:999px;
     background:#ffffff;
     color:#4f5f95;
-
     font-size:14px;
     font-weight:700;
     cursor:pointer;
-
     transition:all .18s ease;
   }
 
@@ -353,34 +280,22 @@
     color:var(--prim);
   }
 
-  /* =========================================================
-     QR BUTTON
-  ========================================================= */
   a.btn[data-open="#qrcodeModal"]{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    flex:0 0 var(--qr-size);
-
-    width:var(--qr-size);
-    height:var(--qr-size);
-    min-width:var(--qr-size);
-    min-height:var(--qr-size);
+    flex:0 0 66px;
+    width:66px;
+    height:66px;
+    min-width:66px;
+    min-height:66px;
     padding:6px;
-
     border:1px solid #d8e2ff;
-    border-radius:calc(15px - (2px * var(--collapse-progress)));
+    border-radius:15px;
     background:#f3f7ff;
     color:#1452ff;
     box-shadow:none;
-
     transition:
-      width .18s ease,
-      height .18s ease,
-      min-width .18s ease,
-      min-height .18s ease,
-      flex-basis .18s ease,
-      border-radius .18s ease,
       background-color .18s ease,
       color .18s ease,
       border-color .18s ease,
@@ -411,15 +326,11 @@
   }
 
   .qr-glyph{
-    width:var(--qr-icon-size);
-    height:var(--qr-icon-size);
+    width:31px;
+    height:31px;
     display:block;
     flex:0 0 auto;
     color:currentColor;
-    transition:
-      width .18s ease,
-      height .18s ease,
-      opacity .18s ease;
   }
 
   .qr-label{
@@ -429,8 +340,7 @@
     font-weight:500;
     letter-spacing:.15px;
     text-transform:lowercase;
-    opacity:var(--qr-label-opacity);
-    transition:opacity .18s ease;
+    opacity:.95;
   }
 
   #openQrBtn .oz-inline-loading__spinner{
@@ -443,206 +353,12 @@
     opacity:.65;
   }
 
-  /* =========================================================
-     MODALS
-  ========================================================= */
   [data-modal]{
     display:none;
   }
 
   [data-modal].is-open{
     display:flex;
-  }
-
-  /* =========================================================
-     DASHBOARD ACTIONS CARD
-  ========================================================= */
-  .dashboard-actions-card{
-    --actions-collapse-progress:0;
-    --actions-pad-y:calc(18px - (8px * var(--actions-collapse-progress)));
-    --actions-pad-x:calc(18px - (2px * var(--actions-collapse-progress)));
-    --actions-gap:calc(6px - (1px * var(--actions-collapse-progress)));
-    --actions-item-gap:calc(4px - (3px * var(--actions-collapse-progress)));
-    --actions-item-min-width:calc(60px - (2px * var(--actions-collapse-progress)));
-    --actions-icon-wrap-size:calc(44px - (44px * var(--actions-collapse-progress)));
-    --actions-icon-size:calc(40px - (40px * var(--actions-collapse-progress)));
-    --actions-icon-opacity:calc(1 - (1 * var(--actions-collapse-progress)));
-    --actions-icon-shift:calc(-8px * var(--actions-collapse-progress));
-    --actions-label-opacity:calc(.94 + (.06 * var(--actions-collapse-progress)));
-    --actions-label-scale:calc(1 + (.02 * var(--actions-collapse-progress)));
-    --actions-label-size:calc(11px + (.22px * var(--actions-collapse-progress)));
-
-    position:sticky;
-    top:calc(var(--branch-header-height, 0px) - 54px);
-    z-index:24;
-    overflow:hidden;
-
-    padding:var(--actions-pad-y) var(--actions-pad-x);
-    background:rgba(255,255,255,.94);
-    border-color:transparent;
-    border-top-color:transparent;
-    box-shadow:0 6px 14px rgba(34, 61, 143, 0.03);
-
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-
-    transition:
-      padding .22s ease,
-      box-shadow .22s ease,
-      background-color .22s ease;
-  }
-
-  .dashboard-actions-card.is-compact{
-    border-color:transparent;
-    border-top-color:transparent;
-  }
-
-  .dashboard-actions-grid{
-    display:flex;
-    align-items:flex-end;
-    gap:var(--actions-gap);
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    overflow-y:hidden;
-    padding-bottom:2px;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    transition:gap .22s ease;
-  }
-
-  .dashboard-actions-grid::-webkit-scrollbar{
-    display:none;
-  }
-
-  .dashboard-action-btn{
-    flex:0 0 auto;
-    width:auto;
-    min-height:64px;
-    padding:0 22px;
-    border-radius:18px;
-    white-space:nowrap;
-    font-size:15px;
-    line-height:1;
-    font-weight:800;
-  }
-
-  .dashboard-action-visit{
-    display:inline-flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-end;
-    flex:0 0 auto;
-    min-width:var(--actions-item-min-width);
-    gap:var(--actions-item-gap);
-    padding:0;
-    text-decoration:none;
-
-    transition:
-      gap .22s ease,
-      min-width .22s ease,
-      transform .22s ease;
-  }
-
-  .dashboard-action-visit__icon-wrap{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-
-    width:var(--actions-icon-wrap-size);
-    height:var(--actions-icon-wrap-size);
-    border:none;
-    border-radius:13px;
-    background:transparent;
-    box-shadow:none;
-
-    opacity:var(--actions-icon-opacity);
-    transform:translateY(var(--actions-icon-shift));
-    transform-origin:center bottom;
-
-    transition:
-      width .22s ease,
-      height .22s ease,
-      opacity .18s ease,
-      transform .22s ease;
-  }
-
-  .dashboard-action-visit__icon{
-    width:var(--actions-icon-size);
-    height:var(--actions-icon-size);
-    display:block;
-    flex:0 0 auto;
-    object-fit:contain;
-
-    opacity:var(--actions-icon-opacity);
-    transform:scale(calc(1 - (0.18 * var(--actions-collapse-progress))));
-    transform-origin:center center;
-
-    transition:
-      width .22s ease,
-      height .22s ease,
-      opacity .18s ease,
-      transform .22s ease;
-  }
-
-  .dashboard-action-visit__label{
-    display:block;
-    white-space:nowrap;
-
-    padding:
-      calc(2px + (3px * var(--actions-collapse-progress)))
-      calc(0px + (8px * var(--actions-collapse-progress)));
-
-    border:1px solid rgba(217,226,255,calc(.00 + (.92 * var(--actions-collapse-progress))));
-    border-radius:calc(0px + (999px * var(--actions-collapse-progress)));
-    background:rgba(247,250,255,calc(.00 + (.96 * var(--actions-collapse-progress))));
-    box-shadow:0 1px 0 rgba(255,255,255,calc(.00 + (.85 * var(--actions-collapse-progress)))) inset;
-
-    color:#4f5f95;
-    font-size:var(--actions-label-size);
-    line-height:1;
-    font-weight:600;
-    letter-spacing:.08px;
-
-    opacity:var(--actions-label-opacity);
-    transform:scale(var(--actions-label-scale));
-    transform-origin:center bottom;
-
-    transition:
-      font-size .22s ease,
-      opacity .18s ease,
-      transform .22s ease,
-      padding .22s ease,
-      border-color .22s ease,
-      border-radius .22s ease,
-      background-color .22s ease,
-      box-shadow .22s ease;
-  }
-
-  .dashboard-actions-card.is-compact .dashboard-action-visit__label{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    min-width:96px;
-  }
-
-  .dashboard-action-visit:hover .dashboard-action-visit__icon-wrap{
-    transform:translateY(calc(var(--actions-icon-shift) - 1px));
-  }
-
-  .dashboard-actions-card.is-compact .dashboard-action-visit:hover .dashboard-action-visit__icon-wrap{
-    transform:translateY(var(--actions-icon-shift));
-  }
-
-  /* =========================================================
-     DASHBOARD SECOND ROW
-  ========================================================= */
-  .today-visits-card{
-    min-height:350px;
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-start;
   }
 
   .dashboard-side-stack{
@@ -673,23 +389,18 @@
     justify-content:flex-start;
   }
 
-  /* =========================================================
-     SMALL MOBILE
-  ========================================================= */
   @media (max-width: 380px){
     .top{
-      --side-pad:12px;
-      --top-pad-top:calc(18px - (2px * var(--collapse-progress)));
-      --top-pad-bottom:calc(12px - (1px * var(--collapse-progress)));
-      --title-size:calc(19px - (2px * var(--collapse-progress)));
-      --qr-size:calc(64px - (7px * var(--collapse-progress)));
-      --qr-icon-size:calc(30px - (3px * var(--collapse-progress)));
-      --header-shift:calc(-4px * var(--collapse-progress));
+      padding:18px 12px 12px;
       gap:7px 8px;
     }
 
     .branch-title-row{
       gap:4px;
+    }
+
+    .branch-title{
+      font-size:19px;
     }
 
     .branch-live-status{
@@ -707,6 +418,18 @@
     .badge{
       font-size:10px;
       padding:4px 8px;
+    }
+
+    a.btn[data-open="#qrcodeModal"]{
+      width:64px;
+      height:64px;
+      min-width:64px;
+      min-height:64px;
+    }
+
+    .qr-glyph{
+      width:30px;
+      height:30px;
     }
 
     .qr-label{
@@ -728,76 +451,18 @@
     }
   }
 
-  /* =========================================================
-     MOBILE / TABLET ACTIONS
-  ========================================================= */
-  @media (max-width: 767px){
-    .dashboard-actions-card{
-      --actions-pad-y:calc(16px - (7px * var(--actions-collapse-progress)));
-      --actions-pad-x:16px;
-      --actions-gap:calc(10px - (2px * var(--actions-collapse-progress)));
-      --actions-item-min-width:calc(56px + (2px * var(--actions-collapse-progress)));
-      --actions-icon-wrap-size:calc(42px - (42px * var(--actions-collapse-progress)));
-      --actions-icon-size:calc(38px - (38px * var(--actions-collapse-progress)));
-      --actions-label-size:calc(10px + (.2px * var(--actions-collapse-progress)));
-      top:calc(var(--branch-header-height, 0px) - 28px);
-
-      border-top-color:transparent !important;
-      border-top-width:0 !important;
-      box-shadow:0 6px 12px rgba(34, 61, 143, 0.025);
-    }
-
-    .dashboard-actions-card.is-compact .dashboard-action-visit__label{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      flex:0 0 92px;
-      width:92px;
-      max-width:92px;
-      padding-left:0;
-      padding-right:0;
-    }
-
-    .dashboard-actions-card.is-compact{
-      border-top-color:transparent !important;
-      border-top-width:0 !important;
-    }
-
-    .dashboard-action-visit__label{
-      padding:
-        calc(2px + (2px * var(--actions-collapse-progress)))
-        calc(0px + (6px * var(--actions-collapse-progress)));
-    }
-
-    .dashboard-action-btn{
-      min-height:58px;
-      padding:0 18px;
-      border-radius:16px;
-      font-size:14px;
-    }
-  }
-
-  /* =========================================================
-     WINDOW / DESKTOP
-  ========================================================= */
   @media (min-width: 768px){
     .top{
-      --side-pad:calc(18px - (1px * var(--collapse-progress)));
-      --top-pad-top:calc(18px - (2px * var(--collapse-progress)));
-      --top-pad-bottom:calc(12px - (1px * var(--collapse-progress)));
-      --title-size:calc(22px - (2px * var(--collapse-progress)));
-      --meta-scale:calc(1 - (0.02 * var(--collapse-progress)));
-      --meta-opacity:calc(1 - (0.05 * var(--collapse-progress)));
-      --qr-size:calc(64px - (5px * var(--collapse-progress)));
-      --qr-icon-size:calc(29px - (2px * var(--collapse-progress)));
-      --qr-label-opacity:calc(.94 - (.08 * var(--collapse-progress)));
-      --header-shift:calc(-8px * var(--collapse-progress));
+      padding:18px 18px 12px;
       gap:6px 12px;
     }
 
     .branch-title-row{
       gap:7px;
+    }
+
+    .branch-title{
+      font-size:22px;
     }
 
     .branch-live-status{
@@ -815,6 +480,18 @@
     .badge{
       font-size:11px;
       padding:5px 9px;
+    }
+
+    a.btn[data-open="#qrcodeModal"]{
+      width:64px;
+      height:64px;
+      min-width:64px;
+      min-height:64px;
+    }
+
+    .qr-glyph{
+      width:29px;
+      height:29px;
     }
 
     .qr-label{
@@ -835,53 +512,10 @@
       width:auto;
     }
 
-    .dashboard-actions-card{
-      --actions-pad-y:calc(24px - (8px * var(--actions-collapse-progress)));
-      --actions-pad-x:28px;
-      --actions-gap:calc(18px - (4px * var(--actions-collapse-progress)));
-      --actions-item-gap:calc(10px - (4px * var(--actions-collapse-progress)));
-      --actions-item-min-width:calc(92px - (6px * var(--actions-collapse-progress)));
-      --actions-icon-wrap-size:calc(62px - (20px * var(--actions-collapse-progress)));
-      --actions-icon-size:calc(52px - (18px * var(--actions-collapse-progress)));
-      --actions-label-size:calc(15px - (.8px * var(--actions-collapse-progress)));
-    }
-
-    .dashboard-actions-grid{
-      align-items:flex-end;
-      flex-wrap:nowrap;
-      overflow-x:auto;
-      padding-bottom:6px;
-    }
-
-    .dashboard-action-visit{
-      min-width:var(--actions-item-min-width);
-    }
-
-    .dashboard-action-visit__icon-wrap{
-      border-radius:18px;
-    }
-
-    .dashboard-action-visit__label{
-      font-weight:700;
-      letter-spacing:.1px;
-    }
-
-    .dashboard-action-btn{
-      min-height:68px;
-      padding:0 24px;
-      border-radius:18px;
-      font-size:16px;
-    }
-
     .dashboard-grid{
-      grid-template-columns:minmax(0, 1.08fr) minmax(320px, .92fr);
+      grid-template-columns:minmax(0, 1.42fr) minmax(280px, .58fr);
       gap:14px;
       align-items:stretch;
-    }
-
-    .today-visits-card{
-      min-height:100%;
-      height:100%;
     }
 
     .dashboard-side-stack{
@@ -895,25 +529,18 @@
     }
   }
 
-  /* =========================================================
-     LARGE DESKTOP
-  ========================================================= */
   @media (min-width: 1100px){
     .top{
-      --side-pad:calc(18px - (1px * var(--collapse-progress)));
-      --top-pad-top:calc(18px - (2px * var(--collapse-progress)));
-      --top-pad-bottom:calc(12px - (1px * var(--collapse-progress)));
-      --title-size:calc(21px - (2px * var(--collapse-progress)));
-      --meta-scale:calc(1 - (0.02 * var(--collapse-progress)));
-      --meta-opacity:calc(1 - (0.04 * var(--collapse-progress)));
-      --qr-size:calc(62px - (4px * var(--collapse-progress)));
-      --qr-icon-size:calc(28px - (2px * var(--collapse-progress)));
-      --header-shift:calc(-10px * var(--collapse-progress));
+      padding:18px 18px 12px;
       gap:6px 12px;
     }
 
     .branch-title-row{
       gap:7px;
+    }
+
+    .branch-title{
+      font-size:21px;
     }
 
     .branch-live-status{
@@ -947,171 +574,57 @@
   }
 </style>
 
-
 </head>
+
 <body
   data-branch-id="{{ branch.id }}"
   data-branch-uid="{{ branch.public_id }}"
 >
-<div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
+  <div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
+
 <div class="wrap">
 
-  <!-- Top bar -->
-<header class="top" id="branchHeader">
-<div class="top-left">
-  <div class="branch-title-row">
-    <h1 class="branch-title">
-      {{ request.session.branch_name|default:"Branch" }}
-    </h1>
+  {% include "branch/partials/branch_header.html" %}
 
-    <span class="branch-live-status" aria-label="Branch is active">
-      <span class="branch-live-status__dot" aria-hidden="true"></span>
-      <span class="branch-live-status__text">Active</span>
-    </span>
-  </div>
-</div>
-
-  <div class="top-meta">
-    <span class="badge" title="Current visit unit">
-      {{ visit_unit_label|default:"—" }}
-    </span>
-
-    {% if request.session.branch_staff_name %}
-      <span class="badge badge--staff">
-        Staff: {{ request.session.branch_staff_name }}
-        {% if request.session.branch_staff_code %}
-          · {{ request.session.branch_staff_code }}
-        {% endif %}
-      </span>
-    {% endif %}
-  </div>
-
-<div class="top-right">
-  <a id="openQrBtn"
-    class="btn btn--mini btn--icon btn--ghost"
-    href="#"
-    data-open="#qrcodeModal"
-    data-qr="offerzone://branch={{ branch.public_id|default:'' }}&desk={{ branch.default_desk|default:'A1' }}"
-    aria-label="Open QR code">
-
-    <span class="oz-inline-loading__content qr-button-content">
-      <svg class="qr-glyph" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-        <!-- top-left finder -->
-        <rect x="6" y="6" width="18" height="18" rx="2" stroke="currentColor" stroke-width="4"/>
-        <rect x="11" y="11" width="8" height="8" rx="1.5" fill="currentColor"/>
-
-        <!-- top-right finder -->
-        <rect x="40" y="6" width="18" height="18" rx="2" stroke="currentColor" stroke-width="4"/>
-        <rect x="45" y="11" width="8" height="8" rx="1.5" fill="currentColor"/>
-
-        <!-- bottom-left finder -->
-        <rect x="6" y="40" width="18" height="18" rx="2" stroke="currentColor" stroke-width="4"/>
-        <rect x="11" y="45" width="8" height="8" rx="1.5" fill="currentColor"/>
-
-        <!-- qr pixels -->
-        <rect x="30" y="30" width="5" height="5" rx="1" fill="currentColor"/>
-        <rect x="37" y="30" width="5" height="5" rx="1" fill="currentColor"/>
-        <rect x="44" y="30" width="5" height="5" rx="1" fill="currentColor"/>
-        <rect x="30" y="37" width="5" height="5" rx="1" fill="currentColor"/>
-        <rect x="44" y="37" width="5" height="5" rx="1" fill="currentColor"/>
-        <rect x="37" y="44" width="5" height="5" rx="1" fill="currentColor"/>
-        <rect x="44" y="44" width="5" height="5" rx="1" fill="currentColor"/>
-        <rect x="30" y="51" width="5" height="5" rx="1" fill="currentColor"/>
-      </svg>
-
-      <span class="qr-label">qrcode</span>
-    </span>
-
-    <span class="oz-inline-loading__state" hidden>
-      {% include "ui_states/spinners/inline_loading.html" %}
-    </span>
-  </a>
-</div>
-
-</header>
-  <!-- Body -->
   <main class="main">
 
-<section class="card dashboard-actions-card" id="dashboardActionsCard">
-  <div class="dashboard-actions-grid" id="dashboardActionsGrid">
-    <a class="dashboard-action-visit" href="{% url 'offers:branch_all_visits' %}">
-      <span class="dashboard-action-visit__icon-wrap">
-        <img src="{% static 'offers/branch_homepage/icons/total-visits.svg' %}" alt="All Visits" class="dashboard-action-visit__icon">
-      </span>
-      <span class="dashboard-action-visit__label">All Visits</span>
-    </a>
+    {% include "branch/partials/branch_quick_actions.html" %}
 
-    <a class="dashboard-action-visit" href="#">
-      <span class="dashboard-action-visit__icon-wrap">
-        <img src="{% static 'offers/branch_homepage/icons/all-claims.svg' %}" alt="All Claims" class="dashboard-action-visit__icon">
-      </span>
-      <span class="dashboard-action-visit__label">All Claims</span>
-    </a>
+    <section class="dashboard-grid">
+      {% include "branch/partials/today_visits_card.html" %}
 
-    <a class="dashboard-action-visit" href="#">
-      <span class="dashboard-action-visit__icon-wrap">
-        <img src="{% static 'offers/branch_homepage/icons/suggestions.svg' %}" alt="Suggestions" class="dashboard-action-visit__icon">
-      </span>
-      <span class="dashboard-action-visit__label">Suggestions</span>
-    </a>
-
-    <a class="dashboard-action-visit" href="#">
-      <span class="dashboard-action-visit__icon-wrap">
-        <img src="{% static 'offers/branch_homepage/icons/reviews.svg' %}" alt="Review" class="dashboard-action-visit__icon">
-      </span>
-      <span class="dashboard-action-visit__label">Review</span>
-    </a>
-
-    <a class="dashboard-action-visit" href="#">
-      <span class="dashboard-action-visit__icon-wrap">
-        <img src="{% static 'offers/branch_homepage/icons/rating.svg' %}" alt="Rating" class="dashboard-action-visit__icon">
-      </span>
-      <span class="dashboard-action-visit__label">Rating</span>
-    </a>
-  </div>
-</section>
-
-<section class="dashboard-grid">
-  <div class="card today-visits-card">
-    <h3 style="margin:0 0 6px">Today visits</h3>
-    <p class="muted">Quick numbers coming soon…</p>
-  </div>
-
-  <div class="dashboard-side-stack">
-    <div class="user-track-cta-wrap">
-      <button type="button"
-              class="btn btn--outline-mini user-track-cta"
-              data-open="#userTrackModal">
-        User track details
-      </button>
-    </div>
-
-    <div class="card side-info-card">
-      <h3 style="margin:0 0 6px">Announcements</h3>
-      <p class="muted">No announcements.</p>
-    </div>
-
-    <div class="card side-info-card">
-      <h3 style="margin:0 0 6px">Campaigns</h3>
-      <p class="muted">No campaigns.</p>
-    </div>
+      <div class="dashboard-side-stack">
+        <div class="user-track-cta-wrap">
+          <button type="button"
+                  class="btn btn--outline-mini user-track-cta"
+                  data-open="#userTrackModal">
+            User track details
+          </button>
+        </div>
 
         <div class="card side-info-card">
-      <h3 style="margin:0 0 6px">Announcements</h3>
-      <p class="muted">No announcements.</p>
-    </div>
-  </div>
-</section>
+          <h3 style="margin:0 0 6px">Announcements</h3>
+          <p class="muted">No announcements.</p>
+        </div>
 
+        <div class="card side-info-card">
+          <h3 style="margin:0 0 6px">Campaigns</h3>
+          <p class="muted">No campaigns.</p>
+        </div>
 
-              <!-- NEW: Add Staff button (future modal ki hook pedthaam) -->
-        <button type="button"
-                class="btn"
-                data-open="#addStaffModal">
-          Add staff
-        </button>
+        <div class="card side-info-card">
+          <h3 style="margin:0 0 6px">Announcements</h3>
+          <p class="muted">No announcements.</p>
+        </div>
+      </div>
+    </section>
 
-    <!-- Bottom logout card -->
+    <button type="button"
+            class="btn"
+            data-open="#addStaffModal">
+      Add staff
+    </button>
+
     <section class="card" style="display:flex;justify-content:flex-end">
       <a
         id="branchLogoutBtn"
@@ -1131,176 +644,126 @@
   </main>
 </div>
 
-{% include "offers/qr_generation/branch_qrcode_modal.html" %}
-{% include "branch/branch_homepage/visitor_details_modal.html" %}
-{% include "branch/branch_homepage/branch_staff_create_modal.html" %}
-{% include "branch/user_tracking/user_tracking_modal.html" %}
+  {% include "branch/partials/branch_qrcode_modal.html" %}
+  {% include "branch/branch_homepage/visitor_details_modal.html" %}
+  {% include "branch/branch_homepage/branch_staff_create_modal.html" %}
+  {% include "branch/user_tracking/user_tracking_modal.html" %}
 
-<script>
-  (function () {
-    const header = document.getElementById('branchHeader');
-    const actionsCard = document.getElementById('dashboardActionsCard');
+  <script>
+    (function () {
+      const header = document.getElementById('branchHeader');
+      const actionsCard = document.getElementById('dashboardActionsCard');
 
-    if (!header || !actionsCard) return;
+      if (!header || !actionsCard) return;
 
-    let ticking = false;
-    let startY = 0;
-    let endY = 0;
+      let ticking = false;
+      let startY = 0;
+      let endY = 0;
 
-    function clamp(value, min, max) {
-      return Math.min(Math.max(value, min), max);
-    }
-
-    function recalculateThresholds() {
-      const headerHeight = header.offsetHeight || 0;
-      const cardTopInDocument = actionsCard.offsetTop;
-
-      const startOffset = 28;
-      const collapseDistance = 80;
-
-      startY = Math.max(cardTopInDocument - headerHeight - startOffset, 0);
-      endY = startY + collapseDistance;
-    }
-
-    function applyActionsCardMotion() {
-      const y = window.scrollY || window.pageYOffset || 0;
-      const rawProgress = (y - startY) / (endY - startY);
-      const progress = clamp(rawProgress, 0, 1);
-
-      actionsCard.style.setProperty('--actions-collapse-progress', progress.toFixed(3));
-
-      if (progress > 0.98) {
-        actionsCard.classList.add('is-compact');
-      } else {
-        actionsCard.classList.remove('is-compact');
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
       }
 
-      ticking = false;
-    }
+      function recalculateThresholds() {
+        const headerHeight = header.offsetHeight || 0;
+        const cardTopInDocument = actionsCard.offsetTop;
+        const startOffset = 28;
+        const collapseDistance = 80;
 
-    function onScrollOrResize() {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(function () {
-        recalculateThresholds();
-        applyActionsCardMotion();
-      });
-    }
-
-    recalculateThresholds();
-    applyActionsCardMotion();
-
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
-    window.addEventListener('resize', onScrollOrResize);
-  })();
-</script>
-
-<script>
-  (function () {
-    const header = document.getElementById('branchHeader');
-    if (!header) return;
-
-    let ticking = false;
-    const COLLAPSE_DISTANCE = 220;
-
-    function clamp(value, min, max) {
-      return Math.min(Math.max(value, min), max);
-    }
-
-    function applyHeaderMotion() {
-      const y = window.scrollY || window.pageYOffset || 0;
-      const progress = clamp(y / COLLAPSE_DISTANCE, 0, 1);
-
-      header.style.setProperty('--collapse-progress', progress.toFixed(3));
-      document.documentElement.style.setProperty('--branch-header-height', `${header.offsetHeight}px`);
-
-      if (progress > 0.06) {
-        header.classList.add('is-condensed');
-      } else {
-        header.classList.remove('is-condensed');
+        startY = Math.max(cardTopInDocument - headerHeight - startOffset, 0);
+        endY = startY + collapseDistance;
       }
 
-      ticking = false;
-    }
+      function applyActionsCardMotion() {
+        const y = window.scrollY || window.pageYOffset || 0;
+        const rawProgress = (y - startY) / (endY - startY);
+        const progress = clamp(rawProgress, 0, 1);
 
-    function onScroll() {
-      if (ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(applyHeaderMotion);
-    }
+        actionsCard.style.setProperty('--actions-collapse-progress', progress.toFixed(3));
 
-    applyHeaderMotion();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', applyHeaderMotion);
-  })();
-</script>
+        if (progress > 0.98) {
+          actionsCard.classList.add('is-compact');
+        } else {
+          actionsCard.classList.remove('is-compact');
+        }
 
-<script>
-  // history trap
-  history.replaceState(null, '', location.pathname);
-  history.pushState(null, '', location.pathname);
-
-  window.addEventListener('popstate', function () {
-    location.replace("{% url 'offers:branch_home' %}");
-  });
-
-  // generic modal open/close handler
-  document.addEventListener("click", function (e) {
-    const openBtn = e.target.closest("[data-open]");
-    if (openBtn) {
-      e.preventDefault(); // avoid # jump
-
-      const selector = openBtn.getAttribute("data-open");
-
-      // QR modal has its own dedicated open/build logic.
-      // Skip generic open handling here.
-      if (selector === "#qrcodeModal") {
-        return;
+        ticking = false;
       }
 
-      const modal = document.querySelector(selector);
-      if (modal) {
-        modal.classList.add("is-open");
+      function onScrollOrResize() {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(function () {
+          recalculateThresholds();
+          applyActionsCardMotion();
+        });
       }
-      return;
-    }
 
-    const closeBtn = e.target.closest("[data-close]");
-    if (closeBtn) {
-      const modal = closeBtn.closest("[data-modal]");
-      if (modal) {
-        modal.classList.remove("is-open");
-      }
-    }
-  });
-</script>
+      recalculateThresholds();
+      applyActionsCardMotion();
 
+      window.addEventListener('scroll', onScrollOrResize, { passive: true });
+      window.addEventListener('resize', onScrollOrResize);
+    })();
+  </script>
 
-<script>
-  (function () {
-    const logoutBtn = document.getElementById("branchLogoutBtn");
-    if (!logoutBtn) return;
+  <script>
+    history.replaceState(null, '', location.pathname);
+    history.pushState(null, '', location.pathname);
 
-    logoutBtn.addEventListener("click", function (e) {
-      if (logoutBtn.classList.contains("oz-btn-loading")) {
+    window.addEventListener('popstate', function () {
+      location.replace("{% url 'offers:branch_home' %}");
+    });
+
+    document.addEventListener("click", function (e) {
+      const openBtn = e.target.closest("[data-open]");
+      if (openBtn) {
         e.preventDefault();
+
+        const selector = openBtn.getAttribute("data-open");
+        if (selector === "#qrcodeModal") {
+          return;
+        }
+
+        const modal = document.querySelector(selector);
+        if (modal) {
+          modal.classList.add("is-open");
+        }
         return;
       }
 
-      if (window.OZButtons) {
-        window.OZButtons.start(logoutBtn, { keepWidth: true });
-      }
-
-      logoutBtn.setAttribute("aria-disabled", "true");
-
-      if (window.OZInteractionBlocker) {
-        window.OZInteractionBlocker.show();
+      const closeBtn = e.target.closest("[data-close]");
+      if (closeBtn) {
+        const modal = closeBtn.closest("[data-modal]");
+        if (modal) {
+          modal.classList.remove("is-open");
+        }
       }
     });
-  })();
-</script>
+  </script>
 
+  <script>
+    (function () {
+      const logoutBtn = document.getElementById("branchLogoutBtn");
+      if (!logoutBtn) return;
+
+      logoutBtn.addEventListener("click", function (e) {
+        if (logoutBtn.classList.contains("oz-btn-loading")) {
+          e.preventDefault();
+          return;
+        }
+
+        if (window.OZButtons) {
+          window.OZButtons.start(logoutBtn, { keepWidth: true });
+        }
+
+        logoutBtn.setAttribute("aria-disabled", "true");
+
+        if (window.OZInteractionBlocker) {
+          window.OZInteractionBlocker.show();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
-
-

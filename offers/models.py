@@ -636,10 +636,9 @@ class UserLocationPing(models.Model):
 
 class UserVisitEvent(models.Model):
     VISIT_METHOD_CHOICES = (
-        ("qr_screenshot", "QR Screenshot Scan"),
+        ("qr_code", "QR Code"),
         ("qr_pin", "QR PIN Entry"),
         ("offer_day_pin", "Offer Day PIN"),
-
     )
 
     user = models.ForeignKey(

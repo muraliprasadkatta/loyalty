@@ -732,7 +732,11 @@
                   </td>
 
                   <td>
-                    <span class="desk-badge">{{ item.latest_visit.desk|default:"—" }}</span>
+                    {% if item.latest_visit.has_offer_claim %}
+                      <span class="desk-badge">Yes</span>
+                    {% else %}
+                      <span class="desk-badge">No</span>
+                    {% endif %}
                   </td>
 
                   <td>
