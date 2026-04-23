@@ -211,9 +211,10 @@ def branch_verify_offer_pin(request):
     if not match:
         return JsonResponse({"ok": False, "error": "pin_not_found_or_expired"}, status=404)
 
-    staff_name = request.session.get("branch_staff_name") or ""
-    staff_code = request.session.get("branch_staff_code") or ""
-
+    branch_name = request.session.get("branch_name") or ""
+    staff_name = (request.session.get("branch_staff_name") or "").strip() or branch_name
+    staff_code = (request.session.get("branch_staff_code") or "").strip()
+    
     claim_issued = False
     claim_ids = []
 

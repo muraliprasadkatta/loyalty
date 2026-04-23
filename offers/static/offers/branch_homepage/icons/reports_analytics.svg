@@ -1,0 +1,38 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer soft background -->
+  <rect x="6" y="6" width="52" height="52" rx="12" fill="#EEF3FF"/>
+
+  <!-- Document shadow -->
+  <rect x="19" y="20.5" width="24" height="30" rx="3" fill="#DCE6FF"/>
+
+  <!-- Document -->
+  <path d="M19 18.5C19 16.8431 20.3431 15.5 22 15.5H36L43 22.5V46C43 47.6569 41.6569 49 40 49H22C20.3431 49 19 47.6569 19 46V18.5Z" fill="white"/>
+
+  <!-- Fold -->
+  <path d="M36 15.5L43 22.5H38.5C37.1193 22.5 36 21.3807 36 20V15.5Z" fill="#C9D8FF"/>
+
+  <!-- Top pie chart -->
+  <circle cx="25.2" cy="25.3" r="3.7" fill="#326DFF"/>
+  <path d="M25.2 21.6C27.2435 21.6 28.9 23.2565 28.9 25.3H25.2V21.6Z" fill="#AFC5FF"/>
+
+  <!-- Top text lines -->
+  <rect x="30.4" y="23.4" width="8.9" height="1.1" rx="0.55" fill="#C2D2FF"/>
+  <rect x="30.4" y="25.9" width="5.8" height="1.1" rx="0.55" fill="#C2D2FF"/>
+
+  <!-- Line chart -->
+  <path d="M22.2 37.3L27.8 33L32.8 34.6L38.6 29.4" stroke="#2F6BFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M37.5 29.3H40.2V32" stroke="#2F6BFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Dots -->
+  <circle cx="22.2" cy="37.3" r="1.05" fill="#2F6BFF"/>
+  <circle cx="27.8" cy="33" r="1.05" fill="#2F6BFF"/>
+  <circle cx="32.8" cy="34.6" r="1.05" fill="#2F6BFF"/>
+
+  <!-- Bar chart -->
+  <rect x="24" y="40" width="3.1" height="5.2" rx="0.8" fill="#8FB0FF"/>
+  <rect x="29.8" y="37.6" width="3.1" height="7.6" rx="0.8" fill="#5D8EFF"/>
+  <rect x="35.6" y="35" width="3.1" height="10.2" rx="0.8" fill="#326DFF"/>
+
+  <!-- Baseline -->
+  <rect x="21.3" y="45.4" width="18.2" height="0.9" rx="0.45" fill="#C2D2FF"/>
+</svg>

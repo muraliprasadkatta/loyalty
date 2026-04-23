@@ -1,0 +1,171 @@
+{% load static %}
+
+<section class="branch-tools-card">
+  <div class="branch-tools-card__header">
+    <h2 class="branch-tools-card__title">Branch Tools &amp; Management</h2>
+  </div>
+
+  <div class="branch-tools-grid">
+    <a href="#" class="branch-tool-item">
+      <div class="branch-tool-item__icon-wrap">
+        <img src="{% static 'offers/branch_homepage/icons/staff_management.svg' %}" alt="Staff Management">
+      </div>
+      <div class="branch-tool-item__content">
+        <h3 class="branch-tool-item__title">Staff Management</h3>
+        <p class="branch-tool-item__subtitle">Manage staff and roles</p>
+      </div>
+      <div class="branch-tool-item__arrow">›</div>
+    </a>
+
+    <a href="#" class="branch-tool-item">
+      <div class="branch-tool-item__icon-wrap">
+        <img src="{% static 'offers/branch_homepage/icons/visit_planning.svg' %}" alt="Visit Planning">
+      </div>
+      <div class="branch-tool-item__content">
+        <h3 class="branch-tool-item__title">Visit Planning</h3>
+        <p class="branch-tool-item__subtitle">Plan and assign visits</p>
+      </div>
+      <div class="branch-tool-item__arrow">›</div>
+    </a>
+
+    <a href="#" class="branch-tool-item">
+      <div class="branch-tool-item__icon-wrap">
+        <img src="{% static 'offers/branch_homepage/icons/customer_list.svg' %}" alt="Customer List">
+      </div>
+      <div class="branch-tool-item__content">
+        <h3 class="branch-tool-item__title">Customer List</h3>
+        <p class="branch-tool-item__subtitle">View all customers</p>
+      </div>
+      <div class="branch-tool-item__arrow">›</div>
+    </a>
+
+    <a href="#" class="branch-tool-item">
+      <div class="branch-tool-item__icon-wrap">
+        <img src="{% static 'offers/branch_homepage/icons/reports_analytics.svg' %}" alt="Reports & Analytics">
+      </div>
+      <div class="branch-tool-item__content">
+        <h3 class="branch-tool-item__title">Reports &amp; Analytics</h3>
+        <p class="branch-tool-item__subtitle">View performance reports</p>
+      </div>
+      <div class="branch-tool-item__arrow">›</div>
+    </a>
+
+    <a href="#" class="branch-tool-item">
+      <div class="branch-tool-item__icon-wrap">
+        <img src="{% static 'offers/branch_homepage/icons/settings.svg' %}" alt="Settings">
+      </div>
+      <div class="branch-tool-item__content">
+        <h3 class="branch-tool-item__title">Settings</h3>
+        <p class="branch-tool-item__subtitle">Branch settings</p>
+      </div>
+      <div class="branch-tool-item__arrow">›</div>
+    </a>
+  </div>
+</section>
+
+<style>
+.branch-tools-card {
+  margin-top: 18px;
+  background: #ffffff;
+  border: 1px solid #e7ecff;
+  border-radius: 22px;
+  padding: 22px 18px;
+  box-shadow: 0 10px 30px rgba(70, 96, 187, 0.06);
+}
+
+.branch-tools-card__header {
+  margin-bottom: 16px;
+}
+
+.branch-tools-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d2b5b;
+}
+
+.branch-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid #edf1ff;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.branch-tool-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px;
+  text-decoration: none;
+  background: #fff;
+  position: relative;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.branch-tool-item:not(:last-child) {
+  border-right: 1px solid #edf1ff;
+}
+
+.branch-tool-item:hover {
+  background: #f8faff;
+}
+
+.branch-tool-item__icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #eef3ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 46px;
+}
+
+.branch-tool-item__icon-wrap img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.branch-tool-item__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.branch-tool-item__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #25356c;
+  line-height: 1.2;
+}
+
+.branch-tool-item__subtitle {
+  margin: 4px 0 0;
+  font-size: 10px;
+  font-weight: 500;
+  color: #7d8bb3;
+  line-height: 1.35;
+}
+
+.branch-tool-item__arrow {
+  font-size: 24px;
+  line-height: 1;
+  color: #50608f;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1199px) {
+  .branch-tools-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .branch-tool-item:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid #edf1ff;
+  }
+}
+</style>

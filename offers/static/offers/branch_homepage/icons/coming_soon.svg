@@ -1,0 +1,29 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="comingSoonGrad" x1="24" y1="20" x2="104" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="12" y="12" width="104" height="104" rx="24" fill="white"/>
+
+  <!-- Main circle -->
+  <circle cx="64" cy="66" r="24" fill="url(#comingSoonGrad)" fill-opacity="0.12"/>
+  <circle cx="64" cy="66" r="22" stroke="url(#comingSoonGrad)" stroke-width="4"/>
+
+  <!-- Clock hands -->
+  <path d="M64 66V54" stroke="url(#comingSoonGrad)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M64 66L73 72" stroke="url(#comingSoonGrad)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Top notification dot -->
+  <circle cx="64" cy="34" r="6" fill="url(#comingSoonGrad)"/>
+
+  <!-- Small spark -->
+  <path d="M92 42L94.8 48.2L101 51L94.8 53.8L92 60L89.2 53.8L83 51L89.2 48.2L92 42Z" fill="#A78BFA"/>
+
+  <!-- Bottom subtle progress line -->
+  <rect x="42" y="94" width="44" height="6" rx="3" fill="#E9E7FF"/>
+  <rect x="42" y="94" width="24" height="6" rx="3" fill="url(#comingSoonGrad)"/>
+</svg>

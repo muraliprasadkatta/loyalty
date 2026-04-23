@@ -1,0 +1,35 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="userTrackGradient" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="128" height="128" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect x="12" y="12" width="104" height="104" rx="24" fill="white"/>
+
+  <!-- Info card -->
+  <g filter="url(#shadow)">
+    <rect x="54" y="34" width="40" height="52" rx="12" fill="#F8FAFC" stroke="#DDE7F0" stroke-width="2"/>
+    <rect x="62" y="46" width="20" height="4" rx="2" fill="#94A3B8"/>
+    <rect x="62" y="56" width="24" height="4" rx="2" fill="#CBD5E1"/>
+    <rect x="62" y="66" width="16" height="4" rx="2" fill="#CBD5E1"/>
+  </g>
+
+  <!-- User head -->
+  <circle cx="42" cy="46" r="12" fill="url(#userTrackGradient)"/>
+
+  <!-- User body -->
+  <path d="M22 84C22 72.9543 30.9543 64 42 64C53.0457 64 62 72.9543 62 84V86H22V84Z" fill="url(#userTrackGradient)"/>
+
+  <!-- Track pin -->
+  <path d="M89 92C89 92 78 80.7 78 72C78 65.3726 83.3726 60 90 60C96.6274 60 102 65.3726 102 72C102 80.7 89 92 89 92Z" fill="url(#userTrackGradient)"/>
+  <circle cx="90" cy="72" r="4.5" fill="white"/>
+
+  <!-- Connection path -->
+  <path d="M58 76C64 76 67 76 71 75C75 74 79 72 83 69" stroke="#0F172A" stroke-width="3" stroke-linecap="round" stroke-dasharray="5 5" opacity="0.5"/>
+</svg>

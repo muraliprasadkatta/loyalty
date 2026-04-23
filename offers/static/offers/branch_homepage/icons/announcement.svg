@@ -1,0 +1,28 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="announceGrad" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316"/>
+      <stop offset="1" stop-color="#EF4444"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="12" y="12" width="104" height="104" rx="24" fill="white"/>
+
+  <!-- Sound waves -->
+  <path d="M89 44C95 49 98 56 98 64C98 72 95 79 89 84" stroke="#FDBA74" stroke-width="4" stroke-linecap="round"/>
+  <path d="M97 36C105 44 109 54 109 64C109 74 105 84 97 92" stroke="#FED7AA" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Megaphone body -->
+  <path d="M30 60C30 56.6863 32.6863 54 36 54H46L76 40V88L46 74H36C32.6863 74 30 71.3137 30 68V60Z" fill="url(#announceGrad)"/>
+
+  <!-- Handle -->
+  <path d="M44 74H54L59 94C59.6 96.4 57.8 98 55.5 98H49.8C47.9 98 46.3 96.7 45.9 94.9L44 74Z" fill="#FDBA74"/>
+
+  <!-- Inner panel -->
+  <path d="M46 54L69 44V84L46 74V54Z" fill="white" fill-opacity="0.22"/>
+
+  <!-- Notification dot -->
+  <circle cx="92" cy="34" r="8" fill="#EF4444"/>
+  <circle cx="92" cy="34" r="3" fill="white"/>
+</svg>

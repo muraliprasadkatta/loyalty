@@ -1,0 +1,29 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer background -->
+  <rect x="6" y="6" width="52" height="52" rx="16" fill="#EEF3FF"/>
+
+  <!-- Inner badge -->
+  <rect x="17" y="17" width="30" height="30" rx="10" fill="white"/>
+
+  <!-- Gear -->
+  <g transform="translate(32 32)">
+    <!-- Gear teeth -->
+    <rect x="-1.7" y="-13.2" width="3.4" height="5.8" rx="1" fill="#4C74FF"/>
+    <rect x="-1.7" y="7.4" width="3.4" height="5.8" rx="1" fill="#4C74FF"/>
+    <rect x="7.4" y="-1.7" width="5.8" height="3.4" rx="1" fill="#4C74FF"/>
+    <rect x="-13.2" y="-1.7" width="5.8" height="3.4" rx="1" fill="#4C74FF"/>
+
+    <rect x="-1.7" y="-13.2" width="3.4" height="5.8" rx="1" transform="rotate(45)" fill="#4C74FF"/>
+    <rect x="-1.7" y="-13.2" width="3.4" height="5.8" rx="1" transform="rotate(90)" fill="#4C74FF"/>
+    <rect x="-1.7" y="-13.2" width="3.4" height="5.8" rx="1" transform="rotate(135)" fill="#4C74FF"/>
+    <rect x="-1.7" y="-13.2" width="3.4" height="5.8" rx="1" transform="rotate(-45)" fill="#4C74FF"/>
+
+    <!-- Gear ring -->
+    <circle cx="0" cy="0" r="8.8" fill="#4C74FF"/>
+    <circle cx="0" cy="0" r="5.1" fill="#EEF3FF"/>
+    <circle cx="0" cy="0" r="2.2" fill="#4C74FF"/>
+  </g>
+
+  <!-- Small accent -->
+  <circle cx="42.5" cy="21.5" r="1.8" fill="#AFC5FF"/>
+</svg>

@@ -2,13 +2,23 @@
 <header class="top top--compact" id="branchHeader">
   <div class="top-left">
     <div class="branch-brand">
-      <div class="branch-brand__icon" aria-hidden="true">
-        <img
-          src="{% static 'offers/branch_homepage/icons/branch_header.svg' %}"
-          alt=""
-          class="branch-brand__icon-img"
-        >
-      </div>
+{% if show_back_nav %}
+  <a href="{{ header_back_url|default:'#' }}" class="branch-brand__icon branch-brand__icon--link back-navigation-icon" aria-label="Go back">
+    <img
+      src="{% static 'offers/branch_homepage/icons/back_nav.svg' %}"
+      alt="Back"
+      class="branch-brand__icon-img back-navigation-icon__img"
+    >
+  </a>
+{% else %}
+  <div class="branch-brand__icon" aria-hidden="true">
+    <img
+      src="{% static 'offers/branch_homepage/icons/branch_header.svg' %}"
+      alt=""
+      class="branch-brand__icon-img"
+    >
+  </div>
+{% endif %}
 
       <div class="branch-copy">
         <div class="branch-title-row">
@@ -22,7 +32,7 @@
           </span>
         </div>
 
-        <p class="branch-subtitle">Branch dashboard</p>
+       <p class="branch-subtitle">{{ header_subtitle|default:"Branch dashboard" }}</p>
       </div>
     </div>
   </div>
@@ -352,5 +362,24 @@
 </style>
 
 <style>
-    
+.branch-brand__icon--link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+}
+
+.back-navigation-icon__img{
+  width:18px;
+  height:18px;
+  object-fit:contain;
+}
+
+.back-navigation-icon:focus-visible{
+  outline:2px solid #1452ff;
+  outline-offset:3px;
+}
+
+
+
 </style>

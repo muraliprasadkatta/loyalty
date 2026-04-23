@@ -1,0 +1,35 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer soft background -->
+  <rect x="6" y="6" width="52" height="52" rx="16" fill="#EEF3FF"/>
+
+  <!-- Inner white badge -->
+  <rect x="16" y="16" width="32" height="32" rx="10" fill="white"/>
+
+  <!-- Main staff member -->
+  <circle cx="28" cy="26.5" r="5.5" fill="#4C74FF"/>
+  <path d="M19.5 39.5C19.5 35.3579 22.8579 32 27 32H29C33.1421 32 36.5 35.3579 36.5 39.5V41H19.5V39.5Z" fill="#4C74FF"/>
+
+  <!-- Secondary staff member -->
+  <circle cx="38.5" cy="28.5" r="3.8" fill="#9BB7FF"/>
+  <path d="M34.2 37.2C34.2 34.3281 36.5281 32 39.4 32C42.2719 32 44.6 34.3281 44.6 37.2V38.5H34.2V37.2Z" fill="#9BB7FF"/>
+
+  <!-- Management gear badge -->
+  <circle cx="42" cy="42" r="7" fill="#DCE6FF"/>
+
+  <g transform="translate(42 42)">
+    <!-- Gear teeth -->
+    <rect x="-1.1" y="-5.8" width="2.2" height="2.4" rx="0.6" fill="#4C74FF"/>
+    <rect x="-1.1" y="3.4" width="2.2" height="2.4" rx="0.6" fill="#4C74FF"/>
+    <rect x="3.4" y="-1.1" width="2.4" height="2.2" rx="0.6" fill="#4C74FF"/>
+    <rect x="-5.8" y="-1.1" width="2.4" height="2.2" rx="0.6" fill="#4C74FF"/>
+
+    <rect x="-1.1" y="-5.8" width="2.2" height="2.4" rx="0.6" transform="rotate(45)" fill="#4C74FF"/>
+    <rect x="-1.1" y="-5.8" width="2.2" height="2.4" rx="0.6" transform="rotate(90)" fill="#4C74FF"/>
+    <rect x="-1.1" y="-5.8" width="2.2" height="2.4" rx="0.6" transform="rotate(135)" fill="#4C74FF"/>
+    <rect x="-1.1" y="-5.8" width="2.2" height="2.4" rx="0.6" transform="rotate(-45)" fill="#4C74FF"/>
+
+    <!-- Gear center -->
+    <circle cx="0" cy="0" r="3.8" fill="#4C74FF"/>
+    <circle cx="0" cy="0" r="1.6" fill="white"/>
+  </g>
+</svg>

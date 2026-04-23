@@ -1,0 +1,191 @@
+{% load static %}
+
+<div class="dashboard-side-stack">
+  <button type="button"
+          class="card side-info-card side-info-card--action"
+          data-open="#userTrackModal">
+    <div class="side-info-card__head">
+      <span class="side-info-card__icon-wrap">
+        <img
+          src="{% static 'offers/branch_homepage/icons/user_track_details.svg' %}"
+          alt="User track details"
+          class="side-info-card__icon"
+        >
+      </span>
+      <div class="side-info-card__content">
+        <span class="side-info-card__title">User track details</span>
+        <span class="side-info-card__subtitle">Open visitor tracking details</span>
+      </div>
+    </div>
+  </button>
+
+  <div class="card side-info-card">
+    <div class="side-info-card__head">
+      <span class="side-info-card__icon-wrap">
+        <img
+          src="{% static 'offers/branch_homepage/icons/announcement.svg' %}"
+          alt="Announcements"
+          class="side-info-card__icon"
+        >
+      </span>
+      <div class="side-info-card__content">
+        <h3 class="side-info-card__title">Announcements</h3>
+        <p class="side-info-card__subtitle">No announcements at the moment.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card side-info-card">
+    <div class="side-info-card__head">
+      <span class="side-info-card__icon-wrap">
+        <img
+          src="{% static 'offers/branch_homepage/icons/campaigns.svg' %}"
+          alt="Campaigns"
+          class="side-info-card__icon"
+        >
+      </span>
+      <div class="side-info-card__content">
+        <h3 class="side-info-card__title">Campaigns</h3>
+        <p class="side-info-card__subtitle">No campaigns running right now.</p>
+      </div>
+    </div>
+  </div>
+
+<div class="card side-info-card">
+  <div class="side-info-card__head">
+    <span class="side-info-card__icon-wrap">
+      <img
+        src="{% static 'offers/branch_homepage/icons/coming_soon.svg' %}"
+        alt="Coming soon"
+        class="side-info-card__icon"
+      >
+    </span>
+    <div class="side-info-card__content">
+      <h3 class="side-info-card__title">Coming soon</h3>
+      <p class="side-info-card__subtitle">More updates will appear here soon.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<style>
+.dashboard-side-stack{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
+  align-content:start;
+}
+
+.side-info-card{
+  min-height:126px;
+  height:100px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:16px 16px;
+}
+
+.side-info-card__head{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-width:0;
+  width:100%;
+}
+
+.side-info-card__icon-wrap{
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:14px;
+  background:#eef3ff;
+  /* background: red; */
+}
+
+
+.side-info-card__icon{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  display:block;
+  object-fit:contain;
+}
+
+.side-info-card__content{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:5px;
+}
+
+.side-info-card__title{
+  margin:0;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.35;
+  font-weight:700;
+  letter-spacing:-0.50px;
+  text-align:left;
+}
+
+.side-info-card__subtitle{
+  margin:0;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.35;
+  font-weight:600;
+  text-align:left;
+}
+
+.side-info-card--action{
+  appearance:none;
+  -webkit-appearance:none;
+  width:100%;
+  border:1px solid var(--border);
+  background:var(--card);
+  box-shadow:var(--shadow-soft);
+  cursor:pointer;
+  text-align:left;
+  align-items:stretch;
+  justify-content:center;
+  color:inherit;
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease,
+    background .18s ease;
+}
+
+.side-info-card--action:hover{
+  transform:translateY(-1px);
+  box-shadow:var(--shadow);
+  border-color:#cdd8ff;
+  background:#fcfdff;
+}
+
+.side-info-card--action:active{
+  transform:translateY(0);
+}
+
+.side-info-card--action:focus-visible{
+  outline:2px solid #cbd6ff;
+  outline-offset:2px;
+}
+
+@media (min-width: 768px){
+  .dashboard-side-stack{
+    height:100%;
+    grid-template-rows:1fr 1fr 1fr 1fr;
+  }
+
+  .side-info-card{
+    min-height:0;
+    height:100%;
+  }
+}
+</style>

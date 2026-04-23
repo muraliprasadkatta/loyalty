@@ -16,6 +16,8 @@
 
   <script src="{% static 'offers/js/api-guard.js' %}"></script>
 
+  <link rel="stylesheet" href="{% static 'offers/branch_homepage/css/branch_side_info_stack.css' %}">
+
   <title>Branch · Home</title>
 
 <style>
@@ -361,34 +363,6 @@
     display:flex;
   }
 
-  .dashboard-side-stack{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:14px;
-    align-content:start;
-  }
-
-  .user-track-cta-wrap{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    min-height:132px;
-    padding:10px 0;
-  }
-
-  .user-track-cta{
-    width:auto;
-    min-width:220px;
-    padding:14px 24px;
-  }
-
-  .side-info-card{
-    min-height:148px;
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-start;
-  }
-
   @media (max-width: 380px){
     .top{
       padding:18px 12px 12px;
@@ -517,16 +491,6 @@
       gap:14px;
       align-items:stretch;
     }
-
-    .dashboard-side-stack{
-      height:100%;
-      grid-template-rows:auto 1fr 1fr;
-    }
-
-    .side-info-card{
-      min-height:0;
-      height:100%;
-    }
   }
 
   @media (min-width: 1100px){
@@ -582,67 +546,45 @@
 >
   <div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
 
-<div class="wrap">
+  <div class="wrap">
 
-  {% include "branch/partials/branch_header.html" %}
+    {% include "branch/partials/branch_header.html" %}
 
-  <main class="main">
+    <main class="main">
 
     {% include "branch/partials/branch_quick_actions.html" %}
 
-    <section class="dashboard-grid">
-      {% include "branch/partials/today_visits_card.html" %}
+      <section class="dashboard-grid">
+        {% include "branch/partials/today_visits_card.html" %}
+        {% include "branch/partials/branch_side_info_stack.html" %}
+      </section>
 
-      <div class="dashboard-side-stack">
-        <div class="user-track-cta-wrap">
-          <button type="button"
-                  class="btn btn--outline-mini user-track-cta"
-                  data-open="#userTrackModal">
-            User track details
-          </button>
-        </div>
+      <button type="button"
+              class="btn"
+              data-open="#addStaffModal">
+        Add staff
+      </button>
+      {% include "branch/partials/branch_tools_management.html" %}
 
-        <div class="card side-info-card">
-          <h3 style="margin:0 0 6px">Announcements</h3>
-          <p class="muted">No announcements.</p>
-        </div>
 
-        <div class="card side-info-card">
-          <h3 style="margin:0 0 6px">Campaigns</h3>
-          <p class="muted">No campaigns.</p>
-        </div>
+      <section class="card" style="display:flex;justify-content:flex-end">
+        <a
+          id="branchLogoutBtn"
+          class="btn oz-btn-inline-flex"
+          href="{% url 'offers:branch_logout' %}"
+          data-requires-network="1"
+        >
+          <span class="oz-btn__content">Logout</span>
 
-        <div class="card side-info-card">
-          <h3 style="margin:0 0 6px">Announcements</h3>
-          <p class="muted">No announcements.</p>
-        </div>
-      </div>
-    </section>
+          <span class="oz-btn__loading" hidden>
+            {% include "ui_states/spinners/button_loading.html" %}
+            <span>Logging out...</span>
+          </span>
+        </a>
+      </section>
 
-    <button type="button"
-            class="btn"
-            data-open="#addStaffModal">
-      Add staff
-    </button>
-
-    <section class="card" style="display:flex;justify-content:flex-end">
-      <a
-        id="branchLogoutBtn"
-        class="btn oz-btn-inline-flex"
-        href="{% url 'offers:branch_logout' %}"
-        data-requires-network="1"
-      >
-        <span class="oz-btn__content">Logout</span>
-
-        <span class="oz-btn__loading" hidden>
-          {% include "ui_states/spinners/button_loading.html" %}
-          <span>Logging out...</span>
-        </span>
-      </a>
-    </section>
-
-  </main>
-</div>
+    </main>
+  </div>
 
   {% include "branch/partials/branch_qrcode_modal.html" %}
   {% include "branch/branch_homepage/visitor_details_modal.html" %}

@@ -7,27 +7,31 @@
   <title>All Visits - {{ branch.name }}</title>
   <style>
     :root{
-      --bg:#f5f7ff;
+      --bg:#f6f8ff;
       --card:#ffffff;
-      --text:#132968;
-      --muted:#6f7da8;
-      --line:#dfe6ff;
-      --primary:#5f86ff;
-      --primary-dark:#3f67ea;
+      --border:#d9e2ff;
+      --text:#16214a;
+      --muted:#6b7aa5;
+      --prim:#4c74ff;
+      --prim-dark:#315ae6;
+      --top-bg:rgba(255,255,255,.92);
+      --soft:#eef3ff;
+      --shadow:0 10px 30px rgba(34, 61, 143, 0.08);
+      --shadow-soft:0 6px 18px rgba(34, 61, 143, 0.06);
       --pill:#eef3ff;
-      --success:#26b36a;
-      --shadow:0 10px 30px rgba(30, 60, 140, 0.08);
-      --radius-xl:28px;
-      --radius-lg:22px;
-      --radius-md:16px;
-      --radius-sm:12px;
     }
 
-    *{box-sizing:border-box}
+    *{
+      box-sizing:border-box;
+    }
+
+    html{
+      scroll-behavior:auto;
+    }
 
     body{
       margin:0;
-      font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family:system-ui, Arial, sans-serif;
       background:var(--bg);
       color:var(--text);
     }
@@ -41,139 +45,62 @@
       font:inherit;
     }
 
-    .page{
-      max-width:1200px;
-      margin:0 auto;
-      padding:24px 18px 40px;
+    .wrap{
+      min-height:100dvh;
+      width:100%;
+      display:block;
     }
 
-    .topbar{
+    .main{
+      width:100%;
+      max-width:none;
+      margin:0;
+      padding:14px;
+      display:grid;
+      gap:14px;
+    }
+
+    .visits-shell{
+      width:100%;
+      display:block;
+    }
+
+    .table-toolbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:14px;
-      margin-bottom:22px;
+      gap:16px;
+      margin-bottom:14px;
       flex-wrap:wrap;
+      width:100%;
     }
 
-    .topbar-left{
+    .table-toolbar-right{
       display:flex;
       align-items:center;
+      justify-content:flex-end;
       gap:14px;
+      flex-wrap:wrap;
+      margin-left:auto;
+    }
+
+    .visits-inline-filters{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
       min-width:0;
     }
 
-    .back-btn{
-      width:48px;
-      height:48px;
-      border-radius:16px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      background:var(--card);
-      border:1px solid var(--line);
-      box-shadow:var(--shadow);
-      flex:0 0 auto;
-      font-size:22px;
-      font-weight:800;
-    }
-
-    .title-wrap{
-      min-width:0;
-    }
-
-    .page-title{
-      margin:0;
-      font-size:32px;
-      line-height:1.05;
-      font-weight:900;
-      letter-spacing:-0.03em;
-      color:#10265f;
-    }
-
-    .page-subtitle{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:15px;
-      font-weight:600;
-    }
-
-    .status-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:10px 14px;
-      border-radius:999px;
-      background:#eafaf1;
-      color:#17894f;
-      font-weight:800;
-      border:1px solid #bce9cd;
-      white-space:nowrap;
-    }
-
-    .status-dot{
-      width:10px;
-      height:10px;
-      border-radius:50%;
-      background:var(--success);
-      box-shadow:0 0 0 5px rgba(38,179,106,.12);
-    }
-
-    .summary-grid{
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:16px;
-      margin-bottom:20px;
-    }
-
-    .summary-card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius-lg);
-      padding:20px;
-      box-shadow:var(--shadow);
-    }
-
-    .summary-label{
-      color:var(--muted);
-      font-size:14px;
-      font-weight:700;
-      margin-bottom:10px;
-    }
-
-    .summary-value{
-      font-size:30px;
-      font-weight:900;
-      color:#17357a;
-      line-height:1;
-    }
-
-    .filters{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius-xl);
-      padding:18px;
-      box-shadow:var(--shadow);
-      margin-bottom:20px;
-    }
-
-    .filters-row{
-      display:grid;
-      grid-template-columns:2fr 1fr 1fr auto;
-      gap:12px;
-    }
-
-    .field,
-    .select,
-    .date-input{
-      width:100%;
-      height:52px;
-      border-radius:16px;
-      border:1px solid var(--line);
+    .field{
+      width:340px;
+      height:44px;
+      border-radius:14px;
+      border:1px solid var(--border);
       background:#f9fbff;
-      padding:0 16px;
-      font-size:15px;
-      font-weight:600;
+      padding:0 14px;
+      font-size:14px;
+      font-weight:500;
       color:var(--text);
       outline:none;
     }
@@ -183,53 +110,52 @@
     }
 
     .btn{
-      height:52px;
-      border:none;
-      border-radius:16px;
-      padding:0 20px;
-      font-size:15px;
-      font-weight:800;
-      cursor:pointer;
       display:inline-flex;
       align-items:center;
       justify-content:center;
+      cursor:pointer;
+      text-decoration:none;
+      height:44px;
+      padding:0 22px;
+      border:none;
+      border-radius:16px;
+      color:#fff;
+      font-size:14px;
+      font-weight:600;
+      background:linear-gradient(135deg, #5d82ff 0%, #4c74ff 100%);
+      box-shadow:0 8px 18px rgba(76,116,255,.18);
+      transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        background .18s ease,
+        opacity .18s ease;
       white-space:nowrap;
     }
 
-    .btn-primary{
-      background:linear-gradient(180deg, #6e92ff 0%, #4f78f3 100%);
-      color:#fff;
-      box-shadow:0 12px 24px rgba(79,120,243,.24);
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 22px rgba(76,116,255,.24);
+      background:linear-gradient(135deg, #6b8dff 0%, #4c74ff 100%);
     }
 
-    .visits-card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius-xl);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-
-    .visits-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:20px 22px;
-      border-bottom:1px solid #edf1ff;
-      flex-wrap:wrap;
-    }
-
-    .visits-head-title{
-      font-size:24px;
-      font-weight:900;
-      color:#10265f;
+    .btn:active{
+      transform:translateY(0);
     }
 
     .visits-head-meta{
       color:var(--muted);
-      font-weight:700;
+      font-weight:600;
       font-size:14px;
+      white-space:nowrap;
+    }
+
+    .visits-card{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:28px;
+      background:var(--card);
+      box-shadow:var(--shadow-soft);
+      overflow:hidden;
     }
 
     .table-wrap{
@@ -240,7 +166,7 @@
     table{
       width:100%;
       border-collapse:collapse;
-      min-width:1040px;
+      min-width:920px;
     }
 
     thead th{
@@ -248,19 +174,19 @@
       font-size:13px;
       letter-spacing:.02em;
       color:#7280a8;
-      font-weight:800;
-      padding:16px 22px;
+      font-weight:650;
+      padding:16px 28px;
       background:#f8faff;
       border-bottom:1px solid #edf1ff;
       white-space:nowrap;
     }
 
     tbody td{
-      padding:18px 22px;
+      padding:18px 28px;
       border-bottom:1px solid #f0f3ff;
       vertical-align:middle;
-      font-size:15px;
-      font-weight:600;
+      font-size:14px;
+      font-weight:500;
       color:#253f7f;
       background:#fff;
     }
@@ -272,20 +198,20 @@
     .user-cell{
       display:flex;
       align-items:center;
-      gap:12px;
+      gap:14px;
       min-width:240px;
     }
 
     .avatar{
-      width:42px;
-      height:42px;
-      border-radius:14px;
+      width:32px;
+      height:32px;
+      border-radius:10px;
       background:linear-gradient(180deg, #7fa1ff 0%, #5f86ff 100%);
       color:#fff;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      font-weight:900;
+      font-weight:600;
       font-size:15px;
       flex:0 0 auto;
       box-shadow:0 8px 18px rgba(95,134,255,.22);
@@ -296,65 +222,41 @@
     }
 
     .user-name{
-      font-size:15px;
-      font-weight:800;
+      font-size:14px;
+      font-weight:600;
       color:#14306f;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
 
-    .user-sub{
-      margin-top:4px;
-      font-size:13px;
-      color:#7d8ab0;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .method-pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:98px;
-      padding:9px 12px;
-      border-radius:999px;
-      background:var(--pill);
-      color:#3958a7;
-      font-weight:800;
-      font-size:13px;
-      border:1px solid #dfe7ff;
-      text-transform:capitalize;
-      white-space:nowrap;
-    }
-
     .desk-badge{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-width:74px;
-      padding:8px 12px;
-      border-radius:12px;
+      min-width:96px;
+      padding:10px 14px;
+      border-radius:14px;
       background:#f7f9ff;
       border:1px solid #e2e8ff;
       color:#52659c;
       font-size:13px;
-      font-weight:800;
+      font-weight:600;
       white-space:nowrap;
     }
 
     .time-main{
-      font-weight:800;
+      font-weight:600;
       color:#18387d;
       white-space:nowrap;
+      font-size:14px;
     }
 
     .time-sub{
       margin-top:4px;
       font-size:12px;
       color:#7b88ae;
-      font-weight:700;
+      font-weight:500;
       white-space:nowrap;
     }
 
@@ -362,16 +264,32 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-width:48px;
-      height:48px;
-      padding:0 16px;
-      border-radius:999px;
+      min-width:36px;
+      height:36px;
+      padding:0 10px;
+      border-radius:20%;
       background:#f2f5ff;
       border:1px solid #dfe6ff;
       color:#3157aa;
-      font-size:16px;
-      font-weight:900;
+      font-size:13px;
+      font-weight:650;
       line-height:1;
+    }
+
+    .method-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:var(--pill);
+      color:#3958a7;
+      font-weight:600;
+      font-size:13px;
+      border:1px solid #dfe7ff;
+      text-transform:capitalize;
+      white-space:nowrap;
     }
 
     .expand-cell{
@@ -409,7 +327,7 @@
     }
 
     .visit-history-row td{
-      padding:0 22px 20px;
+      padding:0 28px 20px;
       background:#fff;
       border-bottom:1px solid #f0f3ff;
     }
@@ -423,8 +341,8 @@
     }
 
     .visit-history-title{
-      font-size:18px;
-      font-weight:900;
+      font-size:17px;
+      font-weight:650;
       color:#17357a;
       margin-bottom:14px;
     }
@@ -436,7 +354,7 @@
 
     .visit-history-item{
       display:grid;
-      grid-template-columns:1.2fr 1fr .8fr 1fr;
+      grid-template-columns:1.2fr 1fr .9fr;
       gap:12px;
       align-items:center;
       padding:14px 16px;
@@ -447,7 +365,7 @@
 
     .visit-history-item__date{
       font-size:14px;
-      font-weight:800;
+      font-weight:600;
       color:#1c3d84;
     }
 
@@ -456,30 +374,16 @@
       margin-top:4px;
       font-size:12px;
       color:#7b88ae;
-      font-weight:700;
+      font-weight:500;
     }
 
     .visit-history-empty{
       padding:14px 16px;
       color:#7b88ae;
-      font-weight:700;
+      font-weight:500;
       background:#fff;
       border:1px solid #e8eeff;
       border-radius:16px;
-    }
-
-    .history-staff{
-      font-size:14px;
-      font-weight:700;
-      color:#27417f;
-    }
-
-    .history-staff-sub{
-      display:block;
-      margin-top:4px;
-      font-size:12px;
-      color:#7b88ae;
-      font-weight:700;
     }
 
     .empty-state{
@@ -501,7 +405,7 @@
 
     .empty-title{
       font-size:22px;
-      font-weight:900;
+      font-weight:650;
       color:#17357a;
       margin-bottom:8px;
     }
@@ -509,7 +413,7 @@
     .empty-text{
       color:var(--muted);
       font-size:15px;
-      font-weight:600;
+      font-weight:500;
     }
 
     .pagination{
@@ -517,59 +421,90 @@
       align-items:center;
       justify-content:flex-end;
       gap:10px;
-      padding:18px 22px 22px;
+      padding:18px 28px 22px;
       flex-wrap:wrap;
     }
 
     .page-btn{
-      min-width:42px;
-      height:42px;
-      padding:0 14px;
-      border-radius:14px;
-      border:1px solid var(--line);
+      min-width:54px;
+      height:54px;
+      padding:0 16px;
+      border-radius:16px;
+      border:1px solid var(--border);
       background:#fff;
       color:#28488f;
-      font-weight:800;
+      font-weight:600;
       display:inline-flex;
       align-items:center;
       justify-content:center;
+      font-size:16px;
     }
 
     .page-btn.active{
-      background:var(--primary);
+      background:var(--prim);
       color:#fff;
-      border-color:var(--primary);
+      border-color:var(--prim);
+      box-shadow:0 8px 18px rgba(76,116,255,.18);
     }
 
-    @media (max-width: 960px){
-      .summary-grid{
-        grid-template-columns:repeat(2, minmax(0,1fr));
+    .table-toolbar--only-actions{
+      justify-content:flex-end;
+    }
+
+    .table-toolbar--only-actions .table-toolbar-right{
+      width:100%;
+      justify-content:flex-end;
+    }
+
+    @media (max-width: 1100px){
+      .table-toolbar{
+        align-items:flex-start;
       }
 
-      .filters-row{
-        grid-template-columns:1fr 1fr;
+      .table-toolbar-right{
+        width:100%;
+        margin-left:0;
+        justify-content:space-between;
+      }
+
+      .visits-inline-filters{
+        flex:1 1 100%;
+      }
+
+      .field{
+        flex:1 1 260px;
+        width:auto;
+      }
+    }
+
+    @media (max-width: 768px){
+      .main{
+        padding:16px 18px 24px;
+        gap:14px;
       }
     }
 
     @media (max-width: 640px){
-      .page{
-        padding:18px 14px 30px;
+      .main{
+        padding:12px;
+        gap:12px;
       }
 
-      .page-title{
-        font-size:26px;
-      }
-
-      .summary-grid{
+      .visits-inline-filters{
+        width:100%;
+        display:grid;
         grid-template-columns:1fr;
+        gap:10px;
       }
 
-      .filters-row{
-        grid-template-columns:1fr;
+      .field,
+      .btn{
+        width:100%;
       }
 
-      .visits-head{
-        padding:18px 16px;
+      .visits-head-meta{
+        width:100%;
+        text-align:right;
       }
 
       thead th,
@@ -589,250 +524,53 @@
         min-width:42px;
         height:42px;
         padding:0 12px;
+        font-size:15px;
+      }
+
+      .avatar{
+        width:44px;
+        height:44px;
+      }
+
+      .page-btn{
+        min-width:44px;
+        height:44px;
+        border-radius:14px;
+        font-size:15px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="page">
+  <div class="wrap">
+    {% include "branch/partials/branch_header.html" with show_back_nav=True header_back_url=branch_home_url header_subtitle="All visit records" %}
 
-    <div class="topbar">
-      <div class="topbar-left">
-        <a href="{% url 'offers:branch_home' %}" class="back-btn" aria-label="Back">←</a>
+    <main class="main">
+      <!-- {% include "branch/partials/branch_quick_actions.html" %} -->
 
-        <div class="title-wrap">
-          <h1 class="page-title">All Visits</h1>
-          <div class="page-subtitle">
-            {{ branch.name }} customer visit records
+      <section class="visits-shell">
+        <div class="table-toolbar table-toolbar--only-actions">
+          <div class="table-toolbar-right">
+            <form method="get" class="visits-inline-filters">
+              <input
+                type="text"
+                name="q"
+                value="{{ request.GET.q }}"
+                class="field"
+                placeholder="Search by user name / email / token"
+              >
+              <button type="submit" class="btn">Apply</button>
+            </form>
+
+            <div class="visits-head-meta">
+              Showing {{ visits|length }} users
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="status-pill">
-        <span class="status-dot"></span>
-        Active Branch
-      </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-card">
-        <div class="summary-label">Total Visits</div>
-        <div class="summary-value">{{ total_visits|default:"0" }}</div>
-      </div>
-
-      <div class="summary-card">
-        <div class="summary-label">Today Visits</div>
-        <div class="summary-value">{{ today_visits|default:"0" }}</div>
-      </div>
-
-      <div class="summary-card">
-        <div class="summary-label">Unique Users</div>
-        <div class="summary-value">{{ unique_users|default:"0" }}</div>
-      </div>
-
-      <div class="summary-card">
-        <div class="summary-label">QR + PIN Visits</div>
-        <div class="summary-value">{{ qr_pin_visits|default:"0" }}</div>
-      </div>
-    </div>
-
-    <form method="get" class="filters">
-      <div class="filters-row">
-        <input
-          type="text"
-          name="q"
-          value="{{ request.GET.q }}"
-          class="field"
-          placeholder="Search by user name / email / token"
-        >
-
-        <select name="method" class="select">
-          <option value="">All Methods</option>
-          <option value="qr_screenshot" {% if request.GET.method == "qr_screenshot" %}selected{% endif %}>QR Screenshot</option>
-          <option value="qr_pin" {% if request.GET.method == "qr_pin" %}selected{% endif %}>QR PIN</option>
-          <option value="offer_day_pin" {% if request.GET.method == "offer_day_pin" %}selected{% endif %}>Offer Day PIN</option>
-        </select>
-
-        <input
-          type="date"
-          name="date"
-          value="{{ request.GET.date }}"
-          class="date-input"
-        >
-
-        <button type="submit" class="btn btn-primary">Apply Filters</button>
-      </div>
-    </form>
-
-    <div class="visits-card">
-      <div class="visits-head">
-        <div class="visits-head-title">Visit Records</div>
-        <div class="visits-head-meta">
-          Showing {{ visits|length }} users
-        </div>
-      </div>
-
-      {% if visits %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Total Visits</th>
-                <th>Visit Type</th>
-                <th>Offer Claimed</th>
-                <th>Verified By</th>
-                <th>Last Visited At</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in visits %}
-                <tr class="visit-main-row">
-                  <td>
-                    <div class="user-cell">
-                      <div class="avatar">
-                        {% if item.user and item.user.email %}
-                          {{ item.user.email|slice:":1"|upper }}
-                        {% else %}
-                          G
-                        {% endif %}
-                      </div>
-
-                      <div class="user-main">
-                        <div class="user-name">
-                          {% if item.user and item.user.profile.display_name %}
-                            {{ item.user.profile.display_name }}
-                          {% elif item.user and item.user.first_name %}
-                            {{ item.user.first_name }}
-                          {% elif item.user %}
-                            {{ item.user.email }}
-                          {% else %}
-                            Guest User
-                          {% endif %}
-                        </div>
-
-                        <div class="user-sub">
-                          {% if item.user %}
-                            {{ item.user.email }}
-                          {% else %}
-                            No account linked
-                          {% endif %}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td>
-                    <span class="visit-count-pill">{{ item.total_visits }}</span>
-                  </td>
-
-                  <td>
-                    <span class="method-pill">{{ item.latest_visit.get_visit_method_display }}</span>
-                  </td>
-
-                  <td>
-                    {% if item.latest_visit.has_offer_claim %}
-                      <span class="desk-badge">Yes</span>
-                    {% else %}
-                      <span class="desk-badge">No</span>
-                    {% endif %}
-                  </td>
-
-                  <td>
-                    {% if item.latest_visit.staff_name %}
-                      {{ item.latest_visit.staff_name }}
-                      {% if item.latest_visit.staff_code %}
-                        <div class="time-sub">{{ item.latest_visit.staff_code }}</div>
-                      {% endif %}
-                    {% else %}
-                      —
-                    {% endif %}
-                  </td>
-
-                  <td>
-                    <div class="time-main">{{ item.latest_visit.created_at|date:"d M Y" }}</div>
-                    <div class="time-sub">{{ item.latest_visit.created_at|date:"h:i A" }}</div>
-                  </td>
-
-                  <td class="expand-cell">
-                    <button
-                      type="button"
-                      class="expand-btn"
-                      data-toggle-history
-                      data-target="history-{{ forloop.counter }}"
-                      aria-expanded="false"
-                      aria-label="Toggle visit history"
-                    >
-                      <span class="expand-btn__icon">⌄</span>
-                    </button>
-                  </td>
-                </tr>
-
-                <tr id="history-{{ forloop.counter }}" class="visit-history-row" hidden>
-                  <td colspan="7">
-                    <div class="visit-history-box">
-                      <div class="visit-history-title">
-                        Visit History ({{ item.total_visits }})
-                      </div>
-
-                      <div class="visit-history-list">
-                        {% for old_visit in item.history %}
-                          <div class="visit-history-item">
-                            <div class="visit-history-item__date">
-                              {{ old_visit.created_at|date:"d M Y" }}
-                              <span>{{ old_visit.created_at|date:"h:i A" }}</span>
-                            </div>
-
-                            <div>
-                              <span class="method-pill">{{ old_visit.get_visit_method_display }}</span>
-                            </div>
-
-                            <div>
-                              <span class="desk-badge">{{ old_visit.desk|default:"—" }}</span>
-                            </div>
-
-                            <div class="history-staff">
-                              {% if old_visit.staff_name %}
-                                {{ old_visit.staff_name }}
-                                {% if old_visit.staff_code %}
-                                  <span class="history-staff-sub">{{ old_visit.staff_code }}</span>
-                                {% endif %}
-                              {% else %}
-                                —
-                              {% endif %}
-                            </div>
-                          </div>
-                        {% empty %}
-                          <div class="visit-history-empty">No previous visits.</div>
-                        {% endfor %}
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="pagination">
-          <span class="page-btn">‹</span>
-          <span class="page-btn active">1</span>
-          <span class="page-btn">2</span>
-          <span class="page-btn">3</span>
-          <span class="page-btn">›</span>
-        </div>
-      {% else %}
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <div class="empty-title">No visits found</div>
-          <div class="empty-text">
-            This branch does not have any visit records yet.
-          </div>
-        </div>
-      {% endif %}
-    </div>
-
+        {% include "branch/branch_all_visits/partials/allvisits_record_table.html" %}
+      </section>
+    </main>
   </div>
 
   <script>

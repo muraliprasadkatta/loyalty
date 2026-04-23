@@ -1,0 +1,31 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer soft background -->
+  <rect x="6" y="6" width="52" height="52" rx="16" fill="#EEF3FF"/>
+
+  <!-- Calendar body -->
+  <rect x="17" y="18" width="30" height="28" rx="8" fill="white"/>
+
+  <!-- Calendar top bar -->
+  <rect x="17" y="18" width="30" height="8" rx="8" fill="#DCE6FF"/>
+  <path d="M17 26H47V27C47 31.4183 43.4183 35 39 35H25C20.5817 35 17 31.4183 17 27V26Z" fill="white"/>
+
+  <!-- Rings -->
+  <rect x="23" y="14" width="3" height="8" rx="1.5" fill="#4C74FF"/>
+  <rect x="38" y="14" width="3" height="8" rx="1.5" fill="#4C74FF"/>
+
+  <!-- Calendar dots -->
+  <circle cx="25" cy="31" r="1.6" fill="#C4D4FF"/>
+  <circle cx="32" cy="31" r="1.6" fill="#C4D4FF"/>
+  <circle cx="39" cy="31" r="1.6" fill="#C4D4FF"/>
+
+  <circle cx="25" cy="37" r="1.6" fill="#C4D4FF"/>
+  <circle cx="32" cy="37" r="1.6" fill="#4C74FF"/>
+  <circle cx="39" cy="37" r="1.6" fill="#C4D4FF"/>
+
+  <!-- Check badge -->
+  <circle cx="42" cy="42" r="7" fill="#4C74FF"/>
+  <path d="M39.5 42.1L41.2 43.8L44.8 40.2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Small planning lines -->
+  <rect x="21" y="49" width="14" height="2.2" rx="1.1" fill="#D7E3FF"/>
+</svg>

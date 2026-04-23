@@ -1057,10 +1057,9 @@ def confirm_branch_visit(request):
                 "redirect_url": reverse("offers:user_visit_pin_page"),
             })
 
-        staff_name = qt.staff_name or ""
-        staff_code = qt.staff_code or ""
+        staff_name = (qt.staff_name or "").strip() or qt.branch.name
+        staff_code = (qt.staff_code or "").strip()
         desk = qt.desk or ""
-
         # If PIN flow → burn YashPin also, and take staff/desk from pin row
         if pending_method == "pin":
             if not pending_pin_row_id:
@@ -1128,13 +1127,13 @@ def confirm_branch_visit(request):
         qt.used_by = request.user
         qt.save(update_fields=["used", "used_at", "used_via", "used_by"])
 
-        # create visit event
+        # create visit 
         ve = UserVisitEvent.objects.create(
             user=request.user,
             branch=qt.branch,
             token=qt.token,
             desk=desk,
-            visit_method="qr_pin" if pending_method == "pin" else "qr_screenshot",
+            visit_method="qr_pin" if pending_method == "pin" else "qr_code",    
             staff_name=staff_name,
             staff_code=staff_code,
         )
@@ -1832,8 +1831,8 @@ def user_verify_visit_pin(request):
             })
 
         # 4D) If user came via qr-pin flow → burn YashPin also
-        staff_name = qt.staff_name or ""
-        staff_code = qt.staff_code or ""
+        staff_name = (qt.staff_name or "").strip() or qt.branch.name
+        staff_code = (qt.staff_code or "").strip()
         desk = qt.desk or ""
 
         if pending_method == "pin":
@@ -1892,8 +1891,8 @@ def user_verify_visit_pin(request):
             pin_row.save(update_fields=["used", "used_at", "used_by"])
 
             # prefer staff/desk from qr-pin row (if set)
-            staff_name = pin_row.staff_name or staff_name
-            staff_code = pin_row.staff_code or staff_code
+            staff_name = (pin_row.staff_name or "").strip() or staff_name or qt.branch.name
+            staff_code = (pin_row.staff_code or "").strip() or staff_code
             desk = pin_row.desk or desk
 
         # 4E) burn QRToken now
@@ -1910,7 +1909,7 @@ def user_verify_visit_pin(request):
 
         # choose desk/staff snapshots (prefer VisitPin snapshots if present)
         final_desk = (matched_visit_pin.desk or desk or "")
-        final_staff_name = (getattr(matched_visit_pin, "staff_name", "") or "").strip() or staff_name
+        final_staff_name = ((getattr(matched_visit_pin, "staff_name", "") or "").strip() or staff_name or qt.branch.name)
         final_staff_code = (getattr(matched_visit_pin, "staff_code", "") or "").strip() or staff_code
 
         # 4G) create audit row (admin table)
@@ -1934,7 +1933,7 @@ def user_verify_visit_pin(request):
             branch=qt.branch,
             token=qt.token,
             desk=final_desk,
-            visit_method="qr_pin" if pending_method == "pin" else "qr_screenshot",
+            visit_method="qr_pin" if pending_method == "pin" else "qr_code",
             staff_name=final_staff_name,
             staff_code=final_staff_code,
         )
