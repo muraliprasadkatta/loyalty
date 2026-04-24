@@ -1,4 +1,63 @@
-<div class="visits-card">
+{% load static %}
+
+<div class="visits-card" id="visitsCard">
+
+  <svg class="stat-symbol-sprite" aria-hidden="true" focusable="false">
+    <symbol id="totalVisitsStatIcon" viewBox="18 14 60 60">
+      <rect x="18" y="14" width="60" height="60" rx="18" fill="currentColor"/>
+
+      <circle cx="37" cy="38" r="9" fill="#FFFFFF" opacity=".94"/>
+      <path d="M25 62C25 55.3726 30.3726 50 37 50C43.6274 50 49 55.3726 49 62V64H25V62Z" fill="#FFFFFF" opacity=".88"/>
+
+      <rect x="54" y="48" width="6" height="14" rx="3" fill="#FFFFFF" opacity=".92"/>
+      <rect x="62" y="40" width="6" height="22" rx="3" fill="#FFFFFF" opacity=".92"/>
+      <rect x="54" y="32" width="14" height="4" rx="2" fill="#FFFFFF" opacity=".72"/>
+
+      <circle cx="69" cy="25" r="10" fill="#FFFFFF"/>
+      <text
+        x="69"
+        y="29.5"
+        text-anchor="middle"
+        font-size="10"
+        font-weight="800"
+        fill="currentColor"
+        font-family="Arial, Helvetica, sans-serif"
+      >12</text>
+    </symbol>
+
+    <symbol id="claimsStatIcon" viewBox="18 14 60 60">
+      <rect x="18" y="14" width="60" height="60" rx="18" fill="currentColor"/>
+
+      <rect x="31" y="30" width="30" height="8" rx="4" fill="#FFFFFF" opacity=".92"/>
+      <rect x="31" y="38" width="30" height="21" rx="6" fill="#FFFFFF" opacity=".86"/>
+
+      <rect x="44" y="30" width="4" height="29" rx="2" fill="currentColor" opacity=".26"/>
+      <rect x="31" y="41.5" width="30" height="4" rx="2" fill="currentColor" opacity=".26"/>
+
+      <path d="M43.5 30C40 30 38.5 27.2 39.8 25.4C41 23.8 43.8 24.3 46 28.2" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M48.5 30C52 30 53.5 27.2 52.2 25.4C51 23.8 48.2 24.3 46 28.2" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+
+      <circle cx="63" cy="28" r="8" fill="#FFFFFF"/>
+      <path d="M59.8 28L61.7 29.9L66.2 25.6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <div class="visits-card-toolbar">
+    <div class="visits-card-search">
+      <input
+        type="text"
+        id="visitsLiveSearch"
+        class="visits-card-search__input"
+        placeholder="Search by user name / email / token"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="visits-card-meta" id="visitsCountText">
+      Showing {{ visits|length }} users
+    </div>
+  </div>
+
   {% if visits %}
     <div class="table-wrap">
       <table>
@@ -12,13 +71,26 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>
+
+        <tbody id="visitsTableBody">
           {% for item in visits %}
-            <tr class="visit-main-row">
+            <tr
+              class="visit-main-row"
+              data-search-row
+              data-history-target="history-{{ forloop.counter }}"
+              onclick="toggleVisitHistoryFromRow(this)"
+            >
               <td>
                 <div class="user-cell">
-                  <div class="avatar">
-                    {% if item.user and item.user.email %}
+                  <div
+                    class="avatar"
+                    data-avatar-letter="{% if item.user and item.user.profile.display_name %}{{ item.user.profile.display_name|slice:':1'|upper }}{% elif item.user and item.user.first_name %}{{ item.user.first_name|slice:':1'|upper }}{% elif item.user and item.user.email %}{{ item.user.email|slice:':1'|upper }}{% else %}G{% endif %}"
+                  >
+                    {% if item.user and item.user.profile.display_name %}
+                      {{ item.user.profile.display_name|slice:":1"|upper }}
+                    {% elif item.user and item.user.first_name %}
+                      {{ item.user.first_name|slice:":1"|upper }}
+                    {% elif item.user and item.user.email %}
                       {{ item.user.email|slice:":1"|upper }}
                     {% else %}
                       G
@@ -42,7 +114,20 @@
               </td>
 
               <td>
-                <span class="visit-count-pill">{{ item.total_visits }}</span>
+                <span class="desktop-stat-pill js-format-count">{{ item.total_visits }}</span>
+
+                <div class="mobile-stat mobile-stat--visits">
+                  <div class="mobile-stat__icon mobile-stat__icon--visits" data-user-color-icon>
+                    <svg class="stat-icon-svg visit-stat-svg" aria-hidden="true" focusable="false">
+                      <use href="#totalVisitsStatIcon"></use>
+                    </svg>
+                  </div>
+
+                  <div class="mobile-stat__content">
+                    <span class="visit-count-pill js-format-count">{{ item.total_visits }}</span>
+                    <div class="mobile-stat__label">Total Visits</div>
+                  </div>
+                </div>
               </td>
 
               <td>
@@ -50,9 +135,20 @@
               </td>
 
               <td>
-                <span class="visit-count-pill">
-                  {{ item.total_claims|default:0 }}
-                </span>
+                <span class="desktop-stat-pill js-format-count">{{ item.total_claims|default:0 }}</span>
+
+                <div class="mobile-stat mobile-stat--claims">
+                  <div class="mobile-stat__icon mobile-stat__icon--claims" data-user-color-icon>
+                    <svg class="stat-icon-svg claim-stat-svg" aria-hidden="true" focusable="false">
+                      <use href="#claimsStatIcon"></use>
+                    </svg>
+                  </div>
+
+                  <div class="mobile-stat__content">
+                    <span class="visit-count-pill js-format-count">{{ item.total_claims|default:0 }}</span>
+                    <div class="mobile-stat__label">Claims</div>
+                  </div>
+                </div>
               </td>
 
               <td>
@@ -64,17 +160,17 @@
                 <button
                   type="button"
                   class="expand-btn"
-                  data-toggle-history
                   data-target="history-{{ forloop.counter }}"
                   aria-expanded="false"
                   aria-label="Toggle visit history"
+                  onclick="event.stopPropagation(); toggleVisitHistory(this);"
                 >
                   <span class="expand-btn__chevron"></span>
                 </button>
               </td>
             </tr>
 
-            <tr id="history-{{ forloop.counter }}" class="visit-history-row" hidden>
+            <tr id="history-{{ forloop.counter }}" class="visit-history-row" data-history-row hidden>
               <td colspan="6">
                 <div class="visit-history-box">
                   <div class="visit-history-title">
@@ -93,6 +189,7 @@
                             <th>Offer Claimed</th>
                           </tr>
                         </thead>
+
                         <tbody>
                           {% for visit in item.all_visits %}
                             <tr>
@@ -102,9 +199,7 @@
                               <td>
                                 {% if visit.staff_name %}
                                   {{ visit.staff_name }}
-                                  {% if visit.staff_code %}
-                                    ({{ visit.staff_code }})
-                                  {% endif %}
+                                  {% if visit.staff_code %}({{ visit.staff_code }}){% endif %}
                                 {% elif visit.desk %}
                                   {{ visit.desk }}
                                 {% else %}
@@ -112,11 +207,7 @@
                                 {% endif %}
                               </td>
                               <td>
-                                {% if visit.has_offer_claim %}
-                                  Yes
-                                {% else %}
-                                  No
-                                {% endif %}
+                                {% if visit.has_offer_claim %}Yes{% else %}No{% endif %}
                               </td>
                             </tr>
                           {% endfor %}
@@ -132,6 +223,10 @@
           {% endfor %}
         </tbody>
       </table>
+
+      <div class="live-search-empty" id="liveSearchEmpty" hidden>
+        No matching visits found.
+      </div>
     </div>
 
     <div class="pagination">
@@ -145,48 +240,194 @@
     <div class="empty-state">
       <div class="empty-icon">📋</div>
       <div class="empty-title">No visits found</div>
-      <div class="empty-text">
-        This branch does not have any visit records yet.
-      </div>
+      <div class="empty-text">This branch does not have any visit records yet.</div>
     </div>
   {% endif %}
 </div>
 
 <style>
+  .stat-symbol-sprite{
+    position:absolute;
+    width:0;
+    height:0;
+    overflow:hidden;
+    pointer-events:none;
+  }
+
+  .visits-card-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:18px 28px;
+    background:#f6f8ff;
+    border-bottom:1px solid #edf1ff;
+    flex-wrap:wrap;
+  }
+
+  .visits-card-search{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .visits-card-search__input{
+    width:360px;
+    height:44px;
+    border-radius:14px;
+    border:1px solid #d9e2ff;
+    background:#ffffff;
+    padding:0 14px;
+    font-size:14px;
+    font-weight:500;
+    color:#16214a;
+    outline:none;
+  }
+
+  .visits-card-search__input::placeholder{
+    color:#98a5cb;
+  }
+
+  .visits-card-meta{
+    color:#6b7aa5;
+    font-size:14px;
+    font-weight:650;
+    white-space:nowrap;
+  }
+
+  .live-search-empty{
+    padding:34px 20px;
+    text-align:center;
+    color:#7b88ae;
+    font-size:15px;
+    font-weight:600;
+    background:#fff;
+  }
+
+  .visits-card table thead th{
+    padding:16px 28px;
+    font-size:13px;
+    font-weight:650;
+  }
+
+  .visits-card table tbody td{
+    padding:6px 20px;
+    vertical-align:middle;
+  }
+
+  .visit-main-row{
+    cursor:pointer;
+    --user-color:#5C8CFF;
+    --user-soft-color:#EEF3FF;
+    --user-line-color:#E4EBFF;
+  }
+
+  .user-cell{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+
+  .avatar{
+    width:30px;
+    height:24px;
+    border-radius:11px;
+    font-size:13px;
+    font-weight:800;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#ffffff;
+    background:var(--user-color);
+    box-shadow:0 8px 20px rgba(76,116,255,.18);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+
+  .user-main{
+    min-width:140px;
+  }
+
+  .user-name{
+    font-size:15px;
+    font-weight:800;
+    color:#17357a;
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .visit-count-pill{
+    min-width:36px;
+    height:36px;
+    padding:0 10px;
+    border-radius:10px;
+    font-size:12px;
+  }
+
+  .desktop-stat-pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:44px;
+    height:36px;
+    padding:0 12px;
+    border-radius:10px;
+    border:1px solid #dfe6ff;
+    background:#f7f9ff;
+    color:var(--user-color);
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .method-pill{
+    min-height:38px;
+    padding:0 16px;
+    border-radius:999px;
+    font-size:12px;
+  }
+
+  .time-main{
+    font-size:14px;
+    line-height:1.2;
+  }
+
+  .time-sub{
+    font-size:12px;
+    margin-top:5px;
+  }
+
   .expand-cell{
-    width:72px;
+    width:58px;
     text-align:right;
   }
 
   .expand-btn{
-    width:42px;
-    height:42px;
+    width:38px;
+    height:38px;
     border:1px solid #dfe6ff;
     background:#f7f9ff;
-    border-radius:14px;
+    border-radius:13px;
     cursor:pointer;
     display:inline-flex;
     align-items:center;
     justify-content:center;
     color:#26478f;
-    transition:
-      background .18s ease,
-      border-color .18s ease,
-      transform .18s ease,
-      box-shadow .18s ease;
   }
 
   .expand-btn:hover{
     background:#eef3ff;
     border-color:#cfdcff;
-    box-shadow:0 8px 18px rgba(76,116,255,.10);
   }
 
   .expand-btn__chevron{
-    width:11px;
-    height:11px;
-    border-right:2.2px solid #3558a8;
-    border-bottom:2.2px solid #3558a8;
+    width:10px;
+    height:10px;
+    border-right:2.1px solid currentColor;
+    border-bottom:2.1px solid currentColor;
     transform:rotate(45deg) translateY(-1px);
     transition:transform .22s ease;
     display:block;
@@ -197,31 +438,35 @@
   }
 
   .visit-history-row td{
-    padding:0 28px 20px;
+    padding:0 24px 18px;
     background:#fff;
     border-bottom:1px solid #f0f3ff;
+  }
+
+  .visit-history-row[hidden]{
+    display:none !important;
   }
 
   .visit-history-box{
     background:#f9fbff;
     border:1px solid #e5ecff;
-    border-radius:20px;
-    padding:18px;
+    border-radius:18px;
+    padding:10px;
     margin-top:-2px;
   }
 
   .visit-history-title{
-    font-size:17px;
+    font-size:15px;
     font-weight:650;
     color:#17357a;
-    margin-bottom:14px;
+    margin-bottom:12px;
   }
 
   .visit-history-table-wrap{
     width:100%;
     overflow:auto;
     border:1px solid #e7edff;
-    border-radius:16px;
+    border-radius:14px;
     background:#fff;
   }
 
@@ -234,17 +479,16 @@
   .visit-history-table thead th{
     text-align:left;
     font-size:12px;
-    letter-spacing:.02em;
     color:#7482aa;
     font-weight:650;
-    padding:14px 18px;
+    padding:12px 16px;
     background:#f7faff;
     border-bottom:1px solid #edf1ff;
     white-space:nowrap;
   }
 
   .visit-history-table tbody td{
-    padding:14px 18px;
+    padding:12px 16px;
     border-bottom:1px solid #eef2ff;
     font-size:13px;
     font-weight:500;
@@ -265,4 +509,641 @@
     border:1px solid #e8eeff;
     border-radius:16px;
   }
+
+  .pagination{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:10px;
+    padding:10px 18px 8px;
+  }
+
+  .page-btn{
+    width:42px;
+    height:42px;
+    border-radius:13px;
+    font-size:14px;
+    font-weight:650;
+  }
+
+  .page-btn.active{
+    width:44px;
+    height:44px;
+    border-radius:13px;
+  }
+
+  .mobile-stat{
+    display:none;
+  }
+
+  @media (max-width:767px){
+    .visits-card{
+      border-radius:24px;
+      overflow:hidden;
+    }
+
+    .visits-card-toolbar{
+      padding:14px;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .visits-card-search,
+    .visits-card-search__input{
+      width:100%;
+    }
+
+    .visits-card-search__input{
+      height:44px;
+      font-size:13px;
+      border-radius:16px;
+      padding:0 14px;
+    }
+
+    .visits-card-meta{
+      width:100%;
+      text-align:left;
+      font-size:13px;
+      font-weight:700;
+    }
+
+    .table-wrap{
+      width:100%;
+      overflow:visible;
+    }
+
+    .visits-card table,
+    .visits-card thead,
+    .visits-card tbody{
+      display:block;
+      width:100%;
+      min-width:0;
+    }
+
+    .visits-card thead{
+      display:none;
+    }
+
+    .visits-card table tbody td{
+      padding:0;
+      border-bottom:0;
+      background:transparent;
+    }
+
+    .visit-main-row{
+      position:relative;
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto;
+      grid-template-rows:auto auto;
+      column-gap:14px;
+      row-gap:0;
+      width:100%;
+      box-sizing:border-box;
+      padding:16px;
+      margin: 10px 0;
+      background:#ffffff;
+      border:1px solid var(--user-line-color);
+      border-left:3px solid var(--user-color);
+      border-radius:16px;
+      box-shadow:0 8px 28px rgba(76,116,255,.06);
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      overflow:hidden;
+      
+    }
+
+    .visit-main-row::after{
+      content:"";
+      position:absolute;
+      right:-30px;
+      top:28px;
+      width:128px;
+      height:78px;
+      background:var(--user-soft-color);
+      border-radius:70px 0 0 0;
+      opacity:.72;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .visit-main-row > td{
+      position:relative;
+      z-index:1;
+    }
+
+    .visit-main-row[hidden]{
+      display:none !important;
+    }
+
+    .visit-main-row > td{
+      min-width:0;
+    }
+
+    .visit-main-row > td:nth-child(1){
+      grid-column:1;
+      grid-row:1;
+      padding-right:0;
+      margin-bottom:0;
+    }
+
+    .visit-main-row > td:nth-child(6){
+      grid-column:2;
+      grid-row:1;
+      display:flex;
+      justify-content:flex-end;
+      align-items:flex-start;
+    }
+
+    .visit-main-row > td:nth-child(2){
+      grid-column:1;
+      grid-row:2;
+    }
+
+    .visit-main-row > td:nth-child(4){
+      grid-column:2;
+      grid-row:2;
+    }
+
+    .visit-main-row > td:nth-child(3),
+    .visit-main-row > td:nth-child(5){
+      display:none !important;
+    }
+
+    .user-cell{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      min-width:0;
+    }
+
+    .avatar{
+      width:36px;
+      height:36px;
+      border-radius:12px;
+      font-size:14px;
+      flex:0 0 36px;
+      box-shadow:0 8px 18px rgba(17, 24, 39, .10);
+    }
+
+    .user-main{
+      min-width:110px;
+    }
+
+    .user-name{
+      font-size:15px;
+      font-weight:800;
+      line-height:1.2;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .expand-cell{
+      width:auto;
+      text-align:right;
+    }
+
+    .expand-btn{
+      width:34px;
+      height:34px;
+      border-radius:12px;
+      color:var(--user-color);
+      background:var(--user-soft-color);
+      border-color:var(--user-line-color);
+      box-shadow:0 7px 18px rgba(17, 24, 39, .06);
+    }
+
+    .expand-btn:hover{
+      background:var(--user-soft-color);
+      border-color:var(--user-color);
+    }
+
+    .desktop-stat-pill{
+      display:none;
+    }
+
+    .visit-main-row > td:nth-child(2),
+    .visit-main-row > td:nth-child(4){
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      padding-top:14px;
+      margin-top:14px;
+      border-top:1px solid var(--user-line-color);
+      background:transparent;
+      border-left:none;
+      border-right:none;
+      border-bottom:none;
+      text-align:left;
+      padding-left:8px;
+    }
+
+    .mobile-stat{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      width:auto;
+      justify-content:flex-start;
+      margin-left:0;
+    }
+
+    .mobile-stat__icon{
+      width:30px;
+      height:30px;
+      flex:0 0 30px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--user-color);
+    }
+
+    .mobile-stat__icon--visits,
+    .mobile-stat__icon--claims{
+      color:var(--user-color);
+    }
+
+    .stat-icon-svg,
+    .visit-stat-svg,
+    .claim-stat-svg{
+      width:30px;
+      height:30px;
+      display:block;
+      color:var(--user-color);
+      filter:drop-shadow(0 5px 8px rgba(49, 90, 230, .14));
+    }
+
+    .mobile-stat__content{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:center;
+      min-width:0;
+    }
+
+    .mobile-stat__label{
+      display:block;
+      margin-top:2px;
+      font-size:12px;
+      font-weight:700;
+      color:#7b88ae;
+      line-height:1.15;
+    }
+
+    .visit-main-row > td:nth-child(2) .visit-count-pill,
+    .visit-main-row > td:nth-child(4) .visit-count-pill{
+      min-width:auto;
+      height:auto;
+      padding:0;
+      border:none;
+      background:transparent;
+      box-shadow:none;
+      border-radius:0;
+      font-size:20px;
+      font-weight:650;
+      line-height:1;
+      color:var(--user-color);
+    }
+
+    .visit-history-row{
+      display:block;
+      width:100%;
+      box-sizing:border-box;
+      margin:0 0 14px;
+    }
+
+    .visit-history-row[hidden]{
+      display:none !important;
+    }
+
+    .visit-history-row td{
+      display:block;
+      width:100%;
+      box-sizing:border-box;
+      padding:0 !important;
+      background:transparent;
+      border:none;
+    }
+
+    .visit-history-box{
+      width:100%;
+      box-sizing:border-box;
+      border-radius:22px;
+      padding:14px;
+      margin:8px 0 0;
+      background:#ffffff;
+      border:1px solid #e7edff;
+      box-shadow:0 8px 28px rgba(76,116,255,.06);
+    }
+
+    .visit-history-title{
+      font-size:15px;
+      font-weight:800;
+      color:#17357a;
+      margin:0 0 12px;
+    }
+
+    .visit-history-table-wrap{
+      width:100%;
+      box-sizing:border-box;
+      overflow-x:auto;
+      overflow-y:hidden;
+      border:1px solid #edf1ff;
+      border-radius:14px;
+      background:#fff;
+    }
+
+    .visit-history-table{
+      display:table !important;
+      width:100%;
+      min-width:0;
+      border-collapse:collapse;
+      table-layout:fixed;
+    }
+
+    .visit-history-table thead{
+      display:table-header-group !important;
+    }
+
+    .visit-history-table tbody{
+      display:table-row-group !important;
+    }
+
+    .visit-history-table thead th:nth-child(3),
+    .visit-history-table tbody td:nth-child(3),
+    .visit-history-table thead th:nth-child(5),
+    .visit-history-table tbody td:nth-child(5){
+      display:none !important;
+    }
+
+    .visit-history-table thead th{
+      display:table-cell !important;
+      padding:5px 8px;
+      font-size:11px;
+      font-weight:800;
+      color:#7482aa;
+      background:#f7faff;
+      border-bottom:1px solid #edf1ff;
+      text-align:left;
+      white-space:nowrap;
+    }
+
+    .visit-history-table tbody tr{
+      display:table-row !important;
+      background:#fff;
+    }
+
+    .visit-history-table tbody td{
+      display:table-cell !important;
+      padding:11px 8px !important;
+      border-bottom:1px solid #eef2ff !important;
+      background:#fff !important;
+      font-size:12px;
+      font-weight:700;
+      color:#17357a;
+      text-align:left;
+      white-space:normal;
+      word-break:break-word;
+      vertical-align:middle;
+    }
+
+    .visit-history-table tbody tr:last-child td{
+      border-bottom:none !important;
+    }
+
+    .visit-history-table thead th:nth-child(1),
+    .visit-history-table tbody td:nth-child(1){
+      width:25%;
+      font-size:11px;
+    }
+
+    .visit-history-table thead th:nth-child(2),
+    .visit-history-table tbody td:nth-child(2){
+      width:34%;
+      font-size:11px;
+    }
+
+    .visit-history-table thead th:nth-child(4),
+    .visit-history-table tbody td:nth-child(4){
+      width:36%;
+      font-size:11px;
+    }
+
+    .visit-history-empty{
+      padding:14px;
+      color:#7b88ae;
+      font-size:13px;
+      font-weight:700;
+      background:#f9fbff;
+      border:1px solid #e8eeff;
+      border-radius:16px;
+    }
+
+    .pagination{
+      justify-content:center;
+      padding:16px 14px 18px;
+      gap:8px;
+    }
+
+    .page-btn{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      font-size:13px;
+    }
+
+    .page-btn.active{
+      width:40px;
+      height:40px;
+    }
+
+    .live-search-empty[hidden]{
+      display:none !important;
+    }
+  }
 </style>
+
+<script>
+  function setVisitHistoryState(historyRow, btn, shouldOpen) {
+    if (!historyRow) return;
+
+    if (shouldOpen) {
+      historyRow.removeAttribute("hidden");
+      if (btn) {
+        btn.classList.add("is-open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+    } else {
+      historyRow.setAttribute("hidden", "");
+      if (btn) {
+        btn.classList.remove("is-open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+    }
+  }
+
+  function toggleVisitHistory(btn) {
+    const targetId = btn.getAttribute("data-target");
+    const historyRow = document.getElementById(targetId);
+    if (!historyRow) return;
+
+    const shouldOpen = historyRow.hasAttribute("hidden");
+    setVisitHistoryState(historyRow, btn, shouldOpen);
+  }
+
+  function toggleVisitHistoryFromRow(row) {
+    const targetId = row.getAttribute("data-history-target");
+    const historyRow = document.getElementById(targetId);
+    const btn = row.querySelector(".expand-btn");
+
+    if (!historyRow) return;
+
+    const shouldOpen = historyRow.hasAttribute("hidden");
+    setVisitHistoryState(historyRow, btn, shouldOpen);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("visitsLiveSearch");
+    const rows = Array.from(document.querySelectorAll("[data-search-row]"));
+    const emptyBox = document.getElementById("liveSearchEmpty");
+    const countText = document.getElementById("visitsCountText");
+    const pagination = document.querySelector(".pagination");
+
+    const avatarColorMap = {
+      A: "#4F7CFF",
+      B: "#FF6B6B",
+      C: "#00B894",
+      D: "#8B5CF6",
+      E: "#FF9F43",
+      F: "#0ABDE3",
+      G: "#10AC84",
+      H: "#EE5253",
+      I: "#6C5CE7",
+      J: "#E84393",
+      K: "#26DE81",
+      L: "#A855F7",
+      M: "#4F7CFF",
+      N: "#00C2A8",
+      O: "#F6B93B",
+      P: "#E17055",
+      Q: "#2E86DE",
+      R: "#FF7675",
+      S: "#00CEC9",
+      T: "#636E72",
+      U: "#7CB342",
+      V: "#3D5AFE",
+      W: "#FFA502",
+      X: "#9C27B0",
+      Y: "#8E63FF",
+      Z: "#F368E0"
+    };
+
+    function hexToRgb(hex) {
+      const clean = String(hex || "").replace("#", "");
+      if (clean.length !== 6) return { r: 92, g: 140, b: 255 };
+
+      return {
+        r: parseInt(clean.slice(0, 2), 16),
+        g: parseInt(clean.slice(2, 4), 16),
+        b: parseInt(clean.slice(4, 6), 16)
+      };
+    }
+
+    function mixWithWhite(hex, amount) {
+      const rgb = hexToRgb(hex);
+
+      const r = Math.round(rgb.r + (255 - rgb.r) * amount);
+      const g = Math.round(rgb.g + (255 - rgb.g) * amount);
+      const b = Math.round(rgb.b + (255 - rgb.b) * amount);
+
+      return "#" + [r, g, b].map(function (value) {
+        return value.toString(16).padStart(2, "0");
+      }).join("");
+    }
+
+    document.querySelectorAll(".visit-main-row").forEach(function (row) {
+      const avatar = row.querySelector(".avatar[data-avatar-letter]");
+      if (!avatar) return;
+
+      const letter = (avatar.getAttribute("data-avatar-letter") || "G")
+        .trim()
+        .toUpperCase()
+        .charAt(0);
+
+      const userColor = avatarColorMap[letter] || "#5C8CFF";
+      const userSoftColor = mixWithWhite(userColor, 0.90);
+      const userLineColor = mixWithWhite(userColor, 0.78);
+
+      row.style.setProperty("--user-color", userColor);
+      row.style.setProperty("--user-soft-color", userSoftColor);
+      row.style.setProperty("--user-line-color", userLineColor);
+
+      avatar.style.background = userColor;
+
+      row.querySelectorAll("[data-user-color-icon]").forEach(function (icon) {
+        icon.style.color = userColor;
+      });
+    });
+
+    document.querySelectorAll(".js-format-count").forEach(function (node) {
+      const raw = (node.textContent || "").trim();
+      const num = parseInt(raw, 10);
+
+      if (Number.isNaN(num)) return;
+
+      if (num < 1000) {
+        node.textContent = String(num);
+      } else if (num < 10000) {
+        const val = (num / 1000).toFixed(1);
+        node.textContent = val.endsWith(".0") ? parseInt(val, 10) + "K" : val + "K";
+      } else if (num < 1000000) {
+        node.textContent = Math.floor(num / 1000) + "K";
+      } else {
+        const val = (num / 1000000).toFixed(1);
+        node.textContent = val.endsWith(".0") ? parseInt(val, 10) + "M" : val + "M";
+      }
+    });
+
+    if (!searchInput) return;
+
+    const totalRows = rows.length;
+
+    searchInput.addEventListener("input", function () {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      rows.forEach(function (row) {
+        const btn = row.querySelector(".expand-btn");
+        const targetId = row.getAttribute("data-history-target");
+        const historyRow = targetId ? document.getElementById(targetId) : null;
+
+        const rowText = (
+          row.textContent + " " + (historyRow ? historyRow.textContent : "")
+        ).toLowerCase();
+
+        const matches = !query || rowText.includes(query);
+
+        row.hidden = !matches;
+
+        if (!matches && historyRow) {
+          setVisitHistoryState(historyRow, btn, false);
+        }
+
+        if (matches) visibleCount += 1;
+      });
+
+      if (emptyBox) {
+        emptyBox.hidden = visibleCount !== 0;
+      }
+
+      if (countText) {
+        countText.textContent = query
+          ? `Showing ${visibleCount} of ${totalRows} users`
+          : `Showing ${totalRows} users`;
+      }
+
+      if (pagination) {
+        pagination.style.display = query ? "none" : "";
+      }
+    });
+  });
+</script>

@@ -1,0 +1,13 @@
+<svg width="60" height="60" viewBox="18 14 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="18" y="14" width="60" height="60" rx="18" fill="currentColor"/>
+
+  <circle cx="37" cy="38" r="9" fill="white" opacity=".94"/>
+  <path d="M25 62C25 55.3726 30.3726 50 37 50C43.6274 50 49 55.3726 49 62V64H25V62Z" fill="white" opacity=".88"/>
+
+  <rect x="54" y="48" width="6" height="14" rx="3" fill="white" opacity=".92"/>
+  <rect x="62" y="40" width="6" height="22" rx="3" fill="white" opacity=".92"/>
+  <rect x="54" y="32" width="14" height="4" rx="2" fill="white" opacity=".72"/>
+
+  <circle cx="69" cy="25" r="10" fill="white"/>
+  <text x="69" y="29.5" text-anchor="middle" font-size="10" font-weight="800" fill="currentColor" font-family="Arial, Helvetica, sans-serif">12</text>
+</svg>

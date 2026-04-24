@@ -1,0 +1,308 @@
+{% load static %}
+
+<style>
+  .visits-overview-section{
+    width:100%;
+    max-width:420px;
+    margin:0;
+  }
+
+  .visits-overview-title-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:0 0 8px;
+    padding:0 2px;
+  }
+
+  .visits-overview-title{
+    margin:0;
+    font-size:15px;
+    line-height:1.15;
+    font-weight:850;
+    color:#172554;
+    letter-spacing:-.02em;
+  }
+
+  .visits-overview-info{
+    width:14px;
+    height:14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #aab8d8;
+    border-radius:50%;
+    font-size:9px;
+    font-weight:800;
+    color:#7b8aaa;
+  }
+
+  .visits-overview-card{
+    position:relative;
+    overflow:hidden;
+    height:150px;
+    border-radius:18px;
+    padding:12px 14px;
+    border:1px solid #cddcff;
+    background:
+      radial-gradient(circle at 92% 8%, rgba(116,239,181,.14), transparent 32%),
+      linear-gradient(135deg, #f4f7ff 0%, #edf3ff 52%, #eef4ff 100%);
+    box-shadow:
+      0 12px 26px rgba(50,80,160,.07),
+      inset 0 1px 0 rgba(255,255,255,.82);
+  }
+
+  .visits-overview-content{
+    height:100px;
+    display:grid;
+    grid-template-columns:135px minmax(0, 1fr);
+    align-items:end;
+    gap:10px;
+  }
+
+  .visits-overview-left{
+    min-width:0;
+    position:relative;
+    z-index:2;
+  }
+
+  .visits-overview-icon{
+    width:34px;
+    height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:10px;
+    border-radius:11px;
+    background:linear-gradient(135deg, #e8eeff, #f5f7ff);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.9),
+      0 7px 14px rgba(79,115,255,.11);
+  }
+
+  .visits-overview-icon svg{
+    width:18px;
+    height:18px;
+    display:block;
+  }
+
+  .visits-overview-label{
+    margin:0 0 4px;
+    font-size:12px;
+    line-height:1.15;
+    font-weight:850;
+    color:#142557;
+  }
+
+  .visits-overview-count{
+    margin:0;
+    font-size:34px;
+    line-height:.9;
+    font-weight:950;
+    letter-spacing:-.055em;
+    color:#071b4d;
+  }
+
+  .visits-overview-meta{
+    display:flex;
+    align-items:center;
+    flex-wrap:nowrap;
+    gap:6px;
+    margin-top:7px;
+  }
+
+  .visits-overview-growth{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:20px;
+    padding:0 8px;
+    border-radius:999px;
+    background:#d8fae8;
+    color:#16a05b;
+    font-size:9.5px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+
+  .visits-overview-date{
+    font-size:9.5px;
+    font-weight:750;
+    color:#6b7ca4;
+    white-space:nowrap;
+  }
+
+  .visits-overview-chart{
+    width:100%;
+    height:82px;
+    min-width:0;
+    display:flex;
+    align-items:flex-end;
+    justify-content:flex-end;
+    overflow:hidden;
+    position:relative;
+    z-index:1;
+  }
+
+  .visits-overview-chart svg{
+    width:100%;
+    height:100%;
+    display:block;
+    overflow:visible;
+  }
+
+  .visits-chart-area{
+    fill:url(#visitsAreaGradient) !important;
+    stroke:none !important;
+  }
+
+  .visits-chart-line{
+    fill:none !important;
+    stroke:#4F73FF !important;
+    stroke-width:3;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+
+  .visits-chart-dot-outer{
+    fill:#ffffff !important;
+    stroke:#4F73FF !important;
+    stroke-width:3;
+  }
+
+  .visits-chart-dot-inner{
+    fill:#4F73FF !important;
+    stroke:none !important;
+  }
+
+  .visits-overview-note{
+    height:28px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin-top:8px;
+    padding:0 10px;
+    border-radius:11px;
+    border:1px solid #d4e0ff;
+    background:rgba(246,249,255,.72);
+    color:#365282;
+    font-size:9.8px;
+    font-weight:750;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .visits-overview-note-icon{
+    color:#4F73FF;
+    font-size:12px;
+    line-height:1;
+    flex:0 0 auto;
+  }
+
+  @media (max-width:767px){
+    .visits-overview-section{
+      max-width:none;
+    }
+
+    .visits-overview-card{
+      height:auto;
+      min-height:150px;
+    }
+
+    .visits-overview-content{
+      grid-template-columns:130px minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width:480px){
+    .visits-overview-card{
+      height:auto;
+      padding:12px;
+    }
+
+    .visits-overview-content{
+      height:auto;
+      grid-template-columns:1fr;
+      gap:4px;
+    }
+
+    .visits-overview-chart{
+      height:70px;
+      margin-top:-4px;
+    }
+
+    .visits-overview-note{
+      margin-top:6px;
+    }
+  }
+</style>
+
+<section class="visits-overview-section">
+  <div class="visits-overview-title-row">
+    <h2 class="visits-overview-title">Visits Overview</h2>
+    <span class="visits-overview-info">i</span>
+  </div>
+
+  <div class="visits-overview-card">
+    <div class="visits-overview-content">
+
+      <div class="visits-overview-left">
+        <div class="visits-overview-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 15L10 11L13 14L18 8" stroke="#4F73FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="6" cy="15" r="2" fill="#4F73FF"/>
+            <circle cx="10" cy="11" r="2" fill="#4F73FF"/>
+            <circle cx="13" cy="14" r="2" fill="#4F73FF"/>
+            <circle cx="18" cy="8" r="2" fill="#4F73FF"/>
+          </svg>
+        </div>
+
+        <p class="visits-overview-label">Total Visits</p>
+
+        <h3 class="visits-overview-count">
+          {{ total_visits|default:"128" }}
+        </h3>
+
+        <div class="visits-overview-meta">
+          <span class="visits-overview-growth">
+            ↑ {{ visits_growth|default:"12.5%" }}
+          </span>
+          <span class="visits-overview-date">
+            vs {{ visits_compare_range|default:"09 Apr – 15 Apr 2026" }}
+          </span>
+        </div>
+      </div>
+
+      <div class="visits-overview-chart" aria-label="Visits trend chart">
+        <svg viewBox="0 0 360 190" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="visitsAreaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4F73FF" stop-opacity="0.20"/>
+              <stop offset="100%" stop-color="#4F73FF" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+
+          <path
+            class="visits-chart-area"
+            d="M20 150 C55 105, 80 100, 115 112 C150 124, 170 112, 200 82 C232 50, 260 88, 292 72 C318 58, 332 42, 345 35 L345 180 L20 180 Z"
+          />
+
+          <path
+            class="visits-chart-line"
+            d="M20 150 C55 105, 80 100, 115 112 C150 124, 170 112, 200 82 C232 50, 260 88, 292 72 C318 58, 332 42, 345 35"
+          />
+
+          <circle class="visits-chart-dot-outer" cx="345" cy="35" r="7"/>
+          <circle class="visits-chart-dot-inner" cx="345" cy="35" r="3.5"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <div class="visits-overview-note">
+      <span class="visits-overview-note-icon">✣</span>
+      <span>Great job! Your branch visits are trending up this week.</span>
+    </div>
+  </div>
+</section>
