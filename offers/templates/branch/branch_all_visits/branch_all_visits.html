@@ -1,4 +1,5 @@
 {% load static %}
+{% url 'offers:branch_home' as branch_home_url %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -353,6 +354,33 @@
       border-color:var(--prim);
       box-shadow:0 8px 18px rgba(76,116,255,.18);
     }
+.visits-overview-layout{
+  width:100%;
+  display:grid;
+  grid-template-columns:420px minmax(0, 1fr);
+  align-items:start;
+  gap:18px;
+}
+
+.visits-overview-main,
+.visits-overview-right{
+  min-width:0;
+}
+
+.visits-overview-main{
+  width:100%;
+}
+
+.visits-overview-right{
+  width:100%;
+}
+
+@media (max-width:1100px){
+  .visits-overview-layout{
+    grid-template-columns:1fr;
+  }
+}
+    
 
     @media (max-width:768px){
       .main{
@@ -397,20 +425,27 @@
 </head>
 
 <body>
-  <div class="wrap">
-    {% include "branch/partials/branch_header.html" with show_back_nav=True header_back_url=branch_home_url header_subtitle="All visit records" %}
+<div class="wrap">
+  {% include "branch/partials/branch_header.html" with show_back_nav=True header_back_url=branch_home_url header_subtitle="All visit records" %}
 
-<main class="main">
+  <main class="main">
 
-  {% include "branch/branch_all_visits/partials/visits_overview_card.html" %}
-
-  <section class="visits-shell">
-    {% include "branch/branch_all_visits/partials/allvisits_record_table.html" %}
-  </section>
-
-</main>
-
+<section class="visits-overview-layout">
+  <div class="visits-overview-main">
+    {% include "branch/branch_all_visits/partials/visits_overview_card.html" %}
   </div>
+
+  <div class="visits-overview-right">
+    {% include "branch/branch_all_visits/partials/visits_overview_right_cards.html" %}
+  </div>
+</section>
+
+    <section class="visits-shell">
+      {% include "branch/branch_all_visits/partials/allvisits_record_table.html" %}
+    </section>
+
+  </main>
+</div>
 
   <script>
     document.addEventListener("click", function (e) {

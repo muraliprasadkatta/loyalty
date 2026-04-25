@@ -29,7 +29,9 @@
           </svg>
         </div>
       </div>
-      <div class="today-stat-card__value today-stat-card__value--blue">{{ today_visits|default:"0" }}</div>
+      <div id="todayVisitsCount" class="today-stat-card__value today-stat-card__value--blue">
+      {{ today_visits|default:"0" }}
+      </div>
     </article>
 
     <article class="today-stat-card today-stat-card--green">
@@ -42,7 +44,9 @@
           </svg>
         </div>
       </div>
-      <div class="today-stat-card__value today-stat-card__value--green">{{ today_offer_claims|default:"0" }}</div>
+      <div id="todayOfferClaimsCount" class="today-stat-card__value today-stat-card__value--green">
+  {{ today_offer_claims|default:"0" }}
+</div>
     </article>
 
     <article class="today-stat-card today-stat-card--indigo">
@@ -55,7 +59,9 @@
           </svg>
         </div>
       </div>
-      <div class="today-stat-card__value today-stat-card__value--indigo">{{ today_qr_visits|default:"0" }}</div>
+      <div id="todayQrVisitsCount" class="today-stat-card__value today-stat-card__value--indigo">
+  {{ today_qr_visits|default:"0" }}
+</div>
     </article>
 
     <article class="today-stat-card today-stat-card--orange">
@@ -68,7 +74,9 @@
           </svg>
         </div>
       </div>
-      <div class="today-stat-card__value today-stat-card__value--orange">{{ today_staff_verified|default:"0" }}</div>
+      <div id="todayStaffVerifiedCount" class="today-stat-card__value today-stat-card__value--orange">
+  {{ today_staff_verified|default:"0" }}
+</div>
     </article>
   </div>
 
@@ -470,3 +478,49 @@
   }
 }
 </style>
+
+<script>
+(function () {
+  const endpoint = "{% url 'offers:branch_live_api' %}";
+
+  const nodes = {
+    todayVisits: document.getElementById("todayVisitsCount"),
+    todayOfferClaims: document.getElementById("todayOfferClaimsCount"),
+    todayQrVisits: document.getElementById("todayQrVisitsCount"),
+    todayStaffVerified: document.getElementById("todayStaffVerifiedCount"),
+  };
+
+  function updateNode(node, value) {
+    if (!node) return;
+    node.textContent = value ?? 0;
+  }
+
+  async function refreshBranchLiveCounts() {
+    try {
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        cache: "no-store"
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (!data.ok || !data.today) return;
+
+      updateNode(nodes.todayVisits, data.today.visits);
+      updateNode(nodes.todayOfferClaims, data.today.offer_claims);
+      updateNode(nodes.todayQrVisits, data.today.qr_visits);
+      updateNode(nodes.todayStaffVerified, data.today.staff_verified);
+    } catch (error) {
+      // silent fail; don't disturb UI
+    }
+  }
+
+  refreshBranchLiveCounts();
+  window.setInterval(refreshBranchLiveCounts, 6000);
+})();
+</script>

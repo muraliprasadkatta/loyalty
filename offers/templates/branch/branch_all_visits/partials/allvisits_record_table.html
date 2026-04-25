@@ -53,9 +53,11 @@
       >
     </div>
 
-    <div class="visits-card-meta" id="visitsCountText">
-      Showing {{ visits|length }} users
-    </div>
+<div class="visits-card-meta" id="visitsCountText">
+  Showing <span class="visits-card-meta__strong">{{ visits|length }} users</span>
+  <span class="visits-card-meta__dot">·</span>
+  Last updated <span class="visits-card-meta__strong">{% now "h:i A" %}</span>
+</div>
   </div>
 
   {% if visits %}
@@ -97,19 +99,23 @@
                     {% endif %}
                   </div>
 
-                  <div class="user-main">
-                    <div class="user-name">
-                      {% if item.user and item.user.profile.display_name %}
-                        {{ item.user.profile.display_name }}
-                      {% elif item.user and item.user.first_name %}
-                        {{ item.user.first_name }}
-                      {% elif item.user %}
-                        {{ item.user.email }}
-                      {% else %}
-                        Guest User
-                      {% endif %}
-                    </div>
-                  </div>
+<div class="user-main">
+  <div class="user-name">
+    {% if item.user and item.user.profile.display_name %}
+      {{ item.user.profile.display_name }}
+    {% elif item.user and item.user.first_name %}
+      {{ item.user.first_name }}
+    {% elif item.user %}
+      User
+    {% else %}
+      Guest User
+    {% endif %}
+  </div>
+
+  {% if item.masked_email %}
+    <div class="user-sub">{{ item.masked_email }}</div>
+  {% endif %}
+</div>
                 </div>
               </td>
 
@@ -290,12 +296,29 @@
     color:#98a5cb;
   }
 
-  .visits-card-meta{
-    color:#6b7aa5;
-    font-size:14px;
-    font-weight:650;
-    white-space:nowrap;
-  }
+.visits-card-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:0;
+  padding:8px 14px;
+  border-radius:999px;
+  background:#eef3ff;
+  border:1px solid #dbe5ff;
+  color:#6678a8;
+  font-size:14px;
+  font-weight:650;
+  white-space:nowrap;
+}
+
+.visits-card-meta__strong{
+  color:#29478f;
+  font-weight:800;
+}
+
+.visits-card-meta__dot{
+  color:#8ea0cf;
+  padding:0 4px;
+}
 
   .live-search-empty{
     padding:34px 20px;
@@ -536,6 +559,22 @@
     display:none;
   }
 
+  .user-sub{
+  margin-top:3px;
+  color:#7b88ae;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.user-sub{
+  margin-top:4px;
+  font-size:11px;
+}
+
   @media (max-width:767px){
     .visits-card{
       border-radius:24px;
@@ -563,8 +602,8 @@
     .visits-card-meta{
       width:100%;
       text-align:left;
-      font-size:13px;
-      font-weight:700;
+      font-size:10px;
+      font-weight:500;
     }
 
     .table-wrap{
@@ -1135,10 +1174,12 @@
         emptyBox.hidden = visibleCount !== 0;
       }
 
+      const lastUpdatedText = "{% now 'h:i A' %}";
+
       if (countText) {
         countText.textContent = query
-          ? `Showing ${visibleCount} of ${totalRows} users`
-          : `Showing ${totalRows} users`;
+          ? `Showing ${visibleCount} of ${totalRows} users · Last updated ${lastUpdatedText}`
+          : `Showing ${totalRows} users · Last updated ${lastUpdatedText}`;
       }
 
       if (pagination) {

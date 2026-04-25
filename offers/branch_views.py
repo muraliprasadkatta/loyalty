@@ -22,6 +22,7 @@ from offers.services.common.time_helpers import get_local_day_bounds
 from offers.models import ComplementaryOffer
 from offers.services.qr.qr_token_utils import mint_qr_token
 from offers.models import Branch, UserVisitEvent, UserOfferClaim
+from offers.services.branch_api.branch_live_api_service import get_branch_live_api_data
 
 
 from offers.services.auth.otp_utils import (
@@ -381,6 +382,7 @@ def branch_home_view(request):
     )
 
     now_ts = timezone.localtime(timezone.now())
+    day_start, next_day_start = get_local_day_bounds(now_ts)
 
     base = (
         ComplementaryOffer.objects
@@ -409,6 +411,28 @@ def branch_home_view(request):
 
     visit_unit_label = "QR scan + Code" if visit_unit == "qr_pin" else "QR code"
 
+    today_visit_qs = UserVisitEvent.objects.filter(
+        branch=branch,
+        created_at__gte=day_start,
+        created_at__lt=next_day_start,
+    )
+
+    today_visits = today_visit_qs.count()
+
+    today_qr_visits = today_visit_qs.filter(
+        visit_method="qr_code",
+    ).count()
+
+    today_staff_verified = today_visit_qs.filter(
+        visit_method__in=["qr_pin", "offer_day_pin"],
+    ).count()
+
+    today_offer_claims = UserOfferClaim.objects.filter(
+        visit_event__branch=branch,
+        issued_at__gte=day_start,
+        issued_at__lt=next_day_start,
+    ).count()
+
     return render(
         request,
         "branch/branch_homepage/branch_homepage.html",
@@ -416,6 +440,11 @@ def branch_home_view(request):
             "branch": branch,
             "visit_unit": visit_unit,
             "visit_unit_label": visit_unit_label,
+
+            "today_visits": today_visits,
+            "today_qr_visits": today_qr_visits,
+            "today_staff_verified": today_staff_verified,
+            "today_offer_claims": today_offer_claims,
         },
     )
 
@@ -535,6 +564,19 @@ from django.utils import timezone
 from offers.models import Branch, UserVisitEvent
 
 
+def mask_email_for_staff(email: str) -> str:
+    email = (email or "").strip()
+    if not email or "@" not in email:
+        return ""
+
+    name, domain = email.split("@", 1)
+    if not name or not domain:
+        return ""
+
+    visible_tail = name[-4:] if len(name) >= 4 else name
+    return f"Mail ******{visible_tail}@{domain}"
+
+
 def branch_all_visits(request):
     branch_id = request.session.get("branch_id")
     branch = get_object_or_404(Branch, id=branch_id)
@@ -587,6 +629,7 @@ def branch_all_visits(request):
         if key not in grouped:
             grouped[key] = {
                 "user": visit.user,
+                "masked_email": mask_email_for_staff(visit.user.email) if visit.user else "",
                 "total_visits": 1,
                 "latest_visit": visit,
                 "all_visits": [visit],
@@ -608,79 +651,16 @@ def branch_all_visits(request):
         "unique_users": unique_users,
         "qr_pin_visits": qr_pin_visits,
     }
+
     return render(request, "branch/branch_all_visits/branch_all_visits.html", context)
+
+
+@require_branch_session
+def branch_live_api(request):
     branch_id = request.session.get("branch_id")
     branch = get_object_or_404(Branch, id=branch_id)
 
-    qs = (
-        UserVisitEvent.objects
-        .filter(branch=branch)
-        .select_related("user", "user__profile")
-        .order_by("-created_at")
-    )
-
-    q = (request.GET.get("q") or "").strip()
-    method = (request.GET.get("method") or "").strip()
-    date_str = (request.GET.get("date") or "").strip()
-
-    if q:
-        qs = qs.filter(
-            Q(user__email__icontains=q) |
-            Q(user__first_name__icontains=q) |
-            Q(token__icontains=q)
-        )
-
-    if method:
-        qs = qs.filter(visit_method=method)
-
-    if date_str:
-        qs = qs.filter(created_at__date=date_str)
-
-    total_visits = qs.count()
-    today_visits = qs.filter(created_at__date=timezone.localdate()).count()
-    unique_users = qs.exclude(user__isnull=True).values("user_id").distinct().count()
-    qr_pin_visits = qs.filter(visit_method="qr_pin").count()
-
-    claim_visit_ids = set(
-        UserOfferClaim.objects
-        .filter(visit_event__in=qs)
-        .values_list("visit_event_id", flat=True)
-    )
-
-    grouped = OrderedDict()
-
-    for visit in qs:
-        visit.has_offer_claim = visit.id in claim_visit_ids
-
-        if visit.user_id:
-            key = f"user-{visit.user_id}"
-        else:
-            key = f"guest-{visit.id}"
-
-        if key not in grouped:
-            grouped[key] = {
-                "user": visit.user,
-                "total_visits": 1,
-                "latest_visit": visit,
-                "all_visits": [visit],
-                "total_claims": 1 if visit.has_offer_claim else 0,
-            }
-        else:
-            grouped[key]["total_visits"] += 1
-            grouped[key]["all_visits"].append(visit)
-            if visit.has_offer_claim:
-                grouped[key]["total_claims"] += 1
-
-
-
-    visits = list(grouped.values())
-
-    context = {
-        "branch": branch,
-        "visits": visits,
-        "total_visits": total_visits,
-        "today_visits": today_visits,
-        "unique_users": unique_users,
-        "qr_pin_visits": qr_pin_visits,
-    }
-    return render(request, "branch/branch_all_visits/branch_all_visits.html", context)
+    return JsonResponse({
+        "ok": True,
+        **get_branch_live_api_data(branch),
+    })
