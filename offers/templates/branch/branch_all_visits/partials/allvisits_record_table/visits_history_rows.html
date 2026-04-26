@@ -1,0 +1,24 @@
+{% for visit in history_visits %}
+  <tr>
+    <td>{{ visit.created_at|date:"h:i A" }}</td>
+    <td>{{ visit.created_at|date:"d M Y" }}</td>
+    <td>{{ visit.get_visit_method_display }}</td>
+    <td>
+      {% if visit.staff_name %}
+        {{ visit.staff_name }}
+        {% if visit.staff_code %}({{ visit.staff_code }}){% endif %}
+      {% elif visit.desk %}
+        {{ visit.desk }}
+      {% else %}
+        —
+      {% endif %}
+    </td>
+    <td>
+    {% if visit.claim_count %}
+        Yes
+    {% else %}
+        No
+    {% endif %}
+    </td>
+  </tr>
+{% endfor %}

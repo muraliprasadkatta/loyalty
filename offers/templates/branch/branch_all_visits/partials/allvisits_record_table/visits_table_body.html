@@ -1,0 +1,168 @@
+{% for item in visits %}
+  <tr
+    class="visit-main-row"
+    data-search-row
+    data-history-target="history-{{ forloop.counter }}"
+    onclick="toggleVisitHistoryFromRow(this)"
+  >
+    <td>
+      <div class="user-cell">
+        <div
+          class="avatar"
+          data-avatar-letter="{% if item.user and item.user.profile.display_name %}{{ item.user.profile.display_name|slice:':1'|upper }}{% elif item.user and item.user.first_name %}{{ item.user.first_name|slice:':1'|upper }}{% elif item.user and item.user.email %}{{ item.user.email|slice:':1'|upper }}{% else %}G{% endif %}"
+        >
+          {% if item.user and item.user.profile.display_name %}
+            {{ item.user.profile.display_name|slice:":1"|upper }}
+          {% elif item.user and item.user.first_name %}
+            {{ item.user.first_name|slice:":1"|upper }}
+          {% elif item.user and item.user.email %}
+            {{ item.user.email|slice:":1"|upper }}
+          {% else %}
+            G
+          {% endif %}
+        </div>
+
+        <div class="user-main">
+          <div class="user-name">
+            {% if item.user and item.user.profile.display_name %}
+              {{ item.user.profile.display_name }}
+            {% elif item.user and item.user.first_name %}
+              {{ item.user.first_name }}
+            {% elif item.user %}
+              User
+            {% else %}
+              Guest User
+            {% endif %}
+          </div>
+
+          {% if item.masked_email %}
+            <div class="user-sub">{{ item.masked_email }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </td>
+
+    <td>
+      <span class="desktop-stat-pill js-format-count">{{ item.total_visits }}</span>
+
+      <div class="mobile-stat mobile-stat--visits">
+        <div class="mobile-stat__icon mobile-stat__icon--visits" data-user-color-icon>
+          <svg class="stat-icon-svg visit-stat-svg" aria-hidden="true" focusable="false">
+            <use href="#totalVisitsStatIcon"></use>
+          </svg>
+        </div>
+
+        <div class="mobile-stat__content">
+          <span class="visit-count-pill js-format-count">{{ item.total_visits }}</span>
+          <div class="mobile-stat__label">Total Visits</div>
+        </div>
+      </div>
+    </td>
+
+    <td>
+      <span class="method-pill">{{ item.latest_visit.get_visit_method_display }}</span>
+    </td>
+
+    <td>
+      <span class="desktop-stat-pill js-format-count">{{ item.total_claims|default:0 }}</span>
+
+      <div class="mobile-stat mobile-stat--claims">
+        <div class="mobile-stat__icon mobile-stat__icon--claims" data-user-color-icon>
+          <svg class="stat-icon-svg claim-stat-svg" aria-hidden="true" focusable="false">
+            <use href="#claimsStatIcon"></use>
+          </svg>
+        </div>
+
+        <div class="mobile-stat__content">
+          <span class="visit-count-pill js-format-count">{{ item.total_claims|default:0 }}</span>
+          <div class="mobile-stat__label">Claims</div>
+        </div>
+      </div>
+    </td>
+
+    <td>
+      <div class="time-main">{{ item.latest_visit.created_at|date:"d M Y" }}</div>
+      <div class="time-sub">{{ item.latest_visit.created_at|date:"h:i A" }}</div>
+    </td>
+
+    <td class="expand-cell">
+      <button
+        type="button"
+        class="expand-btn"
+        data-target="history-{{ forloop.counter }}"
+        aria-expanded="false"
+        aria-label="Toggle visit history"
+        onclick="event.stopPropagation(); toggleVisitHistory(this);"
+      >
+        <span class="expand-btn__chevron"></span>
+      </button>
+    </td>
+  </tr>
+
+  <tr id="history-{{ forloop.counter }}" class="visit-history-row" data-history-row hidden>
+    <td colspan="6">
+      <div class="visit-history-box">
+        <div class="visit-history-title">
+          Visit History ({{ item.total_visits }})
+        </div>
+
+        {% if item.all_visits %}
+          <div class="visit-history-table-wrap">
+<table class="visit-history-table">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Date</th>
+      <th>Visit Type</th>
+      <th>Verified By</th>
+      <th>Offer Claimed</th>
+    </tr>
+  </thead>
+
+<tbody
+  id="visitHistoryBody-{{ item.user.id }}"
+  data-history-body
+>
+  {% include "branch/branch_all_visits/partials/allvisits_record_table/visits_history_rows.html" with history_visits=item.all_visits %}
+</tbody>
+
+</table>
+
+{% if item.has_more_history and item.user %}
+  <div class="visit-history-more">
+    <span>
+      Showing latest {{ item.history_limit }} of {{ item.total_visits }} visits.
+    </span>
+
+    <button
+      type="button"
+      class="visit-history-load-more"
+      data-history-load-more
+      data-user-id="{{ item.user.id }}"
+      data-next-page="2"
+      data-target-body="visitHistoryBody-{{ item.user.id }}"
+    >
+      Load more
+    </button>
+  </div>
+{% endif %}
+
+
+          </div>
+        {% else %}
+          <div class="visit-history-empty">No visits found.</div>
+        {% endif %}
+      </div>
+    </td>
+  </tr>
+{% empty %}
+  <tr>
+    <td colspan="6">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No visits found</div>
+        <div class="empty-text">No matching visit records found.</div>
+      </div>
+    </td>
+  </tr>
+{% endfor %}

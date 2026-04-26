@@ -43,212 +43,64 @@
   </svg>
 
   <div class="visits-card-toolbar">
-    <div class="visits-card-search">
+    <form class="visits-card-search" method="get" id="visitsSearchForm">
       <input
         type="text"
+        name="q"
         id="visitsLiveSearch"
         class="visits-card-search__input"
         placeholder="Search by user name / email / token"
+        value="{{ q }}"
         autocomplete="off"
       >
-    </div>
 
-<div class="visits-card-meta" id="visitsCountText">
-  Showing <span class="visits-card-meta__strong">{{ visits|length }} users</span>
-  <span class="visits-card-meta__dot">·</span>
-  Last updated <span class="visits-card-meta__strong">{% now "h:i A" %}</span>
-</div>
+      {% if method %}
+        <input type="hidden" name="method" value="{{ method }}">
+      {% endif %}
+
+      {% if date %}
+        <input type="hidden" name="date" value="{{ date }}">
+      {% endif %}
+
+
+      {% if q %}
+        <a class="visits-search-clear" href="{% url 'offers:branch_all_visits' %}">
+          Clear
+        </a>
+      {% endif %}
+    </form>
+
+    <div class="visits-card-meta" id="visitsCountText">
+      {% include "branch/branch_all_visits/partials/allvisits_record_table/visits_meta.html" %}
+    </div>
   </div>
 
-  {% if visits %}
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Total Visits</th>
-            <th>Last Visit Type</th>
-            <th>Number of Claims</th>
-            <th>Last Visited At</th>
-            <th></th>
-          </tr>
-        </thead>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Total Visits</th>
+          <th>Last Visit Type</th>
+          <th>Number of Claims</th>
+          <th>Last Visited At</th>
+          <th></th>
+        </tr>
+      </thead>
 
-        <tbody id="visitsTableBody">
-          {% for item in visits %}
-            <tr
-              class="visit-main-row"
-              data-search-row
-              data-history-target="history-{{ forloop.counter }}"
-              onclick="toggleVisitHistoryFromRow(this)"
-            >
-              <td>
-                <div class="user-cell">
-                  <div
-                    class="avatar"
-                    data-avatar-letter="{% if item.user and item.user.profile.display_name %}{{ item.user.profile.display_name|slice:':1'|upper }}{% elif item.user and item.user.first_name %}{{ item.user.first_name|slice:':1'|upper }}{% elif item.user and item.user.email %}{{ item.user.email|slice:':1'|upper }}{% else %}G{% endif %}"
-                  >
-                    {% if item.user and item.user.profile.display_name %}
-                      {{ item.user.profile.display_name|slice:":1"|upper }}
-                    {% elif item.user and item.user.first_name %}
-                      {{ item.user.first_name|slice:":1"|upper }}
-                    {% elif item.user and item.user.email %}
-                      {{ item.user.email|slice:":1"|upper }}
-                    {% else %}
-                      G
-                    {% endif %}
-                  </div>
+      <tbody id="visitsTableBody">
+        {% include "branch/branch_all_visits/partials/allvisits_record_table/visits_table_body.html" %}
+      </tbody>
+    </table>
 
-<div class="user-main">
-  <div class="user-name">
-    {% if item.user and item.user.profile.display_name %}
-      {{ item.user.profile.display_name }}
-    {% elif item.user and item.user.first_name %}
-      {{ item.user.first_name }}
-    {% elif item.user %}
-      User
-    {% else %}
-      Guest User
-    {% endif %}
+    <div class="live-search-empty" id="liveSearchEmpty" hidden>
+      No matching visits found.
+    </div>
   </div>
 
-  {% if item.masked_email %}
-    <div class="user-sub">{{ item.masked_email }}</div>
-  {% endif %}
-</div>
-                </div>
-              </td>
-
-              <td>
-                <span class="desktop-stat-pill js-format-count">{{ item.total_visits }}</span>
-
-                <div class="mobile-stat mobile-stat--visits">
-                  <div class="mobile-stat__icon mobile-stat__icon--visits" data-user-color-icon>
-                    <svg class="stat-icon-svg visit-stat-svg" aria-hidden="true" focusable="false">
-                      <use href="#totalVisitsStatIcon"></use>
-                    </svg>
-                  </div>
-
-                  <div class="mobile-stat__content">
-                    <span class="visit-count-pill js-format-count">{{ item.total_visits }}</span>
-                    <div class="mobile-stat__label">Total Visits</div>
-                  </div>
-                </div>
-              </td>
-
-              <td>
-                <span class="method-pill">{{ item.latest_visit.get_visit_method_display }}</span>
-              </td>
-
-              <td>
-                <span class="desktop-stat-pill js-format-count">{{ item.total_claims|default:0 }}</span>
-
-                <div class="mobile-stat mobile-stat--claims">
-                  <div class="mobile-stat__icon mobile-stat__icon--claims" data-user-color-icon>
-                    <svg class="stat-icon-svg claim-stat-svg" aria-hidden="true" focusable="false">
-                      <use href="#claimsStatIcon"></use>
-                    </svg>
-                  </div>
-
-                  <div class="mobile-stat__content">
-                    <span class="visit-count-pill js-format-count">{{ item.total_claims|default:0 }}</span>
-                    <div class="mobile-stat__label">Claims</div>
-                  </div>
-                </div>
-              </td>
-
-              <td>
-                <div class="time-main">{{ item.latest_visit.created_at|date:"d M Y" }}</div>
-                <div class="time-sub">{{ item.latest_visit.created_at|date:"h:i A" }}</div>
-              </td>
-
-              <td class="expand-cell">
-                <button
-                  type="button"
-                  class="expand-btn"
-                  data-target="history-{{ forloop.counter }}"
-                  aria-expanded="false"
-                  aria-label="Toggle visit history"
-                  onclick="event.stopPropagation(); toggleVisitHistory(this);"
-                >
-                  <span class="expand-btn__chevron"></span>
-                </button>
-              </td>
-            </tr>
-
-            <tr id="history-{{ forloop.counter }}" class="visit-history-row" data-history-row hidden>
-              <td colspan="6">
-                <div class="visit-history-box">
-                  <div class="visit-history-title">
-                    Visit History ({{ item.total_visits }})
-                  </div>
-
-                  {% if item.all_visits %}
-                    <div class="visit-history-table-wrap">
-                      <table class="visit-history-table">
-                        <thead>
-                          <tr>
-                            <th>Time</th>
-                            <th>Date</th>
-                            <th>Visit Type</th>
-                            <th>Verified By</th>
-                            <th>Offer Claimed</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                          {% for visit in item.all_visits %}
-                            <tr>
-                              <td>{{ visit.created_at|date:"h:i A" }}</td>
-                              <td>{{ visit.created_at|date:"d M Y" }}</td>
-                              <td>{{ visit.get_visit_method_display }}</td>
-                              <td>
-                                {% if visit.staff_name %}
-                                  {{ visit.staff_name }}
-                                  {% if visit.staff_code %}({{ visit.staff_code }}){% endif %}
-                                {% elif visit.desk %}
-                                  {{ visit.desk }}
-                                {% else %}
-                                  —
-                                {% endif %}
-                              </td>
-                              <td>
-                                {% if visit.has_offer_claim %}Yes{% else %}No{% endif %}
-                              </td>
-                            </tr>
-                          {% endfor %}
-                        </tbody>
-                      </table>
-                    </div>
-                  {% else %}
-                    <div class="visit-history-empty">No visits found.</div>
-                  {% endif %}
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-
-      <div class="live-search-empty" id="liveSearchEmpty" hidden>
-        No matching visits found.
-      </div>
-    </div>
-
-    <div class="pagination">
-      <span class="page-btn">‹</span>
-      <span class="page-btn active">1</span>
-      <span class="page-btn">2</span>
-      <span class="page-btn">3</span>
-      <span class="page-btn">›</span>
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-icon">📋</div>
-      <div class="empty-title">No visits found</div>
-      <div class="empty-text">This branch does not have any visit records yet.</div>
-    </div>
-  {% endif %}
+  <div id="visitsPaginationWrap">
+    {% include "branch/branch_all_visits/partials/allvisits_record_table/visits_pagination.html" %}
+  </div>
 </div>
 
 <style>
@@ -296,29 +148,38 @@
     color:#98a5cb;
   }
 
-.visits-card-meta{
-  display:inline-flex;
-  align-items:center;
-  gap:0;
-  padding:8px 14px;
-  border-radius:999px;
-  background:#eef3ff;
-  border:1px solid #dbe5ff;
-  color:#6678a8;
-  font-size:14px;
-  font-weight:650;
-  white-space:nowrap;
-}
+  .visits-card-meta{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:8px 14px;
+    border-radius:999px;
+    background:#eef3ff;
+    border:1px solid #dbe5ff;
+    color:#6678a8;
+    font-size:14px;
+    font-weight:650;
+    white-space:nowrap;
+  }
 
-.visits-card-meta__strong{
-  color:#29478f;
-  font-weight:800;
-}
+  .visits-card-meta__text{
+    display:inline-flex;
+    align-items:center;
+  }
 
-.visits-card-meta__dot{
-  color:#8ea0cf;
-  padding:0 4px;
-}
+  .visits-card-meta__strong{
+    display:inline-flex;
+    align-items:center;
+    color:#29478f;
+    font-weight:800;
+  }
+
+  .visits-card-meta__dot{
+    display:inline-flex;
+    align-items:center;
+    color:#8ea0cf;
+    padding:0 2px;
+  }
 
   .live-search-empty{
     padding:34px 20px;
@@ -377,6 +238,17 @@
     font-size:15px;
     font-weight:800;
     color:#17357a;
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .user-sub{
+    margin-top:4px;
+    color:#7b88ae;
+    font-size:11px;
+    font-weight:700;
     line-height:1.2;
     white-space:nowrap;
     overflow:hidden;
@@ -547,6 +419,23 @@
     border-radius:13px;
     font-size:14px;
     font-weight:650;
+    text-decoration:none;
+  }
+
+  .page-btn.is-disabled{
+    opacity:.45;
+    pointer-events:none;
+  }
+
+  .page-info{
+    display:inline-flex;
+    align-items:center;
+    height:42px;
+    padding:0 6px;
+    color:#7b88ae;
+    font-size:13px;
+    font-weight:700;
+    white-space:nowrap;
   }
 
   .page-btn.active{
@@ -559,26 +448,90 @@
     display:none;
   }
 
-  .user-sub{
-  margin-top:3px;
-  color:#7b88ae;
-  font-size:11px;
-  font-weight:700;
-  line-height:1.2;
+.visits-search-clear{
+  height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 16px;
+  border-radius:14px;
+  border:1px solid #d9e2ff;
+  background:#fff;
+  color:#29478f;
+  font-size:13px;
+  font-weight:800;
+  text-decoration:none;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
-.user-sub{
-  margin-top:4px;
-  font-size:11px;
+
+  .visits-card.is-loading{
+    opacity:.72;
+    pointer-events:none;
+    }
+
+
+.visit-history-more{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid #e8eeff;
+  border-radius:14px;
+  background:#ffffff;
+  color:#7b88ae;
+  font-size:12px;
+  font-weight:700;
+}
+
+.visit-history-load-more{
+  min-height:34px;
+  padding:0 13px;
+  border:1px solid #d9e2ff;
+  border-radius:12px;
+  background:#f7f9ff;
+  color:#29478f;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.visit-history-load-more:hover{
+  background:#eef3ff;
+}
+
+.visit-history-load-more.is-loading{
+  opacity:.65;
+  pointer-events:none;
 }
 
   @media (max-width:767px){
+
+    .visit-history-more{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .visit-history-load-more{
+        width:100%;
+    }
+
+
+
     .visits-card{
       border-radius:24px;
       overflow:hidden;
+    }
+
+    .visits-search-clear{
+      width:100%;
+    }
+
+    .page-info{
+      height:38px;
+      font-size:12px;
     }
 
     .visits-card-toolbar{
@@ -639,7 +592,7 @@
       width:100%;
       box-sizing:border-box;
       padding:16px;
-      margin: 10px 0;
+      margin:10px 0;
       background:#ffffff;
       border:1px solid var(--user-line-color);
       border-left:3px solid var(--user-color);
@@ -648,7 +601,6 @@
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
       overflow:hidden;
-      
     }
 
     .visit-main-row::after{
@@ -668,14 +620,11 @@
     .visit-main-row > td{
       position:relative;
       z-index:1;
+      min-width:0;
     }
 
     .visit-main-row[hidden]{
       display:none !important;
-    }
-
-    .visit-main-row > td{
-      min-width:0;
     }
 
     .visit-main-row > td:nth-child(1){
@@ -1002,21 +951,52 @@
 </style>
 
 <script>
+  function captureInitialHistoryState(scope) {
+    const root = scope || document;
+
+    root.querySelectorAll("[data-history-body]").forEach(function (tbody) {
+      tbody.dataset.initialHtml = tbody.innerHTML;
+    });
+  }
+
+  function resetHistoryRow(historyRow) {
+    if (!historyRow) return;
+
+    const tbody = historyRow.querySelector("[data-history-body]");
+    if (tbody && typeof tbody.dataset.initialHtml !== "undefined") {
+      tbody.innerHTML = tbody.dataset.initialHtml;
+    }
+
+    const loadMoreBtn = historyRow.querySelector("[data-history-load-more]");
+    if (loadMoreBtn) {
+      loadMoreBtn.disabled = false;
+      loadMoreBtn.classList.remove("is-loading");
+      loadMoreBtn.setAttribute("data-next-page", "2");
+      loadMoreBtn.textContent = "Load more";
+    }
+  }
+
   function setVisitHistoryState(historyRow, btn, shouldOpen) {
     if (!historyRow) return;
 
     if (shouldOpen) {
       historyRow.removeAttribute("hidden");
+
       if (btn) {
         btn.classList.add("is-open");
         btn.setAttribute("aria-expanded", "true");
       }
-    } else {
-      historyRow.setAttribute("hidden", "");
-      if (btn) {
-        btn.classList.remove("is-open");
-        btn.setAttribute("aria-expanded", "false");
-      }
+
+      return;
+    }
+
+    resetHistoryRow(historyRow);
+
+    historyRow.setAttribute("hidden", "");
+
+    if (btn) {
+      btn.classList.remove("is-open");
+      btn.setAttribute("aria-expanded", "false");
     }
   }
 
@@ -1041,44 +1021,21 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("visitsLiveSearch");
-    const rows = Array.from(document.querySelectorAll("[data-search-row]"));
-    const emptyBox = document.getElementById("liveSearchEmpty");
-    const countText = document.getElementById("visitsCountText");
-    const pagination = document.querySelector(".pagination");
-
     const avatarColorMap = {
-      A: "#4F7CFF",
-      B: "#FF6B6B",
-      C: "#00B894",
-      D: "#8B5CF6",
-      E: "#FF9F43",
-      F: "#0ABDE3",
-      G: "#10AC84",
-      H: "#EE5253",
-      I: "#6C5CE7",
-      J: "#E84393",
-      K: "#26DE81",
-      L: "#A855F7",
-      M: "#4F7CFF",
-      N: "#00C2A8",
-      O: "#F6B93B",
-      P: "#E17055",
-      Q: "#2E86DE",
-      R: "#FF7675",
-      S: "#00CEC9",
-      T: "#636E72",
-      U: "#7CB342",
-      V: "#3D5AFE",
-      W: "#FFA502",
-      X: "#9C27B0",
-      Y: "#8E63FF",
-      Z: "#F368E0"
+      A:"#4F7CFF", B:"#FF6B6B", C:"#00B894", D:"#8B5CF6", E:"#FF9F43",
+      F:"#0ABDE3", G:"#10AC84", H:"#EE5253", I:"#6C5CE7", J:"#E84393",
+      K:"#26DE81", L:"#A855F7", M:"#4F7CFF", N:"#00C2A8", O:"#F6B93B",
+      P:"#E17055", Q:"#2E86DE", R:"#FF7675", S:"#00CEC9", T:"#636E72",
+      U:"#7CB342", V:"#3D5AFE", W:"#FFA502", X:"#9C27B0", Y:"#8E63FF",
+      Z:"#F368E0"
     };
 
     function hexToRgb(hex) {
       const clean = String(hex || "").replace("#", "");
-      if (clean.length !== 6) return { r: 92, g: 140, b: 255 };
+
+      if (clean.length !== 6) {
+        return { r: 92, g: 140, b: 255 };
+      }
 
       return {
         r: parseInt(clean.slice(0, 2), 16),
@@ -1099,92 +1056,281 @@
       }).join("");
     }
 
-    document.querySelectorAll(".visit-main-row").forEach(function (row) {
-      const avatar = row.querySelector(".avatar[data-avatar-letter]");
-      if (!avatar) return;
+    function applyAvatarColors(scope) {
+      const root = scope || document;
 
-      const letter = (avatar.getAttribute("data-avatar-letter") || "G")
-        .trim()
-        .toUpperCase()
-        .charAt(0);
+      root.querySelectorAll(".visit-main-row").forEach(function (row) {
+        const avatar = row.querySelector(".avatar[data-avatar-letter]");
+        if (!avatar) return;
 
-      const userColor = avatarColorMap[letter] || "#5C8CFF";
-      const userSoftColor = mixWithWhite(userColor, 0.90);
-      const userLineColor = mixWithWhite(userColor, 0.78);
+        const letter = (avatar.getAttribute("data-avatar-letter") || "G")
+          .trim()
+          .toUpperCase()
+          .charAt(0);
 
-      row.style.setProperty("--user-color", userColor);
-      row.style.setProperty("--user-soft-color", userSoftColor);
-      row.style.setProperty("--user-line-color", userLineColor);
+        const userColor = avatarColorMap[letter] || "#5C8CFF";
+        const userSoftColor = mixWithWhite(userColor, 0.90);
+        const userLineColor = mixWithWhite(userColor, 0.78);
 
-      avatar.style.background = userColor;
+        row.style.setProperty("--user-color", userColor);
+        row.style.setProperty("--user-soft-color", userSoftColor);
+        row.style.setProperty("--user-line-color", userLineColor);
 
-      row.querySelectorAll("[data-user-color-icon]").forEach(function (icon) {
-        icon.style.color = userColor;
+        avatar.style.background = userColor;
+
+        row.querySelectorAll("[data-user-color-icon]").forEach(function (icon) {
+          icon.style.color = userColor;
+        });
       });
-    });
+    }
 
-    document.querySelectorAll(".js-format-count").forEach(function (node) {
-      const raw = (node.textContent || "").trim();
-      const num = parseInt(raw, 10);
+    function formatCounts(scope) {
+      const root = scope || document;
 
-      if (Number.isNaN(num)) return;
+      root.querySelectorAll(".js-format-count").forEach(function (node) {
+        const raw = (node.textContent || "").trim();
+        const num = parseInt(raw, 10);
 
-      if (num < 1000) {
-        node.textContent = String(num);
-      } else if (num < 10000) {
-        const val = (num / 1000).toFixed(1);
-        node.textContent = val.endsWith(".0") ? parseInt(val, 10) + "K" : val + "K";
-      } else if (num < 1000000) {
-        node.textContent = Math.floor(num / 1000) + "K";
-      } else {
-        const val = (num / 1000000).toFixed(1);
-        node.textContent = val.endsWith(".0") ? parseInt(val, 10) + "M" : val + "M";
-      }
-    });
+        if (Number.isNaN(num)) return;
 
-    if (!searchInput) return;
-
-    const totalRows = rows.length;
-
-    searchInput.addEventListener("input", function () {
-      const query = searchInput.value.trim().toLowerCase();
-      let visibleCount = 0;
-
-      rows.forEach(function (row) {
-        const btn = row.querySelector(".expand-btn");
-        const targetId = row.getAttribute("data-history-target");
-        const historyRow = targetId ? document.getElementById(targetId) : null;
-
-        const rowText = (
-          row.textContent + " " + (historyRow ? historyRow.textContent : "")
-        ).toLowerCase();
-
-        const matches = !query || rowText.includes(query);
-
-        row.hidden = !matches;
-
-        if (!matches && historyRow) {
-          setVisitHistoryState(historyRow, btn, false);
+        if (num < 1000) {
+          node.textContent = String(num);
+          return;
         }
 
-        if (matches) visibleCount += 1;
+        if (num < 10000) {
+          const val = (num / 1000).toFixed(1);
+          node.textContent = val.endsWith(".0") ? parseInt(val, 10) + "K" : val + "K";
+          return;
+        }
+
+        if (num < 1000000) {
+          node.textContent = Math.floor(num / 1000) + "K";
+          return;
+        }
+
+        const val = (num / 1000000).toFixed(1);
+        node.textContent = val.endsWith(".0") ? parseInt(val, 10) + "M" : val + "M";
+      });
+    }
+
+    applyAvatarColors(document);
+    formatCounts(document);
+    captureInitialHistoryState(document);
+
+    const searchInput = document.getElementById("visitsLiveSearch");
+    const searchForm = document.getElementById("visitsSearchForm");
+    const metaWrap = document.getElementById("visitsCountText");
+    const tableBody = document.getElementById("visitsTableBody");
+    const paginationWrap = document.getElementById("visitsPaginationWrap");
+    const visitsCard = document.getElementById("visitsCard");
+
+    let visitsSearchTimer = null;
+    let visitsAbortController = null;
+
+    function buildLiveUrlFromForm(pageUrl) {
+      const params = new URLSearchParams();
+
+      if (searchForm) {
+        const formData = new FormData(searchForm);
+
+        for (const [key, value] of formData.entries()) {
+          const cleanValue = String(value || "").trim();
+
+          if (cleanValue) {
+            params.set(key, cleanValue);
+          }
+        }
+      }
+
+      if (pageUrl) {
+        const clickedUrl = new URL(pageUrl, window.location.origin);
+        const page = clickedUrl.searchParams.get("page");
+
+        if (page) {
+          params.set("page", page);
+        }
+      } else {
+        params.set("page", "1");
+      }
+
+      return "{% url 'offers:branch_all_visits_live' %}?" + params.toString();
+    }
+
+    function setVisitsLoading(isLoading) {
+      if (!visitsCard) return;
+
+      if (isLoading) {
+        visitsCard.classList.add("is-loading");
+      } else {
+        visitsCard.classList.remove("is-loading");
+      }
+    }
+
+    function replaceVisitsHtml(data) {
+      if (metaWrap) {
+        metaWrap.innerHTML = data.meta_html || "";
+      }
+
+      if (tableBody) {
+        tableBody.innerHTML = data.table_body_html || "";
+      }
+
+      if (paginationWrap) {
+        paginationWrap.innerHTML = data.pagination_html || "";
+      }
+
+      applyAvatarColors(document);
+      formatCounts(document);
+      captureInitialHistoryState(document);
+    }
+
+    function fetchVisits(url) {
+      if (visitsAbortController) {
+        visitsAbortController.abort();
+      }
+
+      visitsAbortController = new AbortController();
+
+      setVisitsLoading(true);
+
+      fetch(url, {
+        method: "GET",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json"
+        },
+        signal: visitsAbortController.signal
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("Failed to load visits");
+          }
+
+          return response.json();
+        })
+        .then(function (data) {
+          if (!data.ok) return;
+
+          replaceVisitsHtml(data);
+
+          const browserUrl = new URL(window.location.href);
+          const liveUrl = new URL(url, window.location.origin);
+
+          browserUrl.search = liveUrl.search;
+          window.history.replaceState({}, "", browserUrl.toString());
+        })
+        .catch(function (error) {
+          if (error.name === "AbortError") return;
+          console.error(error);
+        })
+        .finally(function () {
+          setVisitsLoading(false);
+        });
+    }
+
+    if (searchInput && searchForm) {
+      searchInput.addEventListener("input", function () {
+        const value = searchInput.value.trim();
+
+        clearTimeout(visitsSearchTimer);
+
+        visitsSearchTimer = setTimeout(function () {
+          if (value.length === 0 || value.length >= 2) {
+            fetchVisits(buildLiveUrlFromForm());
+          }
+        }, 500);
       });
 
-      if (emptyBox) {
-        emptyBox.hidden = visibleCount !== 0;
+      searchForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        fetchVisits(buildLiveUrlFromForm());
+      });
+    }
+
+    document.addEventListener("click", function (event) {
+      const pageLink = event.target.closest("[data-ajax-page]");
+
+      if (pageLink) {
+        event.preventDefault();
+        fetchVisits(buildLiveUrlFromForm(pageLink.getAttribute("href")));
+        return;
       }
 
-      const lastUpdatedText = "{% now 'h:i A' %}";
+      const loadMoreBtn = event.target.closest("[data-history-load-more]");
+      if (!loadMoreBtn) return;
 
-      if (countText) {
-        countText.textContent = query
-          ? `Showing ${visibleCount} of ${totalRows} users · Last updated ${lastUpdatedText}`
-          : `Showing ${totalRows} users · Last updated ${lastUpdatedText}`;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const userId = loadMoreBtn.getAttribute("data-user-id");
+      const nextPage = loadMoreBtn.getAttribute("data-next-page") || "2";
+      const targetBodyId = loadMoreBtn.getAttribute("data-target-body");
+      const targetBody = document.getElementById(targetBodyId);
+
+      if (!userId || !targetBody) return;
+
+      const params = new URLSearchParams();
+      params.set("user_id", userId);
+      params.set("history_page", nextPage);
+
+      if (searchForm) {
+        const formData = new FormData(searchForm);
+
+        const methodValue = String(formData.get("method") || "").trim();
+        const dateValue = String(formData.get("date") || "").trim();
+
+        if (methodValue) {
+          params.set("method", methodValue);
+        }
+
+        if (dateValue) {
+          params.set("date", dateValue);
+        }
       }
 
-      if (pagination) {
-        pagination.style.display = query ? "none" : "";
-      }
+      const url = "{% url 'offers:branch_visit_history_live' %}?" + params.toString();
+
+      loadMoreBtn.classList.add("is-loading");
+      loadMoreBtn.textContent = "Loading...";
+
+      fetch(url, {
+        method: "GET",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json"
+        }
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("Failed to load history");
+          }
+
+          return response.json();
+        })
+        .then(function (data) {
+          if (!data.ok) return;
+
+          targetBody.insertAdjacentHTML("beforeend", data.history_html || "");
+
+          if (data.has_next && data.next_page) {
+            loadMoreBtn.setAttribute("data-next-page", data.next_page);
+            loadMoreBtn.textContent = "Load more";
+          } else {
+            loadMoreBtn.textContent = "All visits loaded";
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.classList.add("is-loading");
+          }
+        })
+        .catch(function (error) {
+          console.error(error);
+          loadMoreBtn.textContent = "Try again";
+        })
+        .finally(function () {
+          if (!loadMoreBtn.disabled) {
+            loadMoreBtn.classList.remove("is-loading");
+          }
+        });
     });
   });
 </script>

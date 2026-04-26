@@ -1,0 +1,35 @@
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+  <div class="pagination">
+
+    {% if page_obj.has_previous %}
+      <a
+        class="page-btn"
+        data-ajax-page
+        href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if method %}&method={{ method|urlencode }}{% endif %}{% if date %}&date={{ date|urlencode }}{% endif %}"
+      >
+        ‹
+      </a>
+    {% else %}
+      <span class="page-btn is-disabled">‹</span>
+    {% endif %}
+
+    <span class="page-btn active">{{ page_obj.number }}</span>
+
+    <span class="page-info">
+      of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a
+        class="page-btn"
+        data-ajax-page
+        href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if method %}&method={{ method|urlencode }}{% endif %}{% if date %}&date={{ date|urlencode }}{% endif %}"
+      >
+        ›
+      </a>
+    {% else %}
+      <span class="page-btn is-disabled">›</span>
+    {% endif %}
+
+  </div>
+{% endif %}

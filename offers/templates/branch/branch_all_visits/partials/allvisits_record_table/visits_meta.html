@@ -1,0 +1,14 @@
+<span class="visits-card-meta__text">Showing</span>
+
+<span class="visits-card-meta__strong">
+  {% if page_obj %}
+    {{ visits|length }} of {{ page_obj.paginator.count }} users
+  {% else %}
+    {{ visits|length }} users
+  {% endif %}
+</span>
+
+<span class="visits-card-meta__dot">·</span>
+
+<span class="visits-card-meta__text">Last updated</span>
+<span class="visits-card-meta__strong">{% now "h:i A" %}</span>

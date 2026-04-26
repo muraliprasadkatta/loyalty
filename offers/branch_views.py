@@ -22,7 +22,17 @@ from offers.services.common.time_helpers import get_local_day_bounds
 from offers.models import ComplementaryOffer
 from offers.services.qr.qr_token_utils import mint_qr_token
 from offers.models import Branch, UserVisitEvent, UserOfferClaim
+from django.db.models import Q, Count, Exists, OuterRef
 from offers.services.branch_api.branch_live_api_service import get_branch_live_api_data
+from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q, Count
+from django.utils import timezone
+
+from .models import Branch, UserVisitEvent, UserOfferClaim
+from django.template.loader import render_to_string
+
+
 
 
 from offers.services.auth.otp_utils import (
@@ -117,28 +127,21 @@ def _clean_branch(v: str) -> str:
 
 
 def _find_branch_by_input(raw_value: str):
-    """
-    Tries exact name match first.
-    Fallback: compares cleaned input vs cleaned branch names in Python.
-    Best long-term fix: dedicated normalized/branch_code field.
-    """
     raw_value = (raw_value or "").strip()
     if not raw_value:
         return None
-
-    branch = Branch.objects.filter(name__iexact=raw_value).only("id", "email", "name", "public_id").first()
-    if branch:
-        return branch
 
     cleaned = _clean_branch(raw_value)
     if not cleaned:
         return None
 
-    candidates = Branch.objects.only("id", "email", "name", "public_id")
-    for b in candidates:
-        if _clean_branch(b.name) == cleaned:
-            return b
-    return None
+    return (
+        Branch.objects
+        .filter(name__iexact=cleaned)
+        .only("id", "email", "name", "public_id")
+        .first()
+    )
+
 
 
 def _resolve_branch_and_identifier(data):
@@ -417,18 +420,24 @@ def branch_home_view(request):
         created_at__lt=next_day_start,
     )
 
-    today_visits = today_visit_qs.count()
+    today_stats = today_visit_qs.aggregate(
+        today_visits=Count("id"),
+        today_qr_visits=Count(
+            "id",
+            filter=Q(visit_method="qr_code"),
+        ),
+        today_staff_verified=Count(
+            "id",
+            filter=Q(visit_method__in=["qr_pin", "offer_day_pin"]),
+        ),
+    )
 
-    today_qr_visits = today_visit_qs.filter(
-        visit_method="qr_code",
-    ).count()
-
-    today_staff_verified = today_visit_qs.filter(
-        visit_method__in=["qr_pin", "offer_day_pin"],
-    ).count()
+    today_visits = today_stats["today_visits"] or 0
+    today_qr_visits = today_stats["today_qr_visits"] or 0
+    today_staff_verified = today_stats["today_staff_verified"] or 0
 
     today_offer_claims = UserOfferClaim.objects.filter(
-        visit_event__branch=branch,
+        branch=branch,
         issued_at__gte=day_start,
         issued_at__lt=next_day_start,
     ).count()
@@ -577,25 +586,89 @@ def mask_email_for_staff(email: str) -> str:
     return f"Mail ******{visible_tail}@{domain}"
 
 
-def branch_all_visits(request):
-    branch_id = request.session.get("branch_id")
-    branch = get_object_or_404(Branch, id=branch_id)
+
+def get_today_new_repeat_customer_counts(branch, day_start, next_day_start):
+    """
+    Branch-wise today new/repeat customer counts.
+
+    New customer:
+      Ee branch lo user's first-ever visit today.
+
+    Repeat customer:
+      Ee branch lo user today visit chesadu,
+      but same branch lo today mundu previous visit already undi.
+    """
+
+    previous_visit_exists = UserVisitEvent.objects.filter(
+        branch=branch,
+        user_id=OuterRef("user_id"),
+        created_at__lt=day_start,
+    )
+
+    today_users = (
+        UserVisitEvent.objects
+        .filter(
+            branch=branch,
+            user__isnull=False,
+            created_at__gte=day_start,
+            created_at__lt=next_day_start,
+        )
+        .values("user_id")
+        .distinct()
+        .annotate(
+            had_previous_visit=Exists(previous_visit_exists)
+        )
+    )
+
+    repeated_customers = today_users.filter(
+        had_previous_visit=True
+    ).count()
+
+    new_customers = today_users.filter(
+        had_previous_visit=False
+    ).count()
+
+    total_today_customers = new_customers + repeated_customers
+
+    returning_rate = 0
+    if total_today_customers:
+        returning_rate = round(
+            (repeated_customers / total_today_customers) * 100
+        )
+
+    return {
+        "new_customers": new_customers,
+        "repeated_customers": repeated_customers,
+        "returning_rate": returning_rate,
+        "total_today_customers": total_today_customers,
+    }
+
+
+
+def build_branch_visits_context(request, branch):
+    q = (request.GET.get("q") or "").strip()
+    method = (request.GET.get("method") or "").strip()
+    date_str = (request.GET.get("date") or "").strip()
+
+    # ✅ Today bounds once calculate chestham
+    now_ts = timezone.localtime(timezone.now())
+    day_start, next_day_start = get_local_day_bounds(now_ts)
+
+    # ✅ Branch-wise all-time customer summary counts
+    customer_counts = get_branch_customer_summary_counts(branch)
 
     qs = (
         UserVisitEvent.objects
         .filter(branch=branch)
-        .select_related("user", "user__profile")
         .order_by("-created_at")
     )
-
-    q = (request.GET.get("q") or "").strip()
-    method = (request.GET.get("method") or "").strip()
-    date_str = (request.GET.get("date") or "").strip()
 
     if q:
         qs = qs.filter(
             Q(user__email__icontains=q) |
             Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(user__profile__display_name__icontains=q) |
             Q(token__icontains=q)
         )
 
@@ -606,25 +679,91 @@ def branch_all_visits(request):
         qs = qs.filter(created_at__date=date_str)
 
     total_visits = qs.count()
-    today_visits = qs.filter(created_at__date=timezone.localdate()).count()
-    unique_users = qs.exclude(user__isnull=True).values("user_id").distinct().count()
+
+    # ✅ created_at__date avoid cheyyadam better.
+    # Today count ki range filter faster and timezone-safe.
+    today_visits = qs.filter(
+        created_at__gte=day_start,
+        created_at__lt=next_day_start,
+    ).count()
+
+    unique_users = (
+        qs
+        .exclude(user__isnull=True)
+        .values("user_id")
+        .distinct()
+        .count()
+    )
+
     qr_pin_visits = qs.filter(visit_method="qr_pin").count()
 
-    claim_visit_ids = set(
+    total_claims = UserOfferClaim.objects.filter(
+        visit_event__in=qs
+    ).count()
+
+    claimed_visit_count = (
         UserOfferClaim.objects
         .filter(visit_event__in=qs)
-        .values_list("visit_event_id", flat=True)
+        .values("visit_event_id")
+        .distinct()
+        .count()
     )
+
+    claim_rate = 0
+    if total_visits:
+        claim_rate = round((claimed_visit_count / total_visits) * 100) 
+
+    customer_rows = (
+        qs
+        .exclude(user__isnull=True)
+        .values("user_id")
+        .annotate(
+            latest_visit_at=Max("created_at"),
+            user_total_visits=Count("id"),
+        )
+        .order_by("-latest_visit_at")
+    )
+
+    CUSTOMERS_PER_PAGE = 50
+    HISTORY_LIMIT_PER_USER = 30
+
+    paginator = Paginator(customer_rows, CUSTOMERS_PER_PAGE)
+
+    page_number = request.GET.get("page") or 1
+    page_obj = paginator.get_page(page_number)
+
+    page_user_ids = [row["user_id"] for row in page_obj.object_list]
+
+    page_visits_qs = (
+        qs
+        .filter(user_id__in=page_user_ids)
+        .select_related("user", "user__profile")
+        .order_by("-created_at")
+    )
+
+    visit_list = list(page_visits_qs)
+    visit_ids = [visit.id for visit in visit_list]
+
+    claim_counts = {}
+
+    if visit_ids:
+        claim_counts = {
+            row["visit_event_id"]: row["claim_count"]
+            for row in (
+                UserOfferClaim.objects
+                .filter(visit_event_id__in=visit_ids)
+                .values("visit_event_id")
+                .annotate(claim_count=Count("id"))
+            )
+        }
 
     grouped = OrderedDict()
 
-    for visit in qs:
-        visit.has_offer_claim = visit.id in claim_visit_ids
+    for visit in visit_list:
+        visit.claim_count = claim_counts.get(visit.id, 0)
+        visit.has_offer_claim = visit.claim_count > 0
 
-        if visit.user_id:
-            key = f"user-{visit.user_id}"
-        else:
-            key = f"guest-{visit.id}"
+        key = f"user-{visit.user_id}"
 
         if key not in grouped:
             grouped[key] = {
@@ -632,27 +771,332 @@ def branch_all_visits(request):
                 "masked_email": mask_email_for_staff(visit.user.email) if visit.user else "",
                 "total_visits": 1,
                 "latest_visit": visit,
+
+                # ✅ Initial render lo latest 30 visits matrame show chestham
                 "all_visits": [visit],
-                "total_claims": 1 if visit.has_offer_claim else 0,
+                "history_limit": HISTORY_LIMIT_PER_USER,
+                "has_more_history": False,
+
+                "total_claims": visit.claim_count,
             }
         else:
             grouped[key]["total_visits"] += 1
-            grouped[key]["all_visits"].append(visit)
-            if visit.has_offer_claim:
-                grouped[key]["total_claims"] += 1
+
+            if len(grouped[key]["all_visits"]) < HISTORY_LIMIT_PER_USER:
+                grouped[key]["all_visits"].append(visit)
+            else:
+                grouped[key]["has_more_history"] = True
+
+            grouped[key]["total_claims"] += visit.claim_count
 
     visits = list(grouped.values())
 
-    context = {
+    return {
         "branch": branch,
         "visits": visits,
+
         "total_visits": total_visits,
         "today_visits": today_visits,
         "unique_users": unique_users,
         "qr_pin_visits": qr_pin_visits,
+        "total_claims": total_claims,
+        "claim_rate": claim_rate,
+
+        # ✅ New / repeat customer cards
+        # ✅ Branch all-time customer summary cards
+        "one_time_customers": customer_counts["one_time_customers"],
+
+        # temporary alias: template old variable use chesthe break avvakudadhu
+        "new_customers": customer_counts["one_time_customers"],
+
+        "repeated_customers": customer_counts["repeated_customers"],
+        "returning_rate": customer_counts["returning_rate"],
+
+        "q": q,
+        "method": method,
+        "date": date_str,
+        "page_obj": page_obj,
     }
 
-    return render(request, "branch/branch_all_visits/branch_all_visits.html", context)
+
+def get_branch_all_time_customer_counts(branch):
+    """
+    Branch-wise all-time customer counts.
+
+    One-time customer:
+      Ee branch lo exactly 1 visit unna user.
+
+    Repeat customer:
+      Ee branch lo 2 or more visits unna user.
+
+    Repeat rate:
+      repeat customers / total unique customers * 100
+    """
+
+    customer_rows = (
+        UserVisitEvent.objects
+        .filter(branch=branch, user__isnull=False)
+        .values("user_id")
+        .annotate(total_visits=Count("id"))
+    )
+
+    total_customers = customer_rows.count()
+
+    repeated_customers = customer_rows.filter(
+        total_visits__gt=1
+    ).count()
+
+    one_time_customers = customer_rows.filter(
+        total_visits=1
+    ).count()
+
+    repeat_rate = 0
+    if total_customers:
+        repeat_rate = round(
+            (repeated_customers / total_customers) * 100
+        )
+
+    return {
+        "total_customers": total_customers,
+        "one_time_customers": one_time_customers,
+        "repeated_customers": repeated_customers,
+        "returning_rate": repeat_rate,
+    }
+
+
+def get_branch_customer_summary_counts(branch):
+    """
+    Branch-wise all-time customer counts.
+
+    One-time customer:
+      Ee branch lo exactly 1 visit unna user.
+
+    Repeat customer:
+      Ee branch lo 2 or more visits unna user.
+
+    Repeat rate:
+      repeat customers / total unique customers * 100
+    """
+
+    customer_rows = (
+        UserVisitEvent.objects
+        .filter(branch=branch, user__isnull=False)
+        .values("user_id")
+        .annotate(total_visits=Count("id"))
+    )
+
+    total_customers = customer_rows.count()
+
+    repeated_customers = customer_rows.filter(
+        total_visits__gt=1
+    ).count()
+
+    one_time_customers = customer_rows.filter(
+        total_visits=1
+    ).count()
+
+    repeat_rate = 0
+    if total_customers:
+        repeat_rate = round(
+            (repeated_customers / total_customers) * 100
+        )
+
+    return {
+        "total_customers": total_customers,
+        "one_time_customers": one_time_customers,
+        "repeated_customers": repeated_customers,
+        "returning_rate": repeat_rate,
+    }
+
+
+@require_branch_session
+def branch_all_visits_live(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    context = build_branch_visits_context(request, branch)
+
+    meta_html = render_to_string(
+        "branch/branch_all_visits/partials/allvisits_record_table/visits_meta.html",
+        context,
+        request=request,
+    )
+
+    table_body_html = render_to_string(
+        "branch/branch_all_visits/partials/allvisits_record_table/visits_table_body.html",
+        context,
+        request=request,
+    )
+
+    pagination_html = render_to_string(
+        "branch/branch_all_visits/partials/allvisits_record_table/visits_pagination.html",
+        context,
+        request=request,
+    )
+
+    return JsonResponse({
+        "ok": True,
+        "meta_html": meta_html,
+        "table_body_html": table_body_html,
+        "pagination_html": pagination_html,
+        "q": context.get("q", ""),
+        "page": context["page_obj"].number if context.get("page_obj") else 1,
+    })
+
+
+@require_branch_session
+def branch_visit_history_live(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    user_id = (request.GET.get("user_id") or "").strip()
+    history_page = request.GET.get("history_page") or 1
+    method = (request.GET.get("method") or "").strip()
+    date_str = (request.GET.get("date") or "").strip()
+
+    if not user_id:
+        return JsonResponse(
+            {"ok": False, "error": "User id required."},
+            status=400,
+        )
+
+    HISTORY_PER_PAGE = 30
+
+    qs = (
+        UserVisitEvent.objects
+        .filter(branch=branch, user_id=user_id)
+        .select_related("user", "user__profile")
+        .order_by("-created_at")
+    )
+
+    if method:
+        qs = qs.filter(visit_method=method)
+
+    if date_str:
+        qs = qs.filter(created_at__date=date_str)
+
+    paginator = Paginator(qs, HISTORY_PER_PAGE)
+    page_obj = paginator.get_page(history_page)
+
+    history_visits = list(page_obj.object_list)
+    visit_ids = [visit.id for visit in history_visits]
+
+    claim_counts = {}
+
+    if visit_ids:
+        claim_counts = {
+            row["visit_event_id"]: row["claim_count"]
+            for row in (
+                UserOfferClaim.objects
+                .filter(visit_event_id__in=visit_ids)
+                .values("visit_event_id")
+                .annotate(claim_count=Count("id"))
+            )
+        }
+
+    for visit in history_visits:
+        visit.claim_count = claim_counts.get(visit.id, 0)
+
+    history_html = render_to_string(
+        "branch/branch_all_visits/partials/allvisits_record_table/visits_history_rows.html",
+        {"history_visits": history_visits},
+        request=request,
+    )
+
+    return JsonResponse({
+        "ok": True,
+        "history_html": history_html,
+        "has_next": page_obj.has_next(),
+        "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+    })
+
+    
+
+@require_branch_session
+def branch_all_visits(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    context = build_branch_visits_context(request, branch)
+
+    return render(
+        request,
+        "branch/branch_all_visits/branch_all_visits.html",
+        context,
+    )
+
+
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
+from django.utils import timezone
+
+from .models import Branch, UserOfferClaim
+
+@require_branch_session
+def branch_all_claims(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    qs = (
+        UserOfferClaim.objects
+        .filter(branch=branch)
+        .select_related(
+            "user",
+            "user__profile",
+            "offer",
+            "visit_event",
+        )
+        .order_by("-issued_at")
+    )
+
+    q = (request.GET.get("q") or "").strip()
+    status = (request.GET.get("status") or "").strip()
+    date_str = (request.GET.get("date") or "").strip()
+
+    if q:
+        qs = qs.filter(
+            Q(user__email__icontains=q) |
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(offer__title__icontains=q) |
+            Q(token__icontains=q) |
+            Q(staff_name__icontains=q) |
+            Q(staff_code__icontains=q)
+        )
+
+    if status:
+        qs = qs.filter(status=status)
+
+    if date_str:
+        qs = qs.filter(issued_at__date=date_str)
+
+    total_claims = qs.count()
+    issued_claims = qs.filter(status="issued").count()
+    redeemed_claims = qs.filter(status="redeemed").count()
+    cancelled_claims = qs.filter(status="cancelled").count()
+    today_claims = qs.filter(issued_at__date=timezone.localdate()).count()
+
+    context = {
+        "branch": branch,
+        "claims": qs[:100],
+
+        "total_claims": total_claims,
+        "today_claims": today_claims,
+        "issued_claims": issued_claims,
+        "redeemed_claims": redeemed_claims,
+        "cancelled_claims": cancelled_claims,
+
+        "q": q,
+        "status": status,
+        "date": date_str,
+    }
+
+    return render(
+        request,
+        "branch/branch_all_claims/branch_all_claims.html",
+        context,
+    )
+
 
 
 @require_branch_session

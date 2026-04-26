@@ -13,10 +13,10 @@
       <p class="overview-mini-card__label">Total Offer Claimed</p>
       <h3 class="overview-mini-card__value">{{ total_claims|default:0 }}</h3>
 
-      <div class="overview-mini-card__meta">
-        <span class="overview-mini-card__growth">↑ {{ claims_growth|default:"0" }}%</span>
-        <span class="overview-mini-card__range">vs {{ previous_range|default:"last week" }}</span>
-      </div>
+    <div class="overview-mini-card__meta">
+      <span class="overview-mini-card__growth">{{ claim_rate|default:0 }}%</span>
+      <span class="overview-mini-card__range">claim rate</span>
+    </div>
     </div>
 
     <div class="overview-mini-card__watermark">
@@ -35,7 +35,7 @@
     </div>
 
     <div class="overview-mini-card__body">
-      <p class="overview-mini-card__label">Repeated Customers</p>
+      <p class="overview-mini-card__label">Repeat Customers</p>
       <h3 class="overview-mini-card__value">{{ repeated_customers|default:0 }}</h3>
 
       <div class="overview-mini-card__meta">
@@ -60,7 +60,7 @@
     </div>
 
     <div class="overview-mini-card__body">
-      <p class="overview-mini-card__label">New Customers</p>
+      <p class="overview-mini-card__label">One-time Customers</p>
       <h3 class="overview-mini-card__value">{{ new_customers|default:0 }}</h3>
 
       <div class="overview-mini-card__meta">
@@ -85,11 +85,11 @@
     </div>
 
     <div class="overview-mini-card__body">
-      <p class="overview-mini-card__label">Returning Rate</p>
+      <p class="overview-mini-card__label">Repeat Rate</p>
       <h3 class="overview-mini-card__value">{{ returning_rate|default:"0" }}%</h3>
 
       <div class="overview-mini-card__meta">
-        <span class="overview-mini-card__range">vs {{ previous_range|default:"last week" }}</span>
+        <span class="overview-mini-card__range">branch total</span>
         <span class="overview-mini-card__growth">↑ {{ returning_growth|default:"0" }}%</span>
       </div>
     </div>

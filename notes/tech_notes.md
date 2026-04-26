@@ -320,3 +320,23 @@ D:\restarent_application66\offers\static\offers\css\ui\page_loading.css D:\resta
 {% include "ui_states/spinners/page_loader.html" %}
 
 idi page spinner kosam design chesamu aslau ee page spinner dheikosam use chestamu ante ancor tag daggara redirectayinappdu lanti page kosam ee page loaderniuse chestamu 
+
+
+____________________________________________________________________
+
+
+D:\restarent_application66\offers\services\branch_api\branch_live_api_service.py
+
+ee api ni branch sidehome page uand innerpage lo user count and today and allcountnumer ni update ayyaka full page refresh avvakunda update avvataniki cresate chesam so eppdina auto upadte avvatam loissu evaste e file ni touchcheyali 
+dheni ki link branch home page and this file
+
+
+__________________________________________________
+
+def build_branch_visits_context(request, branch):
+def get_today_new_repeat_customer_counts(branch, day_start, next_day_start):
+def build_branch_visits_context(request, branch):
+get_branch_all_time_customer_counts
+
+e files anevi allvisit lo right card lo unna count ni add cheyataniki ee helpersfiles ni use chestunnam 
+andhulo all day count kosam unadhi and only tody count kosam undhi alane ercentage lu kosam kudaikkade unnay

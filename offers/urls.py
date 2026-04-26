@@ -18,7 +18,6 @@ app_name = "offers"
 urlpatterns = [
 
     path("", root_router, name="root"),
-    path("branch/live/", bviews.branch_live_api, name="branch_live_api"),
 
     path("user/login/",  uviews.user_login_page,  name="user_login"),
     path("auth/otp/send", uviews.otp_send, name="otp_send"),
@@ -66,6 +65,10 @@ urlpatterns = [
     path("branch/offer-pin/verify/",branch_verify_offer_pin, name="branch_verify_offer_pin"),
     path("branch/visits/",bviews.branch_all_visits, name="branch_all_visits"),
     path("branch/live/", bviews.branch_live_api, name="branch_live_api"),
+    path("branch/claims/",bviews.branch_all_claims,name="branch_all_claims",),
+    path("branch/visits/live/",bviews.branch_all_visits_live,name="branch_all_visits_live",),
+    path("branch/visits/history/live/",bviews.branch_visit_history_live,name="branch_visit_history_live",),
+    
 
     # offers/urls.py
 

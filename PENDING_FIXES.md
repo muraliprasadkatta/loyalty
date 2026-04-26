@@ -16,3 +16,8 @@
 4. ## only qr tho validations pettinappudu dhaniki qr side button remove cheyali like pin generate and and offer pin verify  anevi
 - generatingqr time lo template lounnaa pinverifyanoffer day pin nidisable cheyali
 -
+
+4. ## branch allvisit lo unna searchbox lo name tho searhchestene ravali 
+present unnalogic prakaram mailtho searchchesina vaachestundhi 
+idiendhuku issue ante ikkad live searchundho so number finc ayye chance undhi
+sofurther gadheni kuda prevent cheyali
