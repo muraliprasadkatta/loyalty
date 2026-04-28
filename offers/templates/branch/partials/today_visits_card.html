@@ -21,7 +21,7 @@
   <div class="today-visits-stats">
     <article class="today-stat-card today-stat-card--blue">
       <div class="today-stat-card__top">
-        <div class="today-stat-card__label">Total Visits</div>
+        <div class="today-stat-card__label">Total Customers</div>
         <div class="today-stat-card__icon today-stat-card__icon--blue" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <path d="M4 16l5-5 4 4 7-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -29,8 +29,9 @@
           </svg>
         </div>
       </div>
-      <div id="todayVisitsCount" class="today-stat-card__value today-stat-card__value--blue">
-      {{ today_visits|default:"0" }}
+
+      <div id="todayCustomersCount" class="today-stat-card__value today-stat-card__value--blue">
+        {{ total_today_customers|default:"0" }}
       </div>
     </article>
 
@@ -44,9 +45,10 @@
           </svg>
         </div>
       </div>
+
       <div id="todayOfferClaimsCount" class="today-stat-card__value today-stat-card__value--green">
-  {{ today_offer_claims|default:"0" }}
-</div>
+        {{ today_offer_claims|default:"0" }}
+      </div>
     </article>
 
     <article class="today-stat-card today-stat-card--indigo">
@@ -54,14 +56,16 @@
         <div class="today-stat-card__label">New Customers</div>
         <div class="today-stat-card__icon today-stat-card__icon--indigo" aria-hidden="true">
           <svg viewBox="0 0 24 24">
-            <path d="M12 4a8 8 0 1 0 8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-            <path d="M20 12A8 8 0 0 0 12 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.5 3"/>
+            <path d="M15 19a6 6 0 0 0-12 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="9" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2.2"/>
+            <path d="M19 8v6M16 11h6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
           </svg>
         </div>
       </div>
-      <div id="todayQrVisitsCount" class="today-stat-card__value today-stat-card__value--indigo">
-  {{ today_qr_visits|default:"0" }}
-</div>
+
+      <div id="todayNewCustomersCount" class="today-stat-card__value today-stat-card__value--indigo">
+        {{ new_customers|default:"0" }}
+      </div>
     </article>
 
     <article class="today-stat-card today-stat-card--orange">
@@ -69,54 +73,81 @@
         <div class="today-stat-card__label">Repeated Customers</div>
         <div class="today-stat-card__icon today-stat-card__icon--orange" aria-hidden="true">
           <svg viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/>
-            <path d="M12 8v4.5l3 1.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14.5 19a5.5 5.5 0 0 0-11 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="9" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="2.2"/>
+            <path d="M17.5 7.5h3v-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20.2 7.2A5.6 5.6 0 0 0 16 5.4a5.4 5.4 0 0 0-3.2 1.1" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
           </svg>
         </div>
       </div>
-      <div id="todayStaffVerifiedCount" class="today-stat-card__value today-stat-card__value--orange">
-  {{ today_staff_verified|default:"0" }}
-</div>
+
+      <div id="todayRepeatedCustomersCount" class="today-stat-card__value today-stat-card__value--orange">
+        {{ repeated_customers|default:"0" }}
+      </div>
     </article>
   </div>
 
   <div class="today-visits-chart-card">
     <div class="today-visits-chart">
-      <div class="today-visits-y-axis">
-        <span>10</span>
-        <span>8</span>
-        <span>6</span>
-        <span>4</span>
-        <span>2</span>
-        <span>0</span>
+      <div class="today-visits-y-axis" id="todayVisitsYAxis">
+        {% for tick in today_chart.y_axis %}
+          <span>{{ tick }}</span>
+        {% empty %}
+          <span>10</span>
+          <span>8</span>
+          <span>6</span>
+          <span>4</span>
+          <span>2</span>
+          <span>0</span>
+        {% endfor %}
       </div>
 
       <div class="today-visits-plot-wrap">
-        <div class="today-visits-plot">
-          <div class="today-visits-empty-state">
+        <div class="today-visits-plot" id="todayVisitsPlot">
+          <div
+            class="today-visits-empty-state"
+            id="todayVisitsEmptyState"
+            {% if today_chart.has_data %}hidden{% endif %}
+          >
             <div class="today-visits-empty-state__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24">
                 <path d="M5 18V9M12 18V6M19 18V3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <div class="today-visits-empty-state__title">No visits scheduled yet</div>
+
+            <div class="today-visits-empty-state__title">No visits recorded yet</div>
             <p class="today-visits-empty-state__text">
-              Visit data will appear here once visits are planned
-              <br>
-              or recorded for today.
+              Visit chart will appear here once visits are recorded for today.
             </p>
+          </div>
+
+          <div
+            class="today-visits-bars"
+            id="todayVisitsBars"
+            {% if not today_chart.has_data %}hidden{% endif %}
+          >
+            {% for bar in today_chart.bars %}
+              <div class="today-visits-bar-wrap" title="{{ bar.label }}: {{ bar.value }} visits">
+                <span class="today-visits-bar-value">{{ bar.value }}</span>
+                <div class="today-visits-bar" style="height: {{ bar.height_percent }}%;"></div>
+              </div>
+            {% endfor %}
           </div>
         </div>
 
-        <div class="today-visits-x-axis">
-          <span>12 AM</span>
-          <span>3 AM</span>
-          <span>6 AM</span>
-          <span>9 AM</span>
-          <span>12 PM</span>
-          <span>3 PM</span>
-          <span>6 PM</span>
-          <span>9 PM</span>
+        <div class="today-visits-x-axis" id="todayVisitsXAxis">
+          {% for bar in today_chart.bars %}
+            <span>{{ bar.label }}</span>
+          {% empty %}
+            <span>12 AM</span>
+            <span>3 AM</span>
+            <span>6 AM</span>
+            <span>9 AM</span>
+            <span>12 PM</span>
+            <span>3 PM</span>
+            <span>6 PM</span>
+            <span>9 PM</span>
+          {% endfor %}
         </div>
       </div>
     </div>
@@ -231,9 +262,7 @@
   font-size:10px;
   line-height:1.3;
   font-weight:800;
-
 }
-
 
 .today-stat-card__icon{
   width:30px;
@@ -249,7 +278,6 @@
   width:24px;
   height:24px;
   display:block;
-  /* background: #2f6fff; */
 }
 
 .today-stat-card__icon--blue{
@@ -347,6 +375,7 @@
   justify-content:center;
   text-align:center;
   padding:20px;
+  z-index:1;
 }
 
 .today-visits-empty-state__icon{
@@ -380,6 +409,49 @@
   color:#7d89a7;
   font-size:13px;
   line-height:1.55;
+}
+
+.today-visits-bars{
+  position:absolute;
+  inset:14px 10px 12px;
+  display:grid;
+  grid-template-columns:repeat(8, minmax(0, 1fr));
+  align-items:end;
+  gap:10px;
+  z-index:2;
+}
+
+.today-visits-bar-wrap{
+  height:100%;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+}
+
+.today-visits-bar-value{
+  min-height:14px;
+  color:#425071;
+  font-size:11px;
+  line-height:1;
+  font-weight:800;
+}
+
+.today-visits-bar{
+  width:100%;
+  max-width:34px;
+  min-height:3px;
+  border-radius:10px 10px 4px 4px;
+  background:linear-gradient(180deg, #4c74ff 0%, #2f6fff 100%);
+  box-shadow:0 8px 16px rgba(47, 111, 255, 0.18);
+  transition:height 220ms ease;
+}
+
+.today-visits-empty-state[hidden],
+.today-visits-bars[hidden]{
+  display:none !important;
 }
 
 .today-visits-x-axis{
@@ -455,10 +527,27 @@
       );
   }
 
+  .today-visits-bars{
+    gap:7px;
+    inset:12px 6px 10px;
+  }
+
+  .today-visits-bar{
+    max-width:26px;
+  }
+
+  .today-visits-bar-value{
+    font-size:10px;
+  }
+
   .today-visits-x-axis{
-    grid-template-columns:repeat(4, minmax(0, 1fr));
-    row-gap:10px;
-    font-size:11px;
+    grid-template-columns:repeat(8, minmax(0, 1fr));
+    gap:7px;
+    margin-top:8px;
+    font-size:10px;
+    line-height:1;
+    letter-spacing:-0.2px;
+    white-space:nowrap;
   }
 }
 
@@ -481,21 +570,114 @@
 
 <script>
 (function () {
-  const endpoint = "{% url 'offers:branch_live_api' %}";
+  const endpoint = "{% url 'offers:branch_today_visits_live' %}";
 
   const nodes = {
-    todayVisits: document.getElementById("todayVisitsCount"),
-    todayOfferClaims: document.getElementById("todayOfferClaimsCount"),
-    todayQrVisits: document.getElementById("todayQrVisitsCount"),
-    todayStaffVerified: document.getElementById("todayStaffVerifiedCount"),
+    totalCustomers: document.getElementById("todayCustomersCount"),
+    offerClaims: document.getElementById("todayOfferClaimsCount"),
+    newCustomers: document.getElementById("todayNewCustomersCount"),
+    repeatedCustomers: document.getElementById("todayRepeatedCustomersCount"),
+
+    yAxis: document.getElementById("todayVisitsYAxis"),
+    xAxis: document.getElementById("todayVisitsXAxis"),
+    bars: document.getElementById("todayVisitsBars"),
+    emptyState: document.getElementById("todayVisitsEmptyState"),
   };
+
+  let latestChart = null;
+  let resizeTimer = null;
 
   function updateNode(node, value) {
     if (!node) return;
     node.textContent = value ?? 0;
   }
 
-  async function refreshBranchLiveCounts() {
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function clampPercent(value) {
+    const numberValue = Number(value || 0);
+
+    if (Number.isNaN(numberValue)) return 0;
+    if (numberValue < 0) return 0;
+    if (numberValue > 100) return 100;
+
+    return numberValue;
+  }
+
+  function isMobileChart() {
+    return window.matchMedia("(max-width: 640px)").matches;
+  }
+
+  function getCompactTimeLabel(label) {
+    const labelMap = {
+      "12 AM": "12a",
+      "3 AM": "3a",
+      "6 AM": "6a",
+      "9 AM": "9a",
+      "12 PM": "12p",
+      "3 PM": "3p",
+      "6 PM": "6p",
+      "9 PM": "9p",
+    };
+
+    return labelMap[label] || label;
+  }
+
+  function getChartLabel(label) {
+    return isMobileChart() ? getCompactTimeLabel(label) : label;
+  }
+
+  function renderTodayChart(chart) {
+    if (!chart || !Array.isArray(chart.bars)) return;
+
+    latestChart = chart;
+
+    if (nodes.yAxis && Array.isArray(chart.y_axis)) {
+      nodes.yAxis.innerHTML = chart.y_axis
+        .map((tick) => `<span>${escapeHtml(tick)}</span>`)
+        .join("");
+    }
+
+    if (nodes.xAxis) {
+      nodes.xAxis.innerHTML = chart.bars
+        .map((bar) => `<span>${escapeHtml(getChartLabel(bar.label))}</span>`)
+        .join("");
+    }
+
+    const hasData = Boolean(chart.has_data);
+
+    if (nodes.emptyState) {
+      nodes.emptyState.hidden = hasData;
+    }
+
+    if (nodes.bars) {
+      nodes.bars.hidden = !hasData;
+
+      nodes.bars.innerHTML = chart.bars
+        .map((bar) => {
+          const fullLabel = escapeHtml(bar.label);
+          const value = Number(bar.value || 0);
+          const height = clampPercent(bar.height_percent);
+
+          return `
+            <div class="today-visits-bar-wrap" title="${fullLabel}: ${value} visits">
+              <span class="today-visits-bar-value">${value}</span>
+              <div class="today-visits-bar" style="height:${height}%;"></div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+  }
+
+  async function refreshTodayVisitCounts() {
     try {
       const response = await fetch(endpoint, {
         method: "GET",
@@ -511,16 +693,30 @@
       const data = await response.json();
       if (!data.ok || !data.today) return;
 
-      updateNode(nodes.todayVisits, data.today.visits);
-      updateNode(nodes.todayOfferClaims, data.today.offer_claims);
-      updateNode(nodes.todayQrVisits, data.today.qr_visits);
-      updateNode(nodes.todayStaffVerified, data.today.staff_verified);
+      updateNode(nodes.totalCustomers, data.today.total_today_customers);
+      updateNode(nodes.offerClaims, data.today.offer_claims);
+      updateNode(nodes.newCustomers, data.today.new_customers);
+      updateNode(nodes.repeatedCustomers, data.today.repeated_customers);
+
+      renderTodayChart(data.today.chart);
     } catch (error) {
-      // silent fail; don't disturb UI
+      // silent fail; UI should not break
     }
   }
 
-  refreshBranchLiveCounts();
-  window.setInterval(refreshBranchLiveCounts, 6000);
+  function handleChartResize() {
+    if (!latestChart) return;
+
+    window.clearTimeout(resizeTimer);
+
+    resizeTimer = window.setTimeout(function () {
+      renderTodayChart(latestChart);
+    }, 120);
+  }
+
+  refreshTodayVisitCounts();
+
+  window.addEventListener("resize", handleChartResize);
+  window.setInterval(refreshTodayVisitCounts, 6000);
 })();
 </script>

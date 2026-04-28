@@ -15,7 +15,7 @@
 
     <div class="overview-mini-card__meta">
       <span class="overview-mini-card__growth">{{ claim_rate|default:0 }}%</span>
-      <span class="overview-mini-card__range">claim rate</span>
+      <span class="overview-mini-card__range">overall claim rate</span>
     </div>
     </div>
 
@@ -38,10 +38,10 @@
       <p class="overview-mini-card__label">Repeat Customers</p>
       <h3 class="overview-mini-card__value">{{ repeated_customers|default:0 }}</h3>
 
-      <div class="overview-mini-card__meta">
-        <span class="overview-mini-card__growth">↑ {{ repeated_growth|default:"0" }}%</span>
-        <span class="overview-mini-card__range">vs {{ previous_range|default:"last week" }}</span>
-      </div>
+<div class="overview-mini-card__meta">
+  <span class="overview-mini-card__growth">{{ repeat_customer_percentage|default:0 }}%</span>
+  <span class="overview-mini-card__range">repeat rate</span>
+</div>
     </div>
 
     <div class="overview-mini-card__watermark">
@@ -63,10 +63,10 @@
       <p class="overview-mini-card__label">One-time Customers</p>
       <h3 class="overview-mini-card__value">{{ new_customers|default:0 }}</h3>
 
-      <div class="overview-mini-card__meta">
-        <span class="overview-mini-card__growth">↑ {{ new_customers_growth|default:"0" }}%</span>
-        <span class="overview-mini-card__range">vs {{ previous_range|default:"last week" }}</span>
-      </div>
+<div class="overview-mini-card__meta">
+  <span class="overview-mini-card__growth">{{ one_time_customer_percentage|default:0 }}%</span>
+  <span class="overview-mini-card__range">one-time rate</span>
+</div>
     </div>
 
     <div class="overview-mini-card__watermark">
@@ -90,16 +90,25 @@
 
       <div class="overview-mini-card__meta">
         <span class="overview-mini-card__range">branch total</span>
-        <span class="overview-mini-card__growth">↑ {{ returning_growth|default:"0" }}%</span>
       </div>
     </div>
 
-    <div class="overview-mini-card__donut" style="--rate: {{ returning_rate|default:0 }};">
+    <div
+      class="overview-mini-card__donut {% if returning_rate > 50 %}overview-mini-card__donut--good{% endif %}"
+      style="--rate: {{ returning_rate|default:0 }};"
+    >
       <span>{{ returning_rate|default:"0" }}%</span>
     </div>
   </article>
 
 </section>
+
+<div class="overview-carousel-indicator" aria-hidden="true">
+  <span class="overview-carousel-indicator__dot is-active"></span>
+  <span class="overview-carousel-indicator__dot"></span>
+  <span class="overview-carousel-indicator__dot"></span>
+  <span class="overview-carousel-indicator__dot"></span>
+</div>
 
 <style>
 .visits-overview-side{
@@ -265,6 +274,8 @@
 
 .overview-mini-card__donut{
   --rate:0;
+  --donut-color:#4f73ff;
+
   position:relative;
   z-index:2;
   width:48px;
@@ -274,20 +285,27 @@
   place-items:center;
   background:
     radial-gradient(circle closest-side, #f8fbff 70%, transparent 71%),
-    conic-gradient(#4f73ff calc(var(--rate) * 1%), #eef1f7 0);
+    conic-gradient(var(--donut-color) calc(var(--rate) * 1%), #eef1f7 0);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.9),
     0 6px 14px rgba(38, 72, 128, 0.07);
   align-self:center;
 }
 
+.overview-mini-card__donut--good{
+  --donut-color:#16a34a;
+}
 .overview-mini-card__donut span{
   font-size:11px;
   font-weight:950;
   color:#18306d;
 }
 
-/* Tablet */
+.overview-carousel-indicator{
+  display:none;
+}
+
+/* Tablet / small laptop */
 @media (max-width:1100px){
   .visits-overview-side{
     grid-template-columns:repeat(2, minmax(220px, 1fr));
@@ -295,24 +313,74 @@
   }
 }
 
-/* Mobile */
-@media (max-width:640px){
+
+@media (max-width:767px){
+  
+
+  .overview-carousel-indicator{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin:2px 0 10px;
+}
+
+.overview-carousel-indicator__dot{
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:#c7d2fe;
+  opacity:.85;
+}
+
+.overview-carousel-indicator__dot.is-active{
+  width:22px;
+  background:#4f73ff;
+}
+
   .visits-overview-layout{
     gap:14px;
   }
 
   .visits-overview-side{
-    grid-template-columns:1fr;
+    display:flex;
+    grid-template-columns:none;
+    flex-wrap:nowrap;
     gap:12px;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+
+    scroll-snap-type:x mandatory;
+    scroll-padding-left:16px;
+
+    padding:0 16px 12px;
+    margin:0 -16px;
+
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+
+    scrollbar-width:none;
+  }
+
+  .visits-overview-side::-webkit-scrollbar{
+    display:none;
   }
 
   .overview-mini-card{
+    flex:0 0 min(84vw, 340px);
+    max-width:340px;
+
     height:auto;
     min-height:96px;
     border-radius:19px;
     padding:16px;
+
     grid-template-columns:44px minmax(0, 1fr) auto;
     gap:12px;
+
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
   }
 
   .overview-mini-card__icon{
@@ -328,10 +396,12 @@
 
   .overview-mini-card__label{
     font-size:14px;
+    line-height:1.15;
   }
 
   .overview-mini-card__value{
     font-size:30px;
+    line-height:.92;
   }
 
   .overview-mini-card__meta{
@@ -351,8 +421,8 @@
   }
 
   .overview-mini-card__donut{
-    width:72px;
-    height:72px;
+    width:68px;
+    height:68px;
   }
 
   .overview-mini-card__donut span{
@@ -366,4 +436,118 @@
     top:32px;
   }
 }
+
+/* Small phones polish */
+@media (max-width:480px){
+  .visits-overview-side{
+    gap:10px;
+    padding:0 14px 12px;
+    margin:0 -14px;
+    scroll-padding-left:14px;
+  }
+
+  .overview-mini-card{
+    flex-basis:86vw;
+    min-height:96px;
+    padding:14px;
+    grid-template-columns:42px minmax(0, 1fr) auto;
+    gap:10px;
+  }
+
+  .overview-mini-card__icon{
+    width:42px;
+    height:42px;
+  }
+
+  .overview-mini-card__icon svg{
+    width:22px;
+    height:22px;
+  }
+
+  .overview-mini-card__label{
+    font-size:13px;
+  }
+
+  .overview-mini-card__value{
+    font-size:28px;
+  }
+
+  .overview-mini-card__growth{
+    height:22px;
+    font-size:11px;
+  }
+
+  .overview-mini-card__range{
+    font-size:11px;
+  }
+
+  .overview-mini-card__donut{
+    width:62px;
+    height:62px;
+  }
+
+  .overview-mini-card__donut span{
+    font-size:13px;
+  }
+}
 </style>
+
+<script>
+(function () {
+  function initOverviewCarouselIndicator() {
+    const slider = document.querySelector(".visits-overview-side");
+    const indicator = document.querySelector(".overview-carousel-indicator");
+
+    if (!slider || !indicator) return;
+
+    const cards = Array.from(slider.querySelectorAll(".overview-mini-card"));
+    const dots = Array.from(indicator.querySelectorAll(".overview-carousel-indicator__dot"));
+
+    if (!cards.length || !dots.length) return;
+
+    function updateActiveDot() {
+      const sliderRect = slider.getBoundingClientRect();
+      const sliderCenter = sliderRect.left + (sliderRect.width / 2);
+
+      let activeIndex = 0;
+      let closestDistance = Infinity;
+
+      cards.forEach(function (card, index) {
+        const cardRect = card.getBoundingClientRect();
+        const cardCenter = cardRect.left + (cardRect.width / 2);
+        const distance = Math.abs(sliderCenter - cardCenter);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          activeIndex = index;
+        }
+      });
+
+      dots.forEach(function (dot, index) {
+        dot.classList.toggle("is-active", index === activeIndex);
+      });
+    }
+
+    let ticking = false;
+
+    slider.addEventListener("scroll", function () {
+      if (!ticking) {
+        window.requestAnimationFrame(function () {
+          updateActiveDot();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+
+    window.addEventListener("resize", updateActiveDot);
+    updateActiveDot();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initOverviewCarouselIndicator);
+  } else {
+    initOverviewCarouselIndicator();
+  }
+})();
+</script>

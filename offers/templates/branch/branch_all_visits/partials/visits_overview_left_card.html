@@ -261,14 +261,11 @@
           {{ total_visits|default:"128" }}
         </h3>
 
-        <div class="visits-overview-meta">
-          <span class="visits-overview-growth">
-            ↑ {{ visits_growth|default:"12.5%" }}
-          </span>
-          <span class="visits-overview-date">
-            vs {{ visits_compare_range|default:"09 Apr – 15 Apr 2026" }}
-          </span>
-        </div>
+<div class="visits-overview-meta">
+  <span class="visits-overview-date">
+    Overall branch data
+  </span>
+</div>
       </div>
 
       <div class="visits-overview-chart" aria-label="Visits trend chart">
@@ -299,7 +296,7 @@
 
     <div class="visits-overview-note">
       <span class="visits-overview-note-icon">✣</span>
-      <span>Great job! Your branch visits are trending up this week.</span>
+      <span>Total visits recorded for this branch.</span>
     </div>
   </div>
 </section>

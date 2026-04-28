@@ -340,3 +340,26 @@ get_branch_all_time_customer_counts
 
 e files anevi allvisit lo right card lo unna count ni add cheyataniki ee helpersfiles ni use chestunnam 
 andhulo all day count kosam unadhi and only tody count kosam undhi alane ercentage lu kosam kudaikkade unnay
+
+____________________________________________________
+
+def get_branch_all_time_customer_counts(branch):
+
+e function table lo ani data ni collect chesi dhenidagara store chesi next funcetin ki pass chetudhuaapass chese function a idi 
+def build_branch_visits_context(request, branch):
+
+ikkdaa nunditemplates ki data share avtudhi 
+
+vetini main ga ee tmeplatekosamdesign chesam indhulo customers counts unnay kabati  
+D:\restarent_application66\offers\templates\branch\branch_all_visits\branch_all_visits.html
+
+___________________________________________________
+
+D:\restarent_application66\offers\services\branch_api\branch_today_metrics_service.py
+e fileloall vist lo today count ki and ala ne all cout kida samadhinichina logic e filelone undhi dheni ( def branch_home_view(request): ) e filekilink chesi template o use chestukunnam branch homeviewand all table data lo right andleft card lo
+
+
+_____________________________________________________
+
+D:\restarent_application66\offers\services\branch_api\branch_today_metrics_service.py
+e file lone branch homepage lo unde static view ante today padrt lo unde y-axis and x-axisanevi hani logic kuda indhuloneundhai and view lo aithe  (branch_home_view) e part inka templat eni uce chesukunnam 

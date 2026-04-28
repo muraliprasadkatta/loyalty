@@ -64,12 +64,11 @@ urlpatterns = [
     path("branch/api/users/", bviews.branch_user_visit_list, name="branch_user_visit_list"),
     path("branch/offer-pin/verify/",branch_verify_offer_pin, name="branch_verify_offer_pin"),
     path("branch/visits/",bviews.branch_all_visits, name="branch_all_visits"),
-    path("branch/live/", bviews.branch_live_api, name="branch_live_api"),
     path("branch/claims/",bviews.branch_all_claims,name="branch_all_claims",),
-    path("branch/visits/live/",bviews.branch_all_visits_live,name="branch_all_visits_live",),
+    path("branch/today-visits/live/",bviews.branch_today_visits_live,name="branch_today_visits_live",),
+    path("branch/all-visits/table/live/",bviews.branch_all_visits_table_live,name="branch_all_visits_table_live",),
     path("branch/visits/history/live/",bviews.branch_visit_history_live,name="branch_visit_history_live",),
     
-
     # offers/urls.py
 
     path(

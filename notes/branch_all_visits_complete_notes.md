@@ -1,5 +1,7 @@
-# Branch All Visits – Complete Technical Notes
+# Branch Dashboard – Complete Technical Notes
 
+> Updated notes file. Includes original Branch All Visits notes plus recent modifications:
+> live endpoint renaming, search clear icon, history UI polish, Branch Home today customer counts, service-file split, and deployment checklist.
 
 ---
 
@@ -24,12 +26,12 @@ Purpose:
 
 ---
 
-### 1.2 `branch_all_visits_live` API create chesam
+### 1.2 `branch_all_visits_table_live` API create chesam
 
 This is our live API endpoint.
 
 ```python
-def branch_all_visits_live(request):
+def branch_all_visits_table_live(request):
     ...
     return JsonResponse({
         "ok": True,
@@ -53,8 +55,8 @@ Purpose:
 ```python
 path(
     "branch/visits/live/",
-    views.branch_all_visits_live,
-    name="branch_all_visits_live",
+    bviews.branch_all_visits_table_live,
+    name="branch_all_visits_table_live",
 ),
 ```
 
@@ -152,7 +154,7 @@ User search box lo "mu" type chestadu
         ↓
 JS 500ms wait chestundi
         ↓
-/branch/visits/live/?q=mu&page=1 API call chestundi
+/branch/visits/live/  # URL path can stay same; URL name/function renamed?q=mu&page=1 API call chestundi
         ↓
 Django build_branch_visits_context() run chestundi
         ↓
@@ -302,7 +304,7 @@ Without helper:
 
 ```text
 branch_all_visits view lo one logic
-branch_all_visits_live API lo duplicate same logic
+branch_all_visits_table_live endpoint lo duplicate same logic
 ```
 
 That is bad.
@@ -328,7 +330,7 @@ But live search ki full page reload avvakudadhu.
 So new API:
 
 ```text
-/branch/visits/live/
+/branch/visits/live/  # URL path can stay same; URL name/function renamed
 ```
 
 only table dynamic HTML return chestundi.
@@ -499,7 +501,7 @@ Important functions:
 
 ```python
 build_branch_visits_context(request, branch)
-branch_all_visits_live(request)
+branch_all_visits_table_live(request)
 branch_visit_history_live(request)
 branch_all_visits(request)
 ```
@@ -800,7 +802,7 @@ This protects server from too many requests.
 Clicking main table page arrows calls:
 
 ```text
-/branch/visits/live/?page=2
+/branch/visits/live/  # URL path can stay same; URL name/function renamed?page=2
 ```
 
 and replaces:
@@ -1038,3 +1040,836 @@ allvisits_record_table.html
 ✅ JS has resetHistoryRow
 ✅ JS calls captureInitialHistoryState after initial load and after AJAX replace
 ```
+---
+
+# Recent Updates – Search Box, History UI, Branch Home Today Cards
+
+## 1. Endpoint Naming Cleanup
+
+We renamed vague live endpoint names to avoid future confusion.
+
+### Old confusing names
+
+```text
+branch_all_visits_live
+branch_live_api
+```
+
+### New clear names
+
+```text
+branch_all_visits_table_live
+branch_today_visits_live
+```
+
+Meaning:
+
+```text
+branch_all_visits_table_live
+→ All Visits page table/search/pagination AJAX update
+
+branch_today_visits_live
+→ Branch Home Today cards live update
+
+branch_visit_history_live
+→ One customer's history Load More AJAX
+```
+
+### Required search checks
+
+Old names should not remain:
+
+```powershell
+Get-ChildItem -Recurse -File -Include *.py,*.html,*.js |
+Select-String -Pattern "branch_all_visits_live|branch_live_api" |
+Select-Object Path, LineNumber, Line
+```
+
+New names should appear in expected places:
+
+```powershell
+Get-ChildItem -Recurse -File -Include *.py,*.html,*.js |
+Select-String -Pattern "branch_all_visits_table_live|branch_today_visits_live" |
+Select-Object Path, LineNumber, Line
+```
+
+Expected:
+
+```text
+branch_all_visits_table_live:
+- offers/branch_views.py
+- offers/urls.py
+- allvisits_record_table.html
+
+branch_today_visits_live:
+- offers/branch_views.py
+- offers/urls.py
+- today_visits_card.html
+```
+
+---
+
+## 2. Search Box Clear Icon Update
+
+### What changed
+
+Search input lo right side small close/X icon add chesam.
+
+Behavior:
+
+```text
+User types text
+→ X icon visible
+User clicks X
+→ search input clear
+→ table resets through AJAX
+→ input focus remains
+```
+
+### Template changes
+
+Search input wrapper:
+
+```html
+<div class="visits-search-input-wrap">
+  <input
+    type="text"
+    name="q"
+    id="visitsLiveSearch"
+    class="visits-card-search__input"
+    placeholder="Search by user name / email / token"
+    value="{{ q }}"
+    autocomplete="off"
+  >
+
+  <button
+    type="button"
+    id="visitsSearchClearBtn"
+    class="visits-search-clear-btn"
+    aria-label="Clear search"
+    {% if not q %}hidden{% endif %}
+  ></button>
+</div>
+```
+
+Old separate `Clear` link can be removed because X icon handles reset.
+
+### CSS
+
+Text `×` glyph center issue avoid cheyyadaniki CSS pseudo-elements tho X draw chesam:
+
+```css
+.visits-search-clear-btn{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:26px;
+  height:26px;
+  padding:0;
+  border:0;
+  border-radius:999px;
+  background:#eef3ff;
+  color:#29478f;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.visits-search-clear-btn::before,
+.visits-search-clear-btn::after{
+  content:"";
+  position:absolute;
+  width:13px;
+  height:3px;
+  border-radius:999px;
+  background:currentColor;
+  left:50%;
+  top:50%;
+  transform-origin:center;
+}
+
+.visits-search-clear-btn::before{
+  transform:translate(-50%, -50%) rotate(45deg);
+}
+
+.visits-search-clear-btn::after{
+  transform:translate(-50%, -50%) rotate(-45deg);
+}
+```
+
+### JS
+
+Clear button click:
+
+```js
+if (searchClearBtn) {
+  searchClearBtn.addEventListener("click", function () {
+    searchInput.value = "";
+    toggleSearchClearButton();
+    fetchVisits(buildLiveUrlFromForm());
+    searchInput.focus();
+  });
+}
+```
+
+---
+
+## 3. Visit History UI Polish
+
+### What changed
+
+History expanded box design improved:
+
+```text
+- history box highlight added
+- left accent line added
+- better border/shadow
+- table header/body center alignment
+- claim Yes/No pill style
+```
+
+### Why
+
+Earlier history table looked mixed with main table. Now it looks like a separate expanded detail panel.
+
+### Important CSS ideas
+
+```css
+.visit-history-box{
+  position:relative;
+  background:linear-gradient(180deg, #fbfdff 0%, #eef5ff 100%);
+  border:1px solid #aac0ff;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:
+    0 14px 34px rgba(41, 71, 143, .14),
+    inset 0 1px 0 rgba(255,255,255,.95);
+  overflow:hidden;
+}
+
+.visit-history-box::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:18px;
+  bottom:18px;
+  width:4px;
+  border-radius:0 8px 8px 0;
+  background:#4f7cff;
+}
+```
+
+### Header/body center alignment
+
+Desktop table uses fixed layout and stable column widths:
+
+```css
+@media (min-width:768px){
+  .visit-history-table{
+    table-layout:fixed;
+  }
+
+  .visit-history-table thead th,
+  .visit-history-table tbody td{
+    text-align:center;
+    vertical-align:middle;
+  }
+}
+```
+
+If other CSS overrides header alignment, final override can be added at the bottom of the style block:
+
+```css
+.visits-card .visit-history-table thead th,
+.visits-card .visit-history-table tbody td{
+  text-align:center !important;
+  vertical-align:middle !important;
+}
+```
+
+---
+
+## 4. Only One History Table Open at a Time
+
+### What changed
+
+When one user history is open and staff opens another user history:
+
+```text
+new history opens
+old history closes automatically
+old history appended Load More rows reset
+```
+
+### Why
+
+This keeps the UI clean and avoids multiple expanded history boxes cluttering the table.
+
+### JS idea
+
+```js
+function closeOtherVisitHistories(activeHistoryRow) {
+  const activeId = activeHistoryRow ? activeHistoryRow.id : "";
+
+  document.querySelectorAll(".visit-history-row").forEach(function (row) {
+    if (row.id === activeId) return;
+    if (row.hasAttribute("hidden")) return;
+
+    resetHistoryRow(row);
+    row.setAttribute("hidden", "");
+  });
+
+  document.querySelectorAll(".expand-btn.is-open").forEach(function (otherBtn) {
+    if (otherBtn.getAttribute("data-target") === activeId) return;
+
+    otherBtn.classList.remove("is-open");
+    otherBtn.setAttribute("aria-expanded", "false");
+  });
+}
+```
+
+---
+
+# Branch Home – Today Customer Counts + Live Update
+
+## 1. What changed
+
+Branch Home Today card now uses customer-based metrics.
+
+Cards:
+
+```text
+Total Customers
+Offer Claimed
+New Customers
+Repeated Customers
+```
+
+Mapping:
+
+```text
+Total Customers    → total_today_customers
+Offer Claimed      → today_offer_claims / offer_claims
+New Customers      → new_customers
+Repeated Customers → repeated_customers
+```
+
+Important: We changed first card from `Total Visits` to `Total Customers` for consistency with customer-count logic.
+
+---
+
+## 2. Today Customer Logic
+
+### Formula
+
+```text
+Total Today Customers:
+  Current branch lo today visit chesina unique users
+
+New Customers:
+  Today visit chesaru
+  + same branch lo today mundu previous visit ledu
+
+Repeated Customers:
+  Today visit chesaru
+  + same branch lo today mundu previous visit undhi
+```
+
+### Example
+
+```text
+User A first time today visited branch
+→ New Customer
+
+User B visited last week and again today
+→ Repeated Customer
+
+User C visited today morning and today evening
+→ Still New Customer for today logic, because previous visit before today ledu
+```
+
+Note:
+Backend lo per user per day one visit design unte today visit count and today customer count may look same. Still customer-based names and variables should be used to avoid future confusion.
+
+---
+
+## 3. Time Helper Usage
+
+Common time helper:
+
+```text
+offers/services/common/time_helpers.py
+```
+
+Function:
+
+```python
+get_local_day_bounds(dt=None)
+```
+
+Purpose:
+
+```text
+day_start      → local today 12:00 AM
+next_day_start → tomorrow 12:00 AM
+```
+
+Use range filters instead of `created_at__date` for better timezone safety and index usage:
+
+```python
+created_at__gte=day_start,
+created_at__lt=next_day_start,
+```
+
+---
+
+## 4. Branch Home View
+
+`branch_home_view` still handles request/session/render. It should call service/helper functions for counts.
+
+Important data passed to template:
+
+```python
+{
+    "total_today_customers": today_customer_counts["total_today_customers"],
+    "new_customers": today_customer_counts["new_customers"],
+    "repeated_customers": today_customer_counts["repeated_customers"],
+    "returning_rate": today_customer_counts["returning_rate"],
+    "new_customer_rate": today_customer_counts["new_customer_rate"],
+    "today_offer_claims": today_offer_claims,
+}
+```
+
+---
+
+# Service File Split
+
+## 1. New service file
+
+Created:
+
+```text
+D:\restarent_application66\offers\services\branch_api\branch_today_metrics_service.py
+```
+
+Contains:
+
+```python
+get_branch_all_time_customer_summary_counts(branch)
+get_branch_today_customer_summary_counts(branch, day_start, next_day_start)
+get_branch_today_visits_live_data(branch)
+```
+
+---
+
+## 2. Function responsibilities
+
+### `get_branch_all_time_customer_summary_counts(branch)`
+
+Used for All Visits overview customer metrics.
+
+Returns:
+
+```text
+total_customers
+one_time_customers
+repeated_customers
+returning_rate
+one_time_rate
+```
+
+Logic:
+
+```text
+One-time customer:
+  Branch lo exactly 1 visit unna user
+
+Repeated customer:
+  Branch lo 2 or more visits unna user
+
+Returning rate:
+  repeated_customers / total_customers * 100
+```
+
+### `get_branch_today_customer_summary_counts(branch, day_start, next_day_start)`
+
+Used for Branch Home today customer metrics.
+
+Returns:
+
+```text
+total_today_customers
+new_customers
+repeated_customers
+returning_rate
+new_customer_rate
+```
+
+### `get_branch_today_visits_live_data(branch)`
+
+Used by live endpoint:
+
+```python
+branch_today_visits_live
+```
+
+Returns JSON-ready today card data:
+
+```text
+visits
+qr_visits
+staff_verified
+offer_claims
+total_today_customers
+new_customers
+repeated_customers
+returning_rate
+new_customer_rate
+```
+
+Even if UI currently shows customer cards only, the extra values are available for future use.
+
+---
+
+## 3. Branch view import
+
+`branch_views.py` should import:
+
+```python
+from offers.services.branch_api.branch_today_metrics_service import (
+    get_branch_all_time_customer_summary_counts,
+    get_branch_today_customer_summary_counts,
+    get_branch_today_visits_live_data,
+)
+```
+
+After importing from service, remove local duplicate definitions from `branch_views.py`:
+
+```python
+def get_branch_all_time_customer_summary_counts(...):
+    ...
+
+def get_branch_today_customer_summary_counts(...):
+    ...
+```
+
+Expected: definitions should exist only inside service file.
+
+---
+
+## 4. Thin live view
+
+`branch_today_visits_live` should stay in `branch_views.py` because it handles request/session/JsonResponse.
+
+Correct slim version:
+
+```python
+@require_branch_session
+def branch_today_visits_live(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    today_data = get_branch_today_visits_live_data(branch)
+
+    return JsonResponse({
+        "ok": True,
+        "today": today_data,
+    })
+```
+
+---
+
+## 5. Folder structure
+
+Required structure:
+
+```text
+offers/
+├── branch_views.py
+├── urls.py
+├── services/
+│   ├── __init__.py
+│   ├── common/
+│   │   ├── __init__.py
+│   │   └── time_helpers.py
+│   └── branch_api/
+│       ├── __init__.py
+│       └── branch_today_metrics_service.py
+└── templates/
+    └── branch/
+        ├── branch_homepage/
+        │   └── branch_homepage.html
+        ├── partials/
+        │   └── today_visits_card.html
+        └── branch_all_visits/
+            └── partials/
+                └── allvisits_record_table/
+                    ├── allvisits_record_table.html
+                    ├── visits_meta.html
+                    ├── visits_table_body.html
+                    ├── visits_history_rows.html
+                    └── visits_pagination.html
+```
+
+Required empty init files:
+
+```text
+offers/services/__init__.py
+offers/services/common/__init__.py
+offers/services/branch_api/__init__.py
+```
+
+---
+
+# Branch Home Today Card Template
+
+## 1. File
+
+```text
+D:\restarent_application66\offers\templates\branch\partials\today_visits_card.html
+```
+
+## 2. Card value IDs
+
+```html
+todayCustomersCount
+todayOfferClaimsCount
+todayNewCustomersCount
+todayRepeatedCustomersCount
+```
+
+## 3. Template variables
+
+```django
+{{ total_today_customers|default:"0" }}
+{{ today_offer_claims|default:"0" }}
+{{ new_customers|default:"0" }}
+{{ repeated_customers|default:"0" }}
+```
+
+## 4. Live JS
+
+Add script after `</style>`:
+
+```html
+<script>
+(function () {
+  const endpoint = "{% url 'offers:branch_today_visits_live' %}";
+
+  const nodes = {
+    totalCustomers: document.getElementById("todayCustomersCount"),
+    offerClaims: document.getElementById("todayOfferClaimsCount"),
+    newCustomers: document.getElementById("todayNewCustomersCount"),
+    repeatedCustomers: document.getElementById("todayRepeatedCustomersCount"),
+  };
+
+  function updateNode(node, value) {
+    if (!node) return;
+    node.textContent = value ?? 0;
+  }
+
+  async function refreshTodayVisitCounts() {
+    try {
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        cache: "no-store"
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (!data.ok || !data.today) return;
+
+      updateNode(nodes.totalCustomers, data.today.total_today_customers);
+      updateNode(nodes.offerClaims, data.today.offer_claims);
+      updateNode(nodes.newCustomers, data.today.new_customers);
+      updateNode(nodes.repeatedCustomers, data.today.repeated_customers);
+    } catch (error) {
+      // silent fail; UI should not break
+    }
+  }
+
+  refreshTodayVisitCounts();
+  window.setInterval(refreshTodayVisitCounts, 10000);
+})();
+</script>
+```
+
+Production interval recommendation:
+
+```text
+10–15 seconds
+```
+
+Avoid too-fast polling if many branch dashboards are open.
+
+---
+
+# URL Routes Summary
+
+## All Visits table live
+
+```python
+path(
+    "branch/visits/live/",
+    bviews.branch_all_visits_table_live,
+    name="branch_all_visits_table_live",
+)
+```
+
+## Visit history load more
+
+```python
+path(
+    "branch/visits/history/live/",
+    bviews.branch_visit_history_live,
+    name="branch_visit_history_live",
+)
+```
+
+## Branch Home today card live
+
+```python
+path(
+    "branch/today-visits/live/",
+    bviews.branch_today_visits_live,
+    name="branch_today_visits_live",
+)
+```
+
+---
+
+# Performance / Deployment Notes
+
+## 1. Live refresh load
+
+`branch_today_visits_live` polling every 10 seconds is okay for normal usage.
+
+Risk increases if:
+
+```text
+many branch dashboards stay open
+polling interval is too low
+database has large visit table without indexes
+```
+
+## 2. Recommended DB indexes later
+
+Add indexes before large production usage:
+
+```text
+UserVisitEvent(branch, created_at)
+UserVisitEvent(branch, user, created_at)
+UserOfferClaim(branch, issued_at)
+UserOfferClaim(visit_event)
+```
+
+Why:
+
+```text
+Today count filters use branch + created_at
+New/repeated logic uses branch + user + created_at
+Offer claim counts use branch + issued_at
+History claim count uses visit_event
+```
+
+## 3. All Visits limits
+
+Recommended production values:
+
+```python
+CUSTOMERS_PER_PAGE = 50
+HISTORY_LIMIT_PER_USER = 30
+HISTORY_PER_PAGE = 30
+```
+
+If you use `HISTORY_LIMIT_PER_USER = 20`, then set:
+
+```python
+HISTORY_PER_PAGE = 20
+```
+
+Important:
+
+```text
+HISTORY_LIMIT_PER_USER and HISTORY_PER_PAGE must match
+```
+
+Otherwise history pages can skip records.
+
+---
+
+# Final Updated Checklist
+
+## Branch Home
+
+```text
+✅ Total Customers card uses total_today_customers
+✅ New Customers card uses new_customers
+✅ Repeated Customers card uses repeated_customers
+✅ Offer Claimed card uses today_offer_claims / offer_claims
+✅ Live endpoint name is branch_today_visits_live
+✅ Service helper get_branch_today_visits_live_data is used
+✅ JS endpoint uses {% url 'offers:branch_today_visits_live' %}
+✅ JS interval set to 10–15 seconds for production
+```
+
+## All Visits
+
+```text
+✅ All Visits table endpoint name is branch_all_visits_table_live
+✅ Search works with 500ms debounce
+✅ Search starts from 2 characters
+✅ Search clear X icon clears and resets table
+✅ AJAX pagination works
+✅ Meta/table/pagination partials update without full reload
+✅ Only one history table should stay open at a time
+✅ History Load More works
+✅ Closing/reopening history resets appended rows
+✅ History table UI has highlight, centered headers/data, and Yes/No claim display
+```
+
+## Service Files
+
+```text
+✅ branch_today_metrics_service.py contains count formulas
+✅ time_helpers.py contains get_local_day_bounds
+✅ branch_views.py stays focused on request/render/JsonResponse
+✅ Duplicate local metric helper functions removed from branch_views.py
+```
+
+## Commands
+
+Search old names:
+
+```powershell
+Get-ChildItem -Recurse -File -Include *.py,*.html,*.js |
+Select-String -Pattern "branch_live_api|branch_all_visits_live" |
+Select-Object Path, LineNumber, Line
+```
+
+Search new names:
+
+```powershell
+Get-ChildItem -Recurse -File -Include *.py,*.html,*.js |
+Select-String -Pattern "branch_today_visits_live|branch_all_visits_table_live" |
+Select-Object Path, LineNumber, Line
+```
+
+Check service helper definitions:
+
+```powershell
+Get-ChildItem -Recurse -File -Include *.py |
+Select-String -Pattern "def get_branch_today_customer_summary_counts|def get_branch_all_time_customer_summary_counts|def get_branch_today_visits_live_data" |
+Select-Object Path, LineNumber, Line
+```
+
+Expected:
+- helper definitions only in service file
+- imports/usages in branch_views.py

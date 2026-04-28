@@ -14,11 +14,11 @@
       {% endif %}
     </td>
     <td>
-    {% if visit.claim_count %}
-        Yes
-    {% else %}
-        No
-    {% endif %}
+      {% if visit.claim_count %}
+        <span class="history-claim-pill history-claim-pill--yes">Yes</span>
+      {% else %}
+        <span class="history-claim-pill history-claim-pill--no">No</span>
+      {% endif %}
     </td>
   </tr>
 {% endfor %}
