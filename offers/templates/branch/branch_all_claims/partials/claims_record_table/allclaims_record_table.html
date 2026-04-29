@@ -1,0 +1,59 @@
+<div class="claims-table-card">
+
+  <div class="claims-table-wrap">
+    <table class="claims-table">
+        <colgroup>
+  <col class="claims-col-customer">
+  <col class="claims-col-time">
+  <col class="claims-col-method">
+  <col class="claims-col-staff">
+  <col class="claims-col-status">
+</colgroup>
+<thead>
+  <tr>
+    <th>
+      <span class="claims-th">
+        <span class="claims-th-icon claims-th-icon--customer" aria-hidden="true">👤</span>
+        Customer
+      </span>
+    </th>
+
+    <th>
+      <span class="claims-th">
+        <span class="claims-th-icon claims-th-icon--time" aria-hidden="true">◷</span>
+        Claimed Time
+      </span>
+    </th>
+
+    <th>
+      <span class="claims-th">
+        <span class="claims-th-icon claims-th-icon--method" aria-hidden="true">⌘</span>
+        Visit Method
+      </span>
+    </th>
+
+    <th>
+      <span class="claims-th">
+        <span class="claims-th-icon claims-th-icon--staff" aria-hidden="true">▣</span>
+        Staff / Desk
+      </span>
+    </th>
+
+    <th>
+      <span class="claims-th">
+        <span class="claims-th-icon claims-th-icon--status" aria-hidden="true">✓</span>
+        Status
+      </span>
+    </th>
+  </tr>
+</thead>
+
+      {% include "branch/branch_all_claims/partials/claims_record_table/claims_table_body.html" %}
+    </table>
+  </div>
+
+<div id="claimsTableFooterWrap">
+  {% include "branch/branch_all_claims/partials/claims_record_table/claims_table_footer.html" %}
+</div>
+
+</div>

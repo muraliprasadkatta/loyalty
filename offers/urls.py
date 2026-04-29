@@ -68,6 +68,8 @@ urlpatterns = [
     path("branch/today-visits/live/",bviews.branch_today_visits_live,name="branch_today_visits_live",),
     path("branch/all-visits/table/live/",bviews.branch_all_visits_table_live,name="branch_all_visits_table_live",),
     path("branch/visits/history/live/",bviews.branch_visit_history_live,name="branch_visit_history_live",),
+    path("branch/all-claims/",bviews.branch_all_claims,name="branch_all_claims"),
+    path("branch/all-claims/live/",bviews.branch_all_claims_table_live,name="branch_all_claims_table_live",),
     
     # offers/urls.py
 

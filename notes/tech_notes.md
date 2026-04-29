@@ -363,3 +363,10 @@ _____________________________________________________
 
 D:\restarent_application66\offers\services\branch_api\branch_today_metrics_service.py
 e file lone branch homepage lo unde static view ante today padrt lo unde y-axis and x-axisanevi hani logic kuda indhuloneundhai and view lo aithe  (branch_home_view) e part inka templat eni uce chesukunnam 
+
+
+________________________________________________________
+
+D:\restarent_application66\offers\templates\branch\branch_all_claims
+e folder lo ok common file ni use chesamu adi enti ante ( D:\restarent_application66\offers\services\branch_api\branch_today_metrics_service.py )
+count lakosam andidi maingause chesina place vachesi all visit count  and all claimscount and branch all vistlo use chesam 

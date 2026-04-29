@@ -1,0 +1,116 @@
+<tbody id="claimsTableBody">
+  {% for claim in claims %}
+    <tr>
+
+      <!-- Customer -->
+<td class="claims-cell claims-cell--customer">
+  <div class="claims-customer-cell">
+<div class="claims-avatar">
+  {% if claim.user.first_name %}
+    {{ claim.user.first_name|slice:":1"|upper }}
+  {% elif claim.user.get_full_name %}
+    {{ claim.user.get_full_name|slice:":1"|upper }}
+  {% else %}
+    C
+  {% endif %}
+</div>
+
+    <div class="claims-customer-info">
+<strong class="claims-customer-name">
+  {% if claim.user.get_full_name %}
+    {{ claim.user.get_full_name|title|truncatechars:8 }}
+  {% elif claim.user.first_name %}
+    {{ claim.user.first_name|title|truncatechars:8 }}
+  {% else %}
+    Customer
+  {% endif %}
+</strong>
+</strong>
+
+      <small class="claims-customer-sub">
+        {% if claim.masked_mobile %}
+          {{ claim.masked_mobile }}
+        {% elif claim.user.profile.phone %}
+          Mobile ****{{ claim.user.profile.phone|slice:"-4:" }}
+        {% elif claim.user.profile.mobile %}
+          Mobile ****{{ claim.user.profile.mobile|slice:"-4:" }}
+        {% elif claim.user.profile.phone_number %}
+          Mobile ****{{ claim.user.profile.phone_number|slice:"-4:" }}
+        {% else %}
+          masked mobile
+        {% endif %}
+      </small>
+    </div>
+  </div>
+</td>
+      <!-- Claimed Time -->
+        <td>
+        <div class="claims-time-cell">
+            <span class="claims-date">
+            {{ claim.issued_at|date:"d M Y" }}
+            </span>
+            <span class="claims-clock">
+            {{ claim.issued_at|date:"h:i A" }}
+            </span>
+        </div>
+        </td>
+
+      <!-- Visit Method -->
+      <td>
+        <span class="claims-method">
+          {% if claim.visit_event.visit_method == "qr_code" %}
+            <span class="claims-method-icon">⌘</span> QR Scan
+          {% elif claim.visit_event.visit_method == "qr_pin" %}
+            <span class="claims-method-icon">▦</span> QR PIN
+          {% elif claim.visit_event.visit_method == "offer_day_pin" %}
+            <span class="claims-method-icon">🔑</span> Offer PIN
+          {% else %}
+            {{ claim.visit_event.get_visit_method_display }}
+          {% endif %}
+        </span>
+      </td>
+
+      <!-- Staff / Desk -->
+      <td>
+        <div class="claims-staff-cell">
+        {% if claim.visit_event.staff_name %}
+        <strong>{{ claim.visit_event.staff_name|title|truncatechars:8 }}</strong>
+        {% if claim.visit_event.staff_code %}
+            <small>({{ claim.visit_event.staff_code }})</small>
+        {% endif %}
+        {% elif claim.visit_event.desk %}
+        <strong>{{ claim.visit_event.desk|title|truncatechars:8 }}</strong>
+        {% else %}
+        <strong>—</strong>
+        {% endif %}
+
+          {% if claim.visit_event.desk %}
+            <small>{{ claim.visit_event.desk }}</small>
+          {% endif %}
+        </div>
+      </td>
+
+      <!-- Status -->
+      <td>
+        {% if claim.status == "used" %}
+          <span class="claims-status claims-status--used">✓ Used</span>
+        {% elif claim.status == "claimed" %}
+          <span class="claims-status claims-status--claimed">✓ Claimed</span>
+        {% else %}
+          <span class="claims-status claims-status--claimed">✓ Claimed</span>
+        {% endif %}
+      </td>
+
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="5">
+        <div class="claims-empty-state">
+          <div class="claims-empty-icon">▤</div>
+          <strong>No claims found</strong>
+          <p>Offer claims will appear here once customers claim offers.</p>
+        </div>
+      </td>
+    </tr>
+  {% endfor %}
+</tbody>

@@ -23,17 +23,17 @@
         </div>
 
         <div class="user-main">
-          <div class="user-name">
-            {% if item.user and item.user.profile.display_name %}
-              {{ item.user.profile.display_name }}
-            {% elif item.user and item.user.first_name %}
-              {{ item.user.first_name }}
-            {% elif item.user %}
-              User
-            {% else %}
-              Guest User
-            {% endif %}
-          </div>
+        <div class="user-name">
+          {% if item.user and item.user.profile.display_name %}
+            {{ item.user.profile.display_name|title }}
+          {% elif item.user and item.user.first_name %}
+            {{ item.user.first_name|title }}
+          {% elif item.user %}
+            User
+          {% else %}
+            Guest User
+          {% endif %}
+        </div>
 
           {% if item.masked_email %}
             <div class="user-sub">{{ item.masked_email }}</div>

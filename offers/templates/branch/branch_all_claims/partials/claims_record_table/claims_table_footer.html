@@ -1,0 +1,70 @@
+<!-- Claims Table Footer / Count Meta -->
+<div class="claims-table-footer">
+
+  <div class="claims-table-meta">
+    <span class="claims-table-meta__label">Showing</span>
+
+    <strong>
+      {% if page_obj %}
+        {{ page_obj.start_index }} - {{ page_obj.end_index }}
+      {% else %}
+        {{ claims|length }}
+      {% endif %}
+    </strong>
+
+    <span class="claims-table-meta__text">
+      of
+      {% if page_obj %}
+        {{ page_obj.paginator.count }}
+      {% else %}
+        {{ claims|length }}
+      {% endif %}
+      claims
+    </span>
+
+    <span class="claims-table-meta__dot"></span>
+
+    <span class="claims-table-meta__updated">
+      Updated {% now "h:i A" %}
+    </span>
+  </div>
+
+  {% if page_obj and page_obj.paginator.num_pages > 1 %}
+    <div class="claims-pagination">
+
+      {% if page_obj.has_previous %}
+        <a
+          href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if date %}&date={{ date }}{% endif %}{% if method %}&method={{ method }}{% endif %}"
+          data-claims-page
+          aria-label="Previous page"
+        >
+          ‹
+        </a>
+      {% else %}
+        <span class="is-disabled">‹</span>
+      {% endif %}
+
+      <span class="is-active">
+        {{ page_obj.number }}
+      </span>
+
+      <span class="claims-page-total">
+        of {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a
+          href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q|urlencode }}{% endif %}{% if date %}&date={{ date }}{% endif %}{% if method %}&method={{ method }}{% endif %}"
+          data-claims-page
+          aria-label="Next page"
+        >
+          ›
+        </a>
+      {% else %}
+        <span class="is-disabled">›</span>
+      {% endif %}
+
+    </div>
+  {% endif %}
+
+</div>

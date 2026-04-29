@@ -27,7 +27,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, Count
 from django.utils import timezone
-
+from django.db.models.functions import ExtractHour
 from .models import Branch, UserVisitEvent, UserOfferClaim
 from django.template.loader import render_to_string
 
@@ -618,72 +618,6 @@ def branch_all_visits(request):
     )
 
 
-@require_branch_session
-def branch_all_claims(request):
-    branch_id = request.session.get("branch_id")
-    branch = get_object_or_404(Branch, id=branch_id)
-
-    qs = (
-        UserOfferClaim.objects
-        .filter(branch=branch)
-        .select_related(
-            "user",
-            "user__profile",
-            "offer",
-            "visit_event",
-        )
-        .order_by("-issued_at")
-    )
-
-    q = (request.GET.get("q") or "").strip()
-    status = (request.GET.get("status") or "").strip()
-    date_str = (request.GET.get("date") or "").strip()
-
-    if q:
-        qs = qs.filter(
-            Q(user__email__icontains=q) |
-            Q(user__first_name__icontains=q) |
-            Q(user__last_name__icontains=q) |
-            Q(offer__title__icontains=q) |
-            Q(token__icontains=q) |
-            Q(staff_name__icontains=q) |
-            Q(staff_code__icontains=q)
-        )
-
-    if status:
-        qs = qs.filter(status=status)
-
-    if date_str:
-        qs = qs.filter(issued_at__date=date_str)
-
-    total_claims = qs.count()
-    issued_claims = qs.filter(status="issued").count()
-    redeemed_claims = qs.filter(status="redeemed").count()
-    cancelled_claims = qs.filter(status="cancelled").count()
-    today_claims = qs.filter(issued_at__date=timezone.localdate()).count()
-
-    context = {
-        "branch": branch,
-        "claims": qs[:100],
-
-        "total_claims": total_claims,
-        "today_claims": today_claims,
-        "issued_claims": issued_claims,
-        "redeemed_claims": redeemed_claims,
-        "cancelled_claims": cancelled_claims,
-
-        "q": q,
-        "status": status,
-        "date": date_str,
-    }
-
-    return render(
-        request,
-        "branch/branch_all_claims/branch_all_claims.html",
-        context,
-    )
-
-
 def build_branch_visits_context(request, branch):
     q = (request.GET.get("q") or "").strip()
     method = (request.GET.get("method") or "").strip()
@@ -1005,3 +939,262 @@ def branch_visit_history_live(request):
 
 
 
+
+@require_branch_session
+def branch_all_claims(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    context = build_branch_claims_context(request, branch)
+
+    return render(
+        request,
+        "branch/branch_all_claims/branch_all_claims.html",
+        context,
+    )
+
+
+@require_branch_session
+def branch_all_claims_table_live(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    context = build_branch_claims_context(request, branch)
+
+    table_body_html = render_to_string(
+        "branch/branch_all_claims/partials/claims_record_table/claims_table_body.html",
+        context,
+        request=request,
+    )
+
+    footer_html = render_to_string(
+        "branch/branch_all_claims/partials/claims_record_table/claims_table_footer.html",
+        context,
+        request=request,
+    )
+
+    return JsonResponse({
+        "ok": True,
+        "table_body_html": table_body_html,
+        "footer_html": footer_html,
+        "q": context.get("q", ""),
+        "page": context["page_obj"].number if context.get("page_obj") else 1,
+    })
+
+def build_branch_claims_context(request, branch):
+    q = (request.GET.get("q") or "").strip()
+    method = (request.GET.get("method") or "").strip()
+    date_str = (request.GET.get("date") or "").strip()
+    claim_count_filter = (request.GET.get("claim_count") or "").strip()
+
+    # Summary cards / sidebar analytics ki unfiltered branch claims
+    all_claims_qs = UserOfferClaim.objects.filter(branch=branch)
+
+    # Per customer claim count rows
+    # Same data ni dropdown, repeat customers, frequency buckets kosam reuse chestham.
+    user_claim_rows = list(
+        all_claims_qs
+        .exclude(user__isnull=True)
+        .values("user_id")
+        .annotate(total_user_claims=Count("id"))
+    )
+
+    # Auto dropdown options: 1 claim, 2 claims, ... highest claim count varaku
+    highest_claim_count = 0
+
+    for row in user_claim_rows:
+        claim_count = row.get("total_user_claims") or 0
+
+        if claim_count > highest_claim_count:
+            highest_claim_count = claim_count
+
+    claim_count_options = list(range(1, highest_claim_count + 1))
+
+    # Table data ki filtered queryset
+    qs = (
+        all_claims_qs
+        .select_related(
+            "user",
+            "user__profile",
+            "offer",
+            "visit_event",
+        )
+        .order_by("-issued_at")
+    )
+
+    if q:
+        qs = qs.filter(
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(user__profile__display_name__icontains=q) |
+            Q(offer__title__icontains=q) |
+            Q(token__icontains=q) |
+            Q(staff_name__icontains=q) |
+            Q(staff_code__icontains=q)
+        )
+
+    if method:
+        qs = qs.filter(visit_event__visit_method=method)
+
+    if date_str:
+        qs = qs.filter(issued_at__date=date_str)
+
+    # Claim count dropdown filter
+    # Example: 3 claims select chesthe, all-time exactly 3 claims unna users claim rows matrame table lo show avuthayi.
+    if claim_count_filter.isdigit():
+        selected_claim_count = int(claim_count_filter)
+
+        filtered_user_ids = [
+            row["user_id"]
+            for row in user_claim_rows
+            if (row.get("total_user_claims") or 0) == selected_claim_count
+        ]
+
+        qs = qs.filter(user_id__in=filtered_user_ids)
+
+    total_claims = all_claims_qs.count()
+
+    # Today claims - local day bounds use chestham
+    now_ts = timezone.now()
+    day_start, next_day_start = get_local_day_bounds(now_ts)
+
+    today_claims = all_claims_qs.filter(
+        issued_at__gte=day_start,
+        issued_at__lt=next_day_start,
+    ).count()
+
+    # Summary card: 2+ claims chesina customers count
+    repeat_claim_customers = sum(
+        1
+        for row in user_claim_rows
+        if (row.get("total_user_claims") or 0) > 1
+    )
+
+    # Sidebar: claim frequency buckets
+    claim_frequency_map = {
+        "5+": 0,
+        "4": 0,
+        "3": 0,
+        "2": 0,
+        "1": 0,
+    }
+
+    for row in user_claim_rows:
+        claim_count = row.get("total_user_claims") or 0
+
+        if claim_count >= 5:
+            claim_frequency_map["5+"] += 1
+        elif claim_count == 4:
+            claim_frequency_map["4"] += 1
+        elif claim_count == 3:
+            claim_frequency_map["3"] += 1
+        elif claim_count == 2:
+            claim_frequency_map["2"] += 1
+        elif claim_count == 1:
+            claim_frequency_map["1"] += 1
+
+    max_bucket_count = max(claim_frequency_map.values()) if claim_frequency_map else 0
+
+    claim_frequency_buckets = []
+
+    for label in ["5+", "4", "3", "2", "1"]:
+        count = claim_frequency_map[label]
+
+        percent = 0
+        if max_bucket_count:
+            percent = round((count / max_bucket_count) * 100)
+
+        claim_frequency_buckets.append({
+            "label": label,
+            "count": count,
+            "percent": percent,
+        })
+
+    # Sidebar: peak claim time buckets
+    # Breakfast  : 6 AM  - 11 AM
+    # Lunch      : 11 AM - 4 PM
+    # Dinner     : 4 PM  - 11 PM
+    # Late Night : 11 PM - 6 AM
+    current_tz = timezone.get_current_timezone()
+
+    claim_hour_rows = (
+        all_claims_qs
+        .annotate(local_hour=ExtractHour("issued_at", tzinfo=current_tz))
+        .values("local_hour")
+        .annotate(count=Count("id"))
+    )
+
+    claim_time_map = {
+        "Breakfast": 0,
+        "Lunch": 0,
+        "Dinner": 0,
+        "Late Night": 0,
+    }
+
+    for row in claim_hour_rows:
+        hour = row.get("local_hour")
+        count = row.get("count") or 0
+
+        if hour is None:
+            continue
+
+        if 6 <= hour < 11:
+            claim_time_map["Breakfast"] += count
+        elif 11 <= hour < 16:
+            claim_time_map["Lunch"] += count
+        elif 16 <= hour < 23:
+            claim_time_map["Dinner"] += count
+        else:
+            claim_time_map["Late Night"] += count
+
+    peak_claim_times = []
+
+
+    for label in ["Breakfast", "Lunch", "Dinner", "Late Night"]:
+        count = claim_time_map[label]
+
+        percent = 0
+        if total_claims:
+            percent = round((count / total_claims) * 100)
+
+        peak_claim_times.append({
+            "label": label,
+            "count": count,
+            "percent": percent,
+        })
+
+    peak_claim_percent_map = {
+        item["label"]: item["percent"]
+        for item in peak_claim_times
+    }
+
+    # Testing ki 5 okay. Final production lo 50 cheyyi.
+    CLAIMS_PER_PAGE = 5
+
+    paginator = Paginator(qs, CLAIMS_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+
+    return {
+        "branch": branch,
+        "claims": page_obj.object_list,
+        "page_obj": page_obj,
+
+        "total_claims": total_claims,
+        "today_claims": today_claims,
+        "repeat_claim_customers": repeat_claim_customers,
+
+        "claim_frequency_buckets": claim_frequency_buckets,
+        "peak_claim_times": peak_claim_times,
+
+        "claim_count_options": claim_count_options,
+        "claim_count_filter": claim_count_filter,
+
+        "q": q,
+        "method": method,
+        "date": date_str,
+
+        "breakfast_pct": peak_claim_percent_map.get("Breakfast", 0),
+        "lunch_pct": peak_claim_percent_map.get("Lunch", 0),
+        "dinner_pct": peak_claim_percent_map.get("Dinner", 0),
+        "late_night_pct": peak_claim_percent_map.get("Late Night", 0),
+    }

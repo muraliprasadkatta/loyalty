@@ -82,6 +82,7 @@
   box-shadow:0 6px 14px rgba(34, 61, 143, 0.04);
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 
 .top-left{
@@ -209,11 +210,32 @@
 
 .branch-live-status__dot{
   width:8px;
-  height:7px;
-  flex:0 0 9px;
+  height:8px;
+  flex:0 0 8px;
   border-radius:50%;
   background:#19b463;
-  box-shadow:0 0 0 3px rgba(25,180,99,.10);
+  box-shadow:0 0 0 rgba(25,180,99,.45);
+  animation:branchLivePulse 1.6s ease-out infinite;
+}
+
+@keyframes branchLivePulse{
+  0%{
+    transform:scale(1);
+    box-shadow:0 0 0 0 rgba(25,180,99,.45);
+    opacity:1;
+  }
+
+  70%{
+    transform:scale(1.08);
+    box-shadow:0 0 0 8px rgba(25,180,99,0);
+    opacity:.95;
+  }
+
+  100%{
+    transform:scale(1);
+    box-shadow:0 0 0 0 rgba(25,180,99,0);
+    opacity:1;
+  }
 }
 
 .branch-live-status__text{
@@ -300,66 +322,6 @@
 }
 </style>
 
-<style>
-@media (min-width: 768px){
-  .top{
-    padding:10px 5px 10px;
-    gap:0 20px;
-  }
-
-  .branch-brand{
-    gap:10px;
-  }
-
-  .branch-brand__icon{
-    width:54px;
-    height:54px;
-    flex-basis:54px;
-    border-radius:20px;
-  }
-
-  .branch-title{
-    font-size:18px;
-    padding: 0;
-  }
-
-  .branch-subtitle{
-    font-size:12px;
-  }
-
-  .branch-live-status{
-    padding:6px 13px;
-    font-size:10px;
-  }
-
-  .branch-live-status__dot{
-    width:8px;
-    height:8px;
-    flex-basis:8px;
-  }
-
-  .badge{
-    font-size:11px;
-    font-weight:500;
-  }
-
-  .top-right{
-    gap:2px;
-  }
-
-  .top-right-qr-icon{
-    width:58px;
-    height:38px;
-    transform:scale(1.2);
-
-  }
-
-  .top-right-qr-label{
-    font-size:10px;
-    padding-top: 5px;
-  }
-}
-</style>
 
 <style>
 .branch-brand__icon--link{

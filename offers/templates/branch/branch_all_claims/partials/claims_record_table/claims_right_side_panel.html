@@ -1,0 +1,102 @@
+<!-- RIGHT SIDEBAR -->
+<aside class="claims-side-panel">
+
+  <!-- Claim Frequency -->
+<section class="claims-side-card">
+  <div class="claims-side-title">
+    <div>
+      <span class="claims-side-icon">↻</span>
+      <h2>Claim Frequency</h2>
+    </div>
+  </div>
+
+  <div class="claims-offer-list">
+    {% for item in claim_frequency_buckets %}
+      <div class="claims-offer-rank-row">
+        <span class="claims-rank">{{ item.label }}</span>
+
+        <div class="claims-rank-content">
+          <div class="claims-rank-top">
+            <strong>
+              {% if item.label == "1" %}
+                1 claim customers
+              {% else %}
+                {{ item.label }} claims customers
+              {% endif %}
+            </strong>
+            <span>{{ item.count }}</span>
+          </div>
+
+          <div class="claims-progress">
+            <span style="width: {{ item.percent|default:0 }}%;"></span>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="claims-side-empty">No claim frequency data yet.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Peak Claim Times -->
+<section class="claims-side-card claims-peak-times-card">
+    <div class="claims-side-title">
+    <div>
+      <span class="claims-side-icon">◷</span>
+      <h2>Peak Claim Times</h2>
+    </div>
+  </div>
+
+  <div class="claims-method-summary">
+
+    <div
+      class="claims-donut claims-donut--peak"
+      style="
+        --breakfast: {{ breakfast_pct|default:0 }};
+        --lunch: {{ lunch_pct|default:0 }};
+        --dinner: {{ dinner_pct|default:0 }};
+        --late-night: {{ late_night_pct|default:0 }};
+      "
+    >
+      <strong>{{ total_claims|default:0 }}</strong>
+      <small>Claims</small>
+    </div>
+
+    <div class="claims-method-list">
+      {% for item in peak_claim_times %}
+        <div class="claims-method-item claims-method-item--{{ item.label|slugify }}">
+          <span class="claims-method-dot"></span>
+          <strong>{{ item.label }}</strong>
+          <em>{{ item.percent }}% ({{ item.count }})</em>
+        </div>
+      {% empty %}
+        <p class="claims-side-empty">No claim time data yet.</p>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+  <!-- Recent Activity -->
+  <section class="claims-side-card">
+    <div class="claims-side-title">
+      <div>
+        <span class="claims-side-icon">◴</span>
+        <h2>Recent Activity</h2>
+      </div>
+      <a href="#">View all activity →</a>
+    </div>
+
+    <div class="claims-activity-list">
+      {% for activity in recent_claim_activities %}
+        <div class="claims-activity-item">
+          <span></span>
+          <p>{{ activity.text }}</p>
+          <time>{{ activity.time|date:"h:i A" }}</time>
+        </div>
+      {% empty %}
+        <p class="claims-side-empty">No recent claim activity.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+</aside>

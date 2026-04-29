@@ -1,0 +1,35 @@
+<!-- All Claims Summary Cards -->
+<div class="claims-summary-grid">
+
+  <article class="claims-summary-card">
+    <div class="claims-summary-icon claims-summary-icon--blue">▤</div>
+    <div class="claims-summary-content">
+      <span class="claims-summary-label">Total Claims</span>
+      <strong>{{ total_claims|default:0 }}</strong>
+      <small>All time</small>
+    </div>
+  </article>
+
+  <article class="claims-summary-card">
+    <div class="claims-summary-icon claims-summary-icon--green">▣</div>
+    <div class="claims-summary-content">
+      <span class="claims-summary-label">Today Claims</span>
+      <strong>{{ today_claims|default:0 }}</strong>
+      <small>Today</small>
+    </div>
+  </article>
+
+<article class="claims-summary-card">
+  <div class="claims-summary-icon claims-summary-icon--orange">↻</div>
+
+  <div class="claims-summary-content">
+    <span class="claims-summary-label">Repeat Claim Customers</span>
+
+    <strong>
+      {{ repeat_claim_customers|default:0 }}
+    </strong>
+
+    <small>2+ more claims</small>
+  </div>
+</article>
+</div>
