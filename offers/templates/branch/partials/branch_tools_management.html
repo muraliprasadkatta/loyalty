@@ -6,14 +6,16 @@
   </div>
 
   <div class="branch-tools-grid">
-    <a href="#" class="branch-tool-item">
+    <a href="{% url 'offers:branch_staff_manage' %}" class="branch-tool-item">
       <div class="branch-tool-item__icon-wrap">
         <img src="{% static 'offers/branch_homepage/icons/staff_management.svg' %}" alt="Staff Management">
       </div>
+
       <div class="branch-tool-item__content">
         <h3 class="branch-tool-item__title">Staff Management</h3>
         <p class="branch-tool-item__subtitle">Manage staff and roles</p>
       </div>
+
       <div class="branch-tool-item__arrow">›</div>
     </a>
 

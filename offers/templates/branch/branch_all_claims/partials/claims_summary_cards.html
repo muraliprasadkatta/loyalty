@@ -1,7 +1,7 @@
 <!-- All Claims Summary Cards -->
 <div class="claims-summary-grid">
 
-  <article class="claims-summary-card">
+  <article class="claims-summary-card claims-summary-card--blue">
     <div class="claims-summary-icon claims-summary-icon--blue">▤</div>
     <div class="claims-summary-content">
       <span class="claims-summary-label">Total Claims</span>
@@ -10,7 +10,7 @@
     </div>
   </article>
 
-  <article class="claims-summary-card">
+  <article class="claims-summary-card claims-summary-card--green">
     <div class="claims-summary-icon claims-summary-icon--green">▣</div>
     <div class="claims-summary-content">
       <span class="claims-summary-label">Today Claims</span>
@@ -19,17 +19,24 @@
     </div>
   </article>
 
-<article class="claims-summary-card">
-  <div class="claims-summary-icon claims-summary-icon--orange">↻</div>
+  <article class="claims-summary-card claims-summary-card--orange">
+    <div class="claims-summary-icon claims-summary-icon--orange">↻</div>
 
-  <div class="claims-summary-content">
-    <span class="claims-summary-label">Repeat Claim Customers</span>
+    <div class="claims-summary-content">
+      <span class="claims-summary-label">Repeat Claim Customers</span>
 
-    <strong>
-      {{ repeat_claim_customers|default:0 }}
-    </strong>
+      <strong>
+        {{ repeat_claim_customers|default:0 }}
+      </strong>
 
-    <small>2+ more claims</small>
-  </div>
-</article>
+      <small>2+ more claims</small>
+    </div>
+  </article>
+
+</div>
+
+<div class="claims-summary-scroll-hint" aria-hidden="true">
+  <span class="is-active"></span>
+  <span></span>
+  <span></span>
 </div>

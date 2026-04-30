@@ -484,53 +484,6 @@ def branch_logout_view(request):
 
 
 
-@require_POST
-@csrf_protect
-@require_branch_session
-def branch_staff_create_view(request):
-    branch_id = request.session.get("branch_id")
-    data = _json(request)
-
-    raw_name = (data.get("staff_name") or "").strip()
-    email = normalize_email(data.get("staff_email") or "")
-    raw_staff_id = (data.get("staff_id") or "").strip()
-
-    if not raw_name or not email or not raw_staff_id:
-        return JsonResponse({"ok": False, "error": "Name, email, and staff ID are required."}, status=400)
-
-    name = raw_name.upper()
-    if len(name) > 12 or not all(ch.isalpha() or ch.isspace() for ch in name):
-        return JsonResponse(
-            {"ok": False, "error": "Staff name must be letters only (A–Z) and max 12 characters."},
-            status=400,
-        )
-
-    staff_id = raw_staff_id.upper()
-    if len(staff_id) > 8 or not staff_id.isalnum():
-        return JsonResponse(
-            {"ok": False, "error": "Staff ID must be letters/numbers only, max 8 characters."},
-            status=400,
-        )
-
-    if not valid_email(email):
-        return JsonResponse({"ok": False, "error": "Invalid email address."}, status=400)
-
-    if BranchStaff.objects.filter(branch_id=branch_id, staff_id=staff_id).exists():
-        return JsonResponse({"ok": False, "error": "Staff ID already exists in this branch."}, status=400)
-
-    if BranchStaff.objects.filter(branch_id=branch_id, email__iexact=email).exists():
-        return JsonResponse({"ok": False, "error": "Email already exists in this branch."}, status=400)
-
-    staff = BranchStaff.objects.create(
-        branch_id=branch_id,
-        name=name,
-        email=email,
-        staff_id=staff_id,
-    )
-
-    return JsonResponse({"ok": True, "id": staff.id})
-
-
 @require_branch_session
 def branch_user_visit_list(request):
     branch_id = request.session.get("branch_id")
@@ -1198,3 +1151,133 @@ def build_branch_claims_context(request, branch):
         "dinner_pct": peak_claim_percent_map.get("Dinner", 0),
         "late_night_pct": peak_claim_percent_map.get("Late Night", 0),
     }
+
+
+
+from django.shortcuts import render, get_object_or_404
+from offers.models import Branch, BranchStaff
+
+
+def branch_staff_manage(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    staff_members = (
+        BranchStaff.objects
+        .filter(branch=branch)
+        .order_by("-created_at")
+    )
+
+    return render(
+        request,
+        "branch/branch_staff/branch_staff_manage.html",
+        {
+            "branch": branch,
+            "staff_members": staff_members,
+        },
+    )
+
+
+
+import re
+from django.db import transaction, IntegrityError
+
+
+def generate_branch_staff_id(branch_id, staff_name):
+    """
+    Branch-wise auto staff ID.
+
+    Examples:
+    MURALI  -> MURA001
+    NARESH  -> NARE002
+    PALLAVI -> PALL003
+    """
+
+    base = re.sub(r"[^A-Z0-9]", "", staff_name.upper())[:4]
+
+    if not base:
+        base = "STAF"
+
+    next_number = BranchStaff.objects.filter(branch_id=branch_id).count() + 1
+
+    while True:
+        staff_id = f"{base}{next_number:03d}"
+
+        exists = BranchStaff.objects.filter(
+            branch_id=branch_id,
+            staff_id=staff_id,
+        ).exists()
+
+        if not exists:
+            return staff_id
+
+        next_number += 1
+
+
+
+@require_POST
+@csrf_protect
+@require_branch_session
+def branch_staff_create_view(request):
+    branch_id = request.session.get("branch_id")
+    data = _json(request)
+
+    raw_name = (data.get("staff_name") or "").strip()
+    email = normalize_email(data.get("staff_email") or "")
+
+    if not raw_name or not email:
+        return JsonResponse(
+            {"ok": False, "error": "Name and email are required."},
+            status=400,
+        )
+
+    name = raw_name.upper()
+
+    if len(name) > 12 or not all(ch.isalpha() or ch.isspace() for ch in name):
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": "Staff name must be letters only (A–Z) and max 12 characters.",
+            },
+            status=400,
+        )
+
+    if not valid_email(email):
+        return JsonResponse(
+            {"ok": False, "error": "Invalid email address."},
+            status=400,
+        )
+
+    try:
+        with transaction.atomic():
+            # Same branch lo simultaneous staff create ayithe duplicate ID avoid cheyyadaniki lock.
+            Branch.objects.select_for_update().only("id").get(id=branch_id)
+
+            if BranchStaff.objects.filter(branch_id=branch_id, email__iexact=email).exists():
+                return JsonResponse(
+                    {"ok": False, "error": "Email already exists in this branch."},
+                    status=400,
+                )
+
+            staff_id = generate_branch_staff_id(branch_id, name)
+
+            staff = BranchStaff.objects.create(
+                branch_id=branch_id,
+                name=name,
+                email=email,
+                staff_id=staff_id,
+            )
+
+    except IntegrityError:
+        return JsonResponse(
+            {"ok": False, "error": "Staff could not be created. Please try again."},
+            status=400,
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "id": staff.id,
+            "staff_id": staff.staff_id,
+        }
+    )

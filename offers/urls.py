@@ -70,7 +70,7 @@ urlpatterns = [
     path("branch/visits/history/live/",bviews.branch_visit_history_live,name="branch_visit_history_live",),
     path("branch/all-claims/",bviews.branch_all_claims,name="branch_all_claims"),
     path("branch/all-claims/live/",bviews.branch_all_claims_table_live,name="branch_all_claims_table_live",),
-    
+    path("branch/staff/",bviews.branch_staff_manage,name="branch_staff_manage",),
     # offers/urls.py
 
     path(

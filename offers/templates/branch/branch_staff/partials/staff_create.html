@@ -1,0 +1,268 @@
+<div id="addStaffModal" class="branch-staff-modal" data-modal>
+  <div class="branch-staff-modal__backdrop" data-close></div>
+
+  <div class="branch-staff-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="addStaffModalTitle">
+    <button
+      type="button"
+      class="branch-staff-modal__close"
+      aria-label="Close"
+      data-close
+    >
+      ×
+    </button>
+
+    <div class="branch-staff-modal__header">
+      <h3 id="addStaffModalTitle">Add staff</h3>
+      <p>Enter staff details. Mobile number later add cheddam.</p>
+    </div>
+
+<form id="addStaffForm" class="branch-staff-form">
+  {% csrf_token %}
+
+  <div class="branch-staff-form__group">
+    <label for="staffBranch">Branch</label>
+    <input
+      id="staffBranch"
+      type="text"
+      value="{{ branch.name }}"
+      readonly
+    >
+  </div>
+
+  <div class="branch-staff-form__group">
+    <label for="staffName">Staff name</label>
+    <input
+      id="staffName"
+      type="text"
+      name="staff_name"
+      placeholder="E.G. RAMESH"
+      required
+      maxlength="12"
+      pattern="[A-Za-z ]{1,12}"
+      title="Use only letters and spaces, max 12 characters."
+    >
+  </div>
+
+  <div class="branch-staff-form__group">
+    <label for="staffCodePreview">Staff ID</label>
+    <input
+      id="staffCodePreview"
+      type="text"
+      value="Auto generated after save"
+      readonly
+    >
+  </div>
+
+  <div class="branch-staff-form__group">
+    <label for="staffEmail">Staff email</label>
+    <input
+      id="staffEmail"
+      type="email"
+      name="staff_email"
+      placeholder="name@example.com"
+      required
+    >
+  </div>
+
+  <p class="branch-staff-form__note">
+    Staff ID backend lo automatic ga generate avuthundhi. Mobile number service onboard ayyaka add chestham.
+  </p>
+
+  <div class="branch-staff-form__actions">
+    <button type="submit" class="branch-staff-form__save" id="addStaffSaveBtn">
+      Save
+    </button>
+  </div>
+</form>
+  </div>
+</div>
+
+<style>
+  .branch-staff-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+  }
+
+  .branch-staff-modal.is-open {
+    display: block;
+  }
+
+  .branch-staff-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(2px);
+  }
+
+  .branch-staff-modal__dialog {
+    position: relative;
+    width: min(92vw, 460px);
+    margin: 72px auto;
+    background: #ffffff;
+    border: 1px solid #e5ebfb;
+    border-radius: 22px;
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+    padding: 22px 20px 18px;
+    z-index: 1;
+  }
+
+  .branch-staff-modal__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 10px;
+    background: #f4f7ff;
+    color: #5f6f99;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .branch-staff-modal__close:hover {
+    background: #ebf1ff;
+    color: #25356c;
+  }
+
+  .branch-staff-modal__header {
+    margin-bottom: 18px;
+    padding-right: 40px;
+  }
+
+  .branch-staff-modal__header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .branch-staff-modal__header p {
+    margin: 6px 0 0;
+    color: #6b7a9f;
+    font-size: 14px;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+
+  .branch-staff-form {
+    display: grid;
+    gap: 16px;
+  }
+
+  .branch-staff-form__group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .branch-staff-form__group label {
+    color: #33446f;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .branch-staff-form__group input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 1px solid #dbe3f4;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #16213e;
+    font-size: 15px;
+    font-weight: 600;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .branch-staff-form__group input:focus {
+    border-color: #8eb2ff;
+    box-shadow: 0 0 0 4px rgba(56, 108, 255, 0.12);
+  }
+
+  .branch-staff-form__group input[readonly] {
+    background: #f7f9ff;
+    color: #5c6d98;
+    cursor: default;
+  }
+
+  .branch-staff-form__note {
+    margin: -2px 0 0;
+    color: #7a88ac;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .branch-staff-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2px;
+  }
+
+  .branch-staff-form__save {
+    min-width: 110px;
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 14px;
+    background: #386cff;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(56, 108, 255, 0.24);
+  }
+
+  .branch-staff-form__save:hover {
+    background: #2f5de8;
+  }
+
+  @media (max-width: 767px) {
+    .branch-staff-modal__dialog {
+      width: min(94vw, 420px);
+      margin: 40px auto;
+      padding: 20px 16px 16px;
+      border-radius: 18px;
+    }
+
+    .branch-staff-modal__header h3 {
+      font-size: 22px;
+    }
+
+    .branch-staff-modal__header p {
+      font-size: 13px;
+    }
+
+    .branch-staff-form__group input {
+      min-height: 46px;
+      font-size: 14px;
+    }
+
+    .branch-staff-form__save {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .branch-staff-modal__dialog {
+      width: calc(100vw - 20px);
+      margin: 24px auto;
+      padding: 18px 14px 14px;
+    }
+
+    .branch-staff-modal__close {
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+    }
+
+    .branch-staff-modal__header h3 {
+      font-size: 20px;
+    }
+  }
+</style>

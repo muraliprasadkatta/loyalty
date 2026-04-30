@@ -77,26 +77,6 @@
   </div>
 </section>
   <!-- Recent Activity -->
-  <section class="claims-side-card">
-    <div class="claims-side-title">
-      <div>
-        <span class="claims-side-icon">◴</span>
-        <h2>Recent Activity</h2>
-      </div>
-      <a href="#">View all activity →</a>
-    </div>
 
-    <div class="claims-activity-list">
-      {% for activity in recent_claim_activities %}
-        <div class="claims-activity-item">
-          <span></span>
-          <p>{{ activity.text }}</p>
-          <time>{{ activity.time|date:"h:i A" }}</time>
-        </div>
-      {% empty %}
-        <p class="claims-side-empty">No recent claim activity.</p>
-      {% endfor %}
-    </div>
-  </section>
 
 </aside>

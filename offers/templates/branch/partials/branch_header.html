@@ -106,18 +106,17 @@
 
 .top-right-qr-icon{
   display:block;
-  width:34px;
-  height:34px;
+  width:38px;
+  height:38px;
   object-fit:contain;
   flex:0 0 auto;
   opacity:.96;
-  transform:scale(1.5);
-  transform-origin:center;
+  transform:none;
 }
 
 .top-right-qr-label{
   display:block;
-  margin:0;
+  margin-top:3px;
   padding:0;
   color:#000000;
   font-size:8px;
@@ -147,9 +146,9 @@
 }
 
 .branch-brand__icon{
-  width:58px;
-  height:58px;
-  flex:0 0 58px;
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
   border-radius:18px;
   overflow:hidden;
   box-shadow:0 8px 20px rgba(76,116,255,.16);
@@ -257,7 +256,7 @@
 </style>
 
 <style>
-@media (max-width: 380px){
+@media (max-width: 480px){
   .top{
     padding:12px 12px 10px;
     gap:6px 8px;
@@ -306,18 +305,19 @@
   }
 
   .top-right{
-    gap:1px;
+    gap:2px;
   }
 
   .top-right-qr-icon{
-    width:58px;
-    height:28px;
+    width:34px;
+    height:34px;
+    transform:none;
   }
 
   .top-right-qr-label{
-    font-size:10px;
-    padding-top: 10px;
-
+    font-size:8px;
+    padding-top:0;
+    margin-top:2px;
   }
 }
 </style>

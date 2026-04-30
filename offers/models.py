@@ -407,7 +407,6 @@ class BranchStaff(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()
 
-    # 🌟 NEW: staff ID (manual / user-created code)
     staff_id = models.CharField(
         max_length=50,
         blank=True,
@@ -415,21 +414,36 @@ class BranchStaff(models.Model):
         help_text="Unique staff code created by branch",
     )
 
-    # future mobile number
     mobile = models.CharField(max_length=20, blank=True, null=True)
 
+    is_active = models.BooleanField(default=True, db_index=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = (
             ("branch", "email"),
-            ("branch", "staff_id"),   # 🌟 NEW: prevent duplicate staff codes per branch
+            ("branch", "staff_id"),
         )
+
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.strip()
+
+        if self.email:
+            self.email = self.email.strip().lower()
+
+        if self.staff_id:
+            self.staff_id = self.staff_id.strip()
+
+        if self.mobile:
+            self.mobile = self.mobile.strip()
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.branch.name})"
-
-
 # assume Branch model already defined above or imported from same app
 # from .models import Branch  # if in another file
 
