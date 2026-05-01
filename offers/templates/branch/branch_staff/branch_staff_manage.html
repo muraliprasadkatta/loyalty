@@ -3,6 +3,16 @@
 {% url 'offers:branch_home' as branch_home_fallback %}
 {% firstof branch_home_url branch_home_fallback as final_branch_home_url %}
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Manage Staff</title>
+</head>
+<body>
+
 <div class="wrap">
   {% include "branch/partials/branch_header.html" with show_back_nav=True header_back_url=final_branch_home_url header_subtitle="Manage staff" %}
 
@@ -10,17 +20,6 @@
     <section class="staff-page">
       <div class="staff-shell">
 
-        <!-- PAGE HEADER -->
-        <div class="staff-header">
-          <div>
-            <h1>Staff Management</h1>
-            <p>Add, edit, deactivate branch staff accounts</p>
-          </div>
-
-          <span class="staff-count-pill">
-            {{ staff_members|length|default:0 }} staff
-          </span>
-        </div>
 
         <div class="staff-layout">
 
@@ -29,63 +28,12 @@
             <div class="staff-card-title">
               <span class="staff-card-icon">＋</span>
               <div>
-                <h2>Add Staff</h2>
-                <p>Create a staff profile for this branch</p>
+              <h2 id="staffFormTitle">Add Staff</h2>
+              <p id="staffFormSubtitle">Create a staff profile for this branch</p>
               </div>
             </div>
 
-            <form id="addStaffForm" class="staff-form">
-              {% csrf_token %}
-
-              <div class="staff-field">
-                <label for="staffBranch">Branch</label>
-                <input
-                  id="staffBranch"
-                  type="text"
-                  value="{{ branch.name|default:request.session.branch_name|default:'—' }}"
-                  readonly
-                >
-              </div>
-
-              <div class="staff-field">
-                <label for="staffName">Staff name</label>
-                <input
-                  id="staffName"
-                  type="text"
-                  name="staff_name"
-                  placeholder="E.G. RAMESH"
-                  required
-                  maxlength="12"
-                  pattern="[A-Za-z ]{1,12}"
-                  title="Use only letters and spaces, max 12 characters."
-                >
-              </div>
-
-              <div class="staff-field">
-                <label for="staffCode">Staff ID</label>
-                <input
-                  id="staffCode"
-                  type="text"
-                  value="Auto generated after save"
-                  readonly
-                >
-              </div>
-
-              <div class="staff-field">
-                <label for="staffEmail">Staff email</label>
-                <input
-                  id="staffEmail"
-                  type="email"
-                  name="staff_email"
-                  placeholder="name@example.com"
-                  required
-                >
-              </div>
-
-              <button class="staff-submit-btn" type="submit" id="addStaffSaveBtn">
-                Save Staff
-              </button>
-            </form>
+            {% include "branch/branch_staff/partials/staff_create_form.html" %}
           </section>
 
           <!-- STAFF LIST CARD -->
@@ -108,98 +56,7 @@
               </div>
             {% endif %}
 
-            <div class="staff-table-wrap">
-              <table class="staff-table">
-                <thead>
-                  <tr>
-                    <th>Staff</th>
-                    <th>Email</th>
-                    <th>Code</th>
-                    <th>Mobile</th>
-                    <th>Status</th>
-                    <th class="staff-actions-th">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {% for staff in staff_members %}
-                    <tr>
-                      <td>
-                        <div class="staff-user-cell">
-                          <span class="staff-avatar">
-                            {{ staff.name|slice:":1"|upper }}
-                          </span>
-                          <div>
-                            <strong>{{ staff.name }}</strong>
-                            <small>Added {{ staff.created_at|date:"d M Y" }}</small>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <span class="staff-muted-text">{{ staff.email }}</span>
-                      </td>
-
-                      <td>
-                        {% if staff.staff_id %}
-                          <span class="staff-code">{{ staff.staff_id }}</span>
-                        {% else %}
-                          <span class="staff-empty">—</span>
-                        {% endif %}
-                      </td>
-
-                      <td>
-                        {% if staff.mobile %}
-                          <span class="staff-muted-text">{{ staff.mobile }}</span>
-                        {% else %}
-                          <span class="staff-empty">—</span>
-                        {% endif %}
-                      </td>
-
-                      <td>
-                        {% if staff.is_active %}
-                          <span class="staff-status staff-status--active">Active</span>
-                        {% else %}
-                          <span class="staff-status staff-status--inactive">Inactive</span>
-                        {% endif %}
-                      </td>
-
-                      <td>
-                        <div class="staff-actions">
-                          <a
-                            class="staff-action-btn staff-action-btn--edit"
-                            href="#"
-                          >
-                            Edit
-                          </a>
-
-                          <form
-                            method="post"
-                            action="#"
-                            onsubmit="return confirm('Deactivate this staff member?');"
-                          >
-                            {% csrf_token %}
-                            <button class="staff-action-btn staff-action-btn--delete" type="submit">
-                              Delete
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  {% empty %}
-                    <tr>
-                      <td colspan="6">
-                        <div class="staff-empty-state">
-                          <div class="staff-empty-icon">👥</div>
-                          <strong>No staff added yet</strong>
-                          <p>Add your first branch staff member using the form.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+            {% include "branch/branch_staff/partials/staff_table.html" %}
           </section>
 
         </div>
@@ -209,7 +66,6 @@
 </div>
 
 <div id="toast" class="staff-toast"></div>
-
 <style>
   *,
   *::before,
@@ -332,51 +188,138 @@
     font-weight: 650;
   }
 
-  .staff-form {
-    display: grid;
-    gap: 13px;
+  /* =========================
+     FORM
+  ========================= */
+
+.staff-form {
+  display: grid;
+  gap: 16px;
+}
+.staff-field {
+  display: grid;
+  gap: 7px;
+}
+
+  .staff-field[hidden],
+  .staff-otp-field[hidden],
+  .staff-code-field[hidden] {
+    display: none !important;
   }
 
-  .staff-field {
-    display: grid;
-    gap: 7px;
-  }
 
-  .staff-field label {
-    color: #40517f;
-    font-size: 12px;
-    font-weight: 850;
-  }
 
-  .staff-field input {
-    width: 100%;
-    min-height: 42px;
-    padding: 0 12px;
-    border: 1px solid #dfe7f8;
-    border-radius: 13px;
-    outline: 0;
+.staff-field label {
+  margin: 0;
+  color: #40517f;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.staff-field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dfe7f8;
+  border-radius: 13px;
+  outline: 0;
+  background: #ffffff;
+  color: #071747;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+  .staff-field input:not([readonly]) {
+    border: 1.5px solid #9bb7ff;
     background: #ffffff;
-    color: #071747;
-    font-size: 13px;
-    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(56, 108, 255, 0.08);
   }
 
-  .staff-field input:focus {
-    border-color: #9fb9ff;
-    box-shadow: 0 0 0 4px rgba(56, 108, 255, 0.10);
+  .staff-field input:not([readonly]):hover {
+    border-color: #386cff;
+  }
+
+  .staff-field input:not([readonly]):focus {
+    border-color: #386cff;
+    box-shadow: 0 0 0 4px rgba(56, 108, 255, 0.14);
   }
 
   .staff-field input[readonly] {
     background: #f7f9ff;
+    border-color: #e1e7f6;
     color: #5f6f99;
     cursor: default;
+    box-shadow: none;
+  }
+
+  .staff-field input[readonly]:focus {
+    border-color: #e1e7f6;
+    box-shadow: none;
   }
 
   .staff-field input[name="staff_name"] {
     text-transform: uppercase;
   }
 
+  .staff-field-help {
+    margin: 2px 0 0;
+    color: #7b88ae;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.35;
+  }
 
+.staff-field-error {
+  min-height: 0;
+  margin: 0;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+  .staff-field input.is-invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.10) !important;
+  }
+
+  .staff-field input.is-valid {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.10) !important;
+  }
+
+  .staff-otp-help {
+    margin: 4px 0 0;
+    color: #7180ad;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.4;
+  }
+
+
+
+  .staff-edit-email-btn {
+    width: fit-content;
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1px solid #d8e3fb;
+    border-radius: 10px;
+    background: #f4f7ff;
+    color: #386cff;
+    font-size: 12px;
+    font-weight: 850;
+    cursor: pointer;
+  }
+
+  .staff-edit-email-btn:hover {
+    background: #edf3ff;
+    border-color: #b9cbff;
+  }
+
+  .staff-edit-email-btn[hidden] {
+    display: none;
+  }
 
   .staff-submit-btn {
     width: 100%;
@@ -416,35 +359,81 @@
     font-weight: 750;
   }
 
-  .staff-table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid #e1e8f8;
-    border-radius: 16px;
-  }
+  /* =========================
+     STAFF TABLE
+     Columns: Staff | Code | Status | Actions
+  ========================= */
+
+.staff-table-wrap {
+  width: 100%;
+  max-height: clamp(360px, 58vh, 620px);
+  overflow: auto;
+  border: 1px solid #e1e8f8;
+  border-radius: 16px;
+  scrollbar-gutter: stable;
+}
 
   .staff-table {
     width: 100%;
-    min-width: 780px;
+    min-width: 680px;
     border-collapse: collapse;
     table-layout: fixed;
   }
 
-  .staff-table thead th {
-    height: 52px;
-    padding: 12px 16px;
-    background: #f3f6ff;
-    border-bottom: 1px solid #e1e8f8;
-    color: #5d6f9f;
-    font-size: 12px;
-    font-weight: 900;
+  .staff-table th:nth-child(1),
+  .staff-table td:nth-child(1) {
+    width: 46%;
+  }
+
+  .staff-table th:nth-child(2),
+  .staff-table td:nth-child(2) {
+    width: 18%;
+  }
+
+  .staff-table th:nth-child(3),
+  .staff-table td:nth-child(3) {
+    width: 16%;
+  }
+
+  .staff-table th:nth-child(4),
+  .staff-table td:nth-child(4) {
+    width: 20%;
+  }
+
+.staff-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 56px;
+  padding: 0 18px;
+  background: #f3f6ff;
+  border-bottom: 1px solid #e1e8f8;
+  color: #5d6f9f;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+  .staff-table thead th:nth-child(1),
+  .staff-table tbody td:nth-child(1) {
     text-align: left;
-    white-space: nowrap;
+  }
+
+  .staff-table thead th:nth-child(2),
+  .staff-table thead th:nth-child(3),
+  .staff-table thead th:nth-child(4),
+  .staff-table tbody td:nth-child(2),
+  .staff-table tbody td:nth-child(3),
+  .staff-table tbody td:nth-child(4) {
+    text-align: center;
+    vertical-align: middle;
   }
 
   .staff-table td {
-    height: 68px;
-    padding: 12px 16px;
+    height: 86px;
+    padding: 14px 18px;
     border-bottom: 1px solid #edf1fa;
     color: #24345f;
     font-size: 13px;
@@ -476,26 +465,40 @@
     font-weight: 900;
   }
 
+  .staff-user-info {
+    min-width: 0;
+  }
+
   .staff-user-cell strong {
     display: block;
     color: #071747;
     font-size: 13px;
     font-weight: 850;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .staff-user-cell small,
-  .staff-muted-text {
+  .staff-email-line {
+    display: block;
+    margin-top: 5px;
+    color: #6274a8;
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .staff-date-line {
     display: block;
     margin-top: 4px;
-    color: #7b88ae;
+    color: #8995bb;
     font-size: 11px;
     font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
   }
 
   .staff-code {
@@ -508,6 +511,12 @@
     align-items: center;
     font-size: 12px;
     font-weight: 900;
+  }
+
+  .staff-table tbody td:nth-child(2) .staff-code,
+  .staff-table tbody td:nth-child(3) .staff-status {
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .staff-empty {
@@ -538,6 +547,7 @@
   .staff-actions {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
   }
 
@@ -545,20 +555,21 @@
     margin: 0;
   }
 
-  .staff-action-btn {
-    min-height: 32px;
-    padding: 0 11px;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 900;
-    text-decoration: none;
-    cursor: pointer;
-    white-space: nowrap;
-  }
+.staff-action-btn {
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
 
   .staff-action-btn--edit {
     background: #edf4ff;
@@ -606,6 +617,10 @@
     font-weight: 650;
   }
 
+  /* =========================
+     TOAST
+  ========================= */
+
   .staff-toast {
     position: fixed;
     left: 50%;
@@ -633,6 +648,45 @@
   .staff-toast--error {
     background: #dc2626;
   }
+
+
+  .staff-th {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.staff-th-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  background: #eef4ff;
+  color: #386cff;
+}
+
+.staff-th-icon--code {
+  background: #fff4e8;
+  color: #f47a24;
+}
+
+.staff-th-icon--status {
+  background: #e9fbf1;
+  color: #13a962;
+}
+
+.staff-th-icon--actions {
+  background: #f3efff;
+  color: #6d5dfc;
+}
+  /* =========================
+     RESPONSIVE
+  ========================= */
 
   @media (max-width: 1100px) {
     .staff-layout {
@@ -666,10 +720,11 @@
       border-radius: 18px;
     }
 
-    .staff-table-wrap {
-      border: 0;
-      overflow: visible;
-    }
+  .staff-table-wrap {
+    max-height: none;
+    border: 0;
+    overflow: visible;
+  }
 
     .staff-table {
       min-width: 0;
@@ -690,8 +745,7 @@
       grid-template-columns: minmax(0, 1fr) auto;
       grid-template-areas:
         "staff status"
-        "email email"
-        "code mobile"
+        "code code"
         "actions actions";
       border: 1px solid #e3eafb;
       border-radius: 16px;
@@ -702,6 +756,7 @@
 
     .staff-table td {
       height: auto;
+      min-height: 0;
       padding: 12px 14px;
       border: 0;
       min-width: 0;
@@ -709,39 +764,39 @@
 
     .staff-table td:nth-child(1) {
       grid-area: staff;
-      padding-bottom: 8px;
+      width: auto;
+      padding-bottom: 10px;
+      text-align: left;
     }
 
     .staff-table td:nth-child(2) {
-      grid-area: email;
+      grid-area: code;
+      width: auto;
       border-top: 1px solid #edf2fb;
       padding-top: 10px;
-      padding-bottom: 10px;
+      text-align: left;
     }
 
     .staff-table td:nth-child(3) {
-      grid-area: code;
-      border-top: 1px solid #edf2fb;
-      padding-top: 10px;
+      grid-area: status;
+      width: auto;
+      justify-self: end;
+      padding-left: 4px;
+      text-align: right;
     }
 
     .staff-table td:nth-child(4) {
-      grid-area: mobile;
+      grid-area: actions;
+      width: auto;
       border-top: 1px solid #edf2fb;
       padding-top: 10px;
       text-align: right;
     }
 
-    .staff-table td:nth-child(5) {
-      grid-area: status;
-      justify-self: end;
-      padding-left: 4px;
-    }
-
-    .staff-table td:nth-child(6) {
-      grid-area: actions;
-      border-top: 1px solid #edf2fb;
-      padding-top: 10px;
+    .staff-table tbody td:nth-child(2) .staff-code,
+    .staff-table tbody td:nth-child(3) .staff-status {
+      margin-left: 0;
+      margin-right: 0;
     }
 
     .staff-actions {
@@ -768,6 +823,7 @@
 </style>
 
 <script>
+document.addEventListener("DOMContentLoaded", function () {
   let toastTimeout;
 
   function showToast(message, variant = "success") {
@@ -775,7 +831,6 @@
     if (!toast) return;
 
     clearTimeout(toastTimeout);
-
     toast.textContent = message;
     toast.classList.toggle("staff-toast--error", variant === "error");
     toast.classList.add("is-visible");
@@ -789,77 +844,617 @@
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(";").shift();
+    return "";
   }
 
   const addStaffForm = document.getElementById("addStaffForm");
   const addStaffSaveBtn = document.getElementById("addStaffSaveBtn");
 
-  if (addStaffForm && addStaffSaveBtn) {
-    addStaffForm.addEventListener("submit", async function (event) {
+  const staffOtpBlock = document.getElementById("staffOtpBlock");
+  const staffOtpInput = document.getElementById("staffOtp");
+
+  const editStaffEmailBtn = document.getElementById("editStaffEmailBtn");
+
+  const staffNameInput = document.getElementById("staffName");
+  const staffEmailInput = document.getElementById("staffEmail");
+  const staffCodeInput = document.getElementById("staffCode");
+
+  const staffNameError = document.getElementById("staffNameError");
+  const staffEmailError = document.getElementById("staffEmailError");
+  const staffOtpError = document.getElementById("staffOtpError");
+
+  const staffFormTitle = document.getElementById("staffFormTitle");
+  const staffFormSubtitle = document.getElementById("staffFormSubtitle");
+
+  if (!addStaffForm || !addStaffSaveBtn || !staffNameInput || !staffEmailInput) {
+    console.warn("Staff form live validation not attached: required elements missing.");
+    return;
+  }
+
+  let staffOtpSent = false;
+  let staffFormMode = "create";
+  let editingStaffId = "";
+
+  /*
+    =========================
+    URLS
+    =========================
+  */
+  const createStartUrl = "{% url 'offers:branch_staff_send_otp' %}";
+  const createVerifyUrl = "{% url 'offers:branch_staff_verify_otp' %}";
+
+  const editStartUrlTemplate = "{% url 'offers:branch_staff_edit_start' 0 %}";
+  const editVerifyUrlTemplate = "{% url 'offers:branch_staff_edit_verify_otp' 0 %}";
+
+  function buildStaffUrl(template, staffId) {
+    return template.replace("/0/", "/" + staffId + "/");
+  }
+
+  /*
+    =========================
+    FIELD STATE HELPERS
+    =========================
+  */
+  function clearFieldState(input, errorEl) {
+    if (!input) return;
+    input.classList.remove("is-valid", "is-invalid");
+    if (errorEl) errorEl.textContent = "";
+  }
+
+  function setFieldState(input, errorEl, message = "") {
+    if (!input) return false;
+
+    input.classList.remove("is-valid", "is-invalid");
+
+    if (message) {
+      input.classList.add("is-invalid");
+      if (errorEl) errorEl.textContent = message;
+      return false;
+    }
+
+    if (input.value.trim()) {
+      input.classList.add("is-valid");
+    }
+
+    if (errorEl) errorEl.textContent = "";
+    return true;
+  }
+
+  function clearStaffFormStates() {
+    clearFieldState(staffNameInput, staffNameError);
+    clearFieldState(staffEmailInput, staffEmailError);
+
+    if (staffOtpInput) {
+      clearFieldState(staffOtpInput, staffOtpError);
+    }
+  }
+
+  function hideOtpBlock() {
+    staffOtpSent = false;
+
+    if (staffOtpBlock) {
+      staffOtpBlock.hidden = true;
+    }
+
+    if (staffOtpInput) {
+      staffOtpInput.value = "";
+      staffOtpInput.required = false;
+      clearFieldState(staffOtpInput, staffOtpError);
+    }
+  }
+
+  /*
+    =========================
+    FORM MODES
+    =========================
+  */
+  function switchToCreateMode() {
+    staffFormMode = "create";
+    editingStaffId = "";
+
+    if (staffFormTitle) {
+      staffFormTitle.textContent = "Add Staff";
+    }
+
+    if (staffFormSubtitle) {
+      staffFormSubtitle.textContent = "Create a staff profile for this branch";
+    }
+
+    addStaffForm.dataset.mode = "create";
+    addStaffForm.dataset.staffId = "";
+
+    staffNameInput.value = "";
+    staffEmailInput.value = "";
+
+    if (staffCodeInput) {
+      staffCodeInput.value = "Auto generated after OTP verification";
+    }
+
+    staffNameInput.readOnly = false;
+    staffEmailInput.readOnly = false;
+
+    if (editStaffEmailBtn) {
+      editStaffEmailBtn.hidden = true;
+    }
+
+    hideOtpBlock();
+    clearStaffFormStates();
+
+    addStaffSaveBtn.textContent = "Send OTP";
+  }
+
+  function switchToEditMode(button) {
+    staffFormMode = "edit";
+    editingStaffId = button.dataset.staffId || "";
+
+    const staffName = button.dataset.staffName || "";
+    const staffEmail = button.dataset.staffEmail || "";
+    const staffCode = button.dataset.staffCode || "";
+
+    if (staffFormTitle) {
+      staffFormTitle.textContent = "Edit Staff";
+    }
+
+    if (staffFormSubtitle) {
+      staffFormSubtitle.textContent = "Update staff name or email";
+    }
+
+    addStaffForm.dataset.mode = "edit";
+    addStaffForm.dataset.staffId = editingStaffId;
+
+    staffNameInput.value = staffName;
+    staffEmailInput.value = staffEmail;
+
+    if (staffCodeInput) {
+      staffCodeInput.value = staffCode || "No staff code";
+    }
+
+    staffNameInput.readOnly = false;
+    staffEmailInput.readOnly = false;
+
+    if (editStaffEmailBtn) {
+      editStaffEmailBtn.hidden = true;
+    }
+
+    hideOtpBlock();
+    clearStaffFormStates();
+
+    addStaffSaveBtn.textContent = "Update Staff";
+
+    staffNameInput.focus();
+    staffNameInput.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    showToast("Staff details loaded for editing.", "success");
+  }
+
+  document.addEventListener("click", function (event) {
+    const button = event.target.closest(".js-staff-edit");
+
+    if (!button) {
+      return;
+    }
+
+    event.preventDefault();
+    switchToEditMode(button);
+  });
+
+  /*
+    =========================
+    VALIDATION
+    =========================
+  */
+  function normalizeNameInput() {
+    let value = staffNameInput.value
+      .replace(/[^A-Za-z ]/g, "")
+      .replace(/\s+/g, " ")
+      .trimStart()
+      .toUpperCase();
+
+    if (value.length > 12) {
+      value = value.slice(0, 12);
+    }
+
+    staffNameInput.value = value;
+    return value.trim();
+  }
+
+  function normalizeEmailInput() {
+    staffEmailInput.value = staffEmailInput.value
+      .replace(/\s+/g, "")
+      .toLowerCase();
+
+    return staffEmailInput.value.trim();
+  }
+
+  function validateStaffNameLive(showError = false) {
+    const cleaned = normalizeNameInput();
+
+    clearFieldState(staffNameInput, staffNameError);
+
+    if (!cleaned) {
+      if (showError) {
+        return setFieldState(staffNameInput, staffNameError, "Staff name required.");
+      }
+      return false;
+    }
+
+    if (!/^[A-Z][A-Z ]{0,11}$/.test(cleaned)) {
+      if (showError) {
+        return setFieldState(
+          staffNameInput,
+          staffNameError,
+          "Use letters and spaces only. Start with a letter."
+        );
+      }
+      return false;
+    }
+
+    return setFieldState(staffNameInput, staffNameError, "");
+  }
+
+  function validateStaffEmailLive(showError = false) {
+    const email = normalizeEmailInput();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    clearFieldState(staffEmailInput, staffEmailError);
+
+    if (!email) {
+      if (showError) {
+        return setFieldState(staffEmailInput, staffEmailError, "Staff email required.");
+      }
+      return false;
+    }
+
+    if (!emailPattern.test(email)) {
+      if (showError) {
+        return setFieldState(
+          staffEmailInput,
+          staffEmailError,
+          "Enter a valid email. Spaces are not allowed."
+        );
+      }
+      return false;
+    }
+
+    return setFieldState(staffEmailInput, staffEmailError, "");
+  }
+
+  function validateStaffOtpLive(showError = false) {
+    if (!staffOtpInput || staffOtpBlock?.hidden) return true;
+
+    staffOtpInput.value = staffOtpInput.value
+      .replace(/\D/g, "")
+      .slice(0, 6);
+
+    clearFieldState(staffOtpInput, staffOtpError);
+
+    if (!staffOtpInput.value) {
+      if (showError) {
+        return setFieldState(staffOtpInput, staffOtpError, "OTP required.");
+      }
+      return false;
+    }
+
+    if (!/^\d{6}$/.test(staffOtpInput.value)) {
+      if (showError) {
+        return setFieldState(staffOtpInput, staffOtpError, "Enter 6 digit OTP.");
+      }
+      return false;
+    }
+
+    return setFieldState(staffOtpInput, staffOtpError, "");
+  }
+
+  function getStaffPayload() {
+    return {
+      staff_name: String(staffNameInput.value || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase(),
+
+      staff_email: String(staffEmailInput.value || "")
+        .trim()
+        .replace(/\s+/g, "")
+        .toLowerCase()
+    };
+  }
+
+  function validateStaffPayload() {
+    const isNameValid = validateStaffNameLive(true);
+    const isEmailValid = validateStaffEmailLive(true);
+    return isNameValid && isEmailValid;
+  }
+
+  /*
+    =========================
+    API HELPER
+    =========================
+  */
+  async function postJson(url, payload) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    let data = {};
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error("Invalid server response.");
+    }
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || "Something went wrong.");
+    }
+
+    return data;
+  }
+
+  /*
+    =========================
+    LOCK / UNLOCK AFTER OTP
+    =========================
+  */
+  function lockStaffDetails() {
+    staffNameInput.readOnly = true;
+    staffEmailInput.readOnly = true;
+
+    if (editStaffEmailBtn) {
+      editStaffEmailBtn.hidden = false;
+    }
+  }
+
+  function unlockStaffDetails() {
+    staffOtpSent = false;
+
+    if (staffOtpBlock) staffOtpBlock.hidden = true;
+
+    if (staffOtpInput) {
+      staffOtpInput.value = "";
+      staffOtpInput.required = false;
+      clearFieldState(staffOtpInput, staffOtpError);
+    }
+
+    staffNameInput.readOnly = false;
+    staffEmailInput.readOnly = false;
+    staffNameInput.focus();
+
+    if (staffCodeInput && staffFormMode === "create") {
+      staffCodeInput.value = "Auto generated after OTP verification";
+    }
+
+    if (editStaffEmailBtn) {
+      editStaffEmailBtn.hidden = true;
+    }
+
+    addStaffSaveBtn.textContent = staffFormMode === "edit"
+      ? "Update Staff"
+      : "Send OTP";
+
+    showToast("Edit details and request a new OTP.", "success");
+  }
+
+  /*
+    =========================
+    INPUT EVENTS
+    =========================
+  */
+  staffNameInput.addEventListener("input", function () {
+    validateStaffNameLive(false);
+  });
+
+  staffNameInput.addEventListener("blur", function () {
+    validateStaffNameLive(true);
+  });
+
+  staffEmailInput.addEventListener("keydown", function (event) {
+    if (event.key === " ") {
       event.preventDefault();
+    }
+  });
 
-      const formData = new FormData(addStaffForm);
+  staffEmailInput.addEventListener("paste", function () {
+    setTimeout(function () {
+      normalizeEmailInput();
+      clearFieldState(staffEmailInput, staffEmailError);
+    }, 0);
+  });
 
-      let staffName = String(formData.get("staff_name") || "").trim().toUpperCase();
-      let staffEmail = String(formData.get("staff_email") || "").trim().toLowerCase();
+  staffEmailInput.addEventListener("input", function () {
+    validateStaffEmailLive(false);
+  });
 
-      const namePattern = /^[A-Z ]{1,12}$/;
-      if (!namePattern.test(staffName)) {
-        showToast("Staff name: letters only, max 12 chars.", "error");
-        return;
-      }
+  staffEmailInput.addEventListener("blur", function () {
+    validateStaffEmailLive(true);
+  });
 
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(staffEmail)) {
-        showToast("Please enter a valid email address.", "error");
-        return;
-      }
+  /*
+    OTP input ki live validation intentionally ledu.
+    OTP submit click appude validate avutundhi.
+  */
 
-      const nameInput = addStaffForm.querySelector('input[name="staff_name"]');
-      const emailInput = addStaffForm.querySelector('input[name="staff_email"]');
+  if (editStaffEmailBtn) {
+    editStaffEmailBtn.addEventListener("click", unlockStaffDetails);
+  }
 
-      if (nameInput) nameInput.value = staffName;
-      if (emailInput) emailInput.value = staffEmail;
+  /*
+    =========================
+    SUBMIT: CREATE / EDIT SPLIT
+    =========================
+  */
+  addStaffForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-      const payload = {
-        staff_name: staffName,
-        staff_email: staffEmail
-      };
+    if (!validateStaffPayload()) {
+      return;
+    }
 
-      try {
-        addStaffSaveBtn.disabled = true;
-        addStaffSaveBtn.textContent = "Saving...";
+    const payload = getStaffPayload();
 
-        const response = await fetch("{% url 'offers:branch_staff_create' %}", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-            "X-Requested-With": "XMLHttpRequest"
-          },
-          body: JSON.stringify(payload)
-        });
+    staffNameInput.value = payload.staff_name;
+    staffEmailInput.value = payload.staff_email;
 
-        const data = await response.json();
+    try {
+      addStaffSaveBtn.disabled = true;
 
-        if (!response.ok || !data.ok) {
-          showToast(data.error || "Failed to add staff.", "error");
+      /*
+        =========================
+        EDIT STAFF FLOW
+        =========================
+      */
+      if (staffFormMode === "edit") {
+        if (!editingStaffId) {
+          showToast("Staff edit data missing. Click Edit again.", "error");
           return;
         }
 
-        showToast("Staff added successfully. ID: " + (data.staff_id || "Created"), "success");
+        const editStartUrl = buildStaffUrl(editStartUrlTemplate, editingStaffId);
+        const editVerifyUrl = buildStaffUrl(editVerifyUrlTemplate, editingStaffId);
+
+        if (!staffOtpSent) {
+          addStaffSaveBtn.textContent = "Updating...";
+
+          const data = await postJson(editStartUrl, payload);
+
+          if (data.updated && !data.otp_required) {
+            showToast(data.message || "Staff updated successfully.", "success");
+
+            setTimeout(function () {
+              window.location.reload();
+            }, 700);
+
+            return;
+          }
+
+          if (data.otp_required) {
+            staffOtpSent = true;
+
+            if (staffOtpBlock) {
+              staffOtpBlock.hidden = false;
+            }
+
+            if (staffOtpInput) {
+              staffOtpInput.required = true;
+              staffOtpInput.focus();
+            }
+
+            lockStaffDetails();
+
+            addStaffSaveBtn.textContent = "Verify & Update Staff";
+            showToast(data.message || "OTP sent to new staff email.", "success");
+            return;
+          }
+
+          showToast(data.message || "Staff update started.", "success");
+          return;
+        }
+
+        if (!validateStaffOtpLive(true)) {
+          showToast("Enter valid 6 digit OTP.", "error");
+          return;
+        }
+
+        const otp = staffOtpInput ? String(staffOtpInput.value || "").trim() : "";
+
+        addStaffSaveBtn.textContent = "Verifying...";
+
+        const data = await postJson(editVerifyUrl, {
+          ...payload,
+          otp: otp
+        });
+
+        showToast(data.message || "Staff updated successfully.", "success");
 
         setTimeout(function () {
           window.location.reload();
         }, 700);
 
-      } catch (error) {
-        console.error(error);
-        showToast("Something went wrong. Try again.", "error");
-      } finally {
-        addStaffSaveBtn.disabled = false;
-        addStaffSaveBtn.textContent = "Save Staff";
+        return;
       }
-    });
-  }
+
+      /*
+        =========================
+        CREATE STAFF FLOW
+        =========================
+      */
+      if (!staffOtpSent) {
+        addStaffSaveBtn.textContent = "Sending OTP...";
+
+        await postJson(createStartUrl, payload);
+
+        staffOtpSent = true;
+
+        if (staffOtpBlock) {
+          staffOtpBlock.hidden = false;
+        }
+
+        if (staffOtpInput) {
+          staffOtpInput.required = true;
+          staffOtpInput.focus();
+        }
+
+        lockStaffDetails();
+
+        addStaffSaveBtn.textContent = "Verify & Create Staff";
+        showToast("OTP sent to staff email.", "success");
+        return;
+      }
+
+      if (!validateStaffOtpLive(true)) {
+        showToast("Enter valid 6 digit OTP.", "error");
+        return;
+      }
+
+      const otp = staffOtpInput ? String(staffOtpInput.value || "").trim() : "";
+
+      addStaffSaveBtn.textContent = "Verifying...";
+
+      const data = await postJson(createVerifyUrl, {
+        ...payload,
+        otp: otp
+      });
+
+      if (staffCodeInput && data.staff_id) {
+        staffCodeInput.value = data.staff_id;
+      }
+
+      showToast(
+        "Staff added successfully. ID: " + (data.staff_id || "Created"),
+        "success"
+      );
+
+      setTimeout(function () {
+        window.location.reload();
+      }, 700);
+
+    } catch (error) {
+      console.error(error);
+      showToast(error.message || "Something went wrong. Try again.", "error");
+    } finally {
+      addStaffSaveBtn.disabled = false;
+
+      if (staffFormMode === "edit") {
+        addStaffSaveBtn.textContent = staffOtpSent
+          ? "Verify & Update Staff"
+          : "Update Staff";
+      } else {
+        addStaffSaveBtn.textContent = staffOtpSent
+          ? "Verify & Create Staff"
+          : "Send OTP";
+      }
+    }
+  });
+});
 </script>
+
+</body>
+</html>

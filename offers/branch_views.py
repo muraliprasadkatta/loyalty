@@ -43,6 +43,8 @@ from offers.services.auth.otp_utils import (
     normalize_email,
     valid_email,
     gen_code,
+    hash_code,
+    codes_match,
     now,
     in_cooldown,
     OTP_TTL_MINUTES,
@@ -56,6 +58,7 @@ from .models import (
     Branch,
     BranchOTP,
     BranchStaff,
+    BranchStaffEmailOTP,
     QRToken,
     YashPin,
     UserVisitEvent,
@@ -1215,18 +1218,15 @@ def generate_branch_staff_id(branch_id, staff_name):
 
 
 
-@require_POST
-@csrf_protect
-@require_branch_session
-def branch_staff_create_view(request):
-    branch_id = request.session.get("branch_id")
-    data = _json(request)
 
+
+
+def _validate_staff_payload(data):
     raw_name = (data.get("staff_name") or "").strip()
     email = normalize_email(data.get("staff_email") or "")
 
     if not raw_name or not email:
-        return JsonResponse(
+        return None, None, JsonResponse(
             {"ok": False, "error": "Name and email are required."},
             status=400,
         )
@@ -1234,7 +1234,7 @@ def branch_staff_create_view(request):
     name = raw_name.upper()
 
     if len(name) > 12 or not all(ch.isalpha() or ch.isspace() for ch in name):
-        return JsonResponse(
+        return None, None, JsonResponse(
             {
                 "ok": False,
                 "error": "Staff name must be letters only (A–Z) and max 12 characters.",
@@ -1243,14 +1243,147 @@ def branch_staff_create_view(request):
         )
 
     if not valid_email(email):
-        return JsonResponse(
+        return None, None, JsonResponse(
             {"ok": False, "error": "Invalid email address."},
             status=400,
         )
 
+    return name, email, None
+
+
+def _branch_staff_otp_salt(branch_id):
+    return f"branch_staff_create:{branch_id}"
+
+
+
+@require_POST
+@csrf_protect
+@require_branch_session
+def branch_staff_send_otp_view(request):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch.objects.only("id", "name"), id=branch_id)
+
+    data = _json(request)
+    name, email, error = _validate_staff_payload(data)
+    if error:
+        return error
+
+    if BranchStaff.objects.filter(branch_id=branch_id, email__iexact=email).exists():
+        return JsonResponse(
+            {"ok": False, "error": "Email already exists in this branch."},
+            status=400,
+        )
+
+    now_ts = now()
+
+    recent = (
+        BranchStaffEmailOTP.objects
+        .filter(branch_id=branch_id, email__iexact=email, used=False)
+        .order_by("-created_at")
+        .first()
+    )
+
+    if recent:
+        cooling, wait = in_cooldown(recent.last_sent_at or recent.created_at)
+        if cooling:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "error": f"Please wait {max(1, wait)}s before requesting again.",
+                    "resend_after_sec": max(1, wait),
+                },
+                status=429,
+            )
+
+    since = now_ts - timedelta(minutes=RESEND_WINDOW_MINUTES)
+
+    recent_send_count = BranchStaffEmailOTP.objects.filter(
+        branch_id=branch_id,
+        email__iexact=email,
+        created_at__gte=since,
+    ).count()
+
+    if recent_send_count >= MAX_RESENDS_PER_15M:
+        return JsonResponse(
+            {"ok": False, "error": "Too many OTP requests. Try later."},
+            status=429,
+        )
+
+    code = gen_code()
+
+    row = BranchStaffEmailOTP.objects.create(
+        branch=branch,
+        staff_name=name,
+        email=email,
+        code_hash=hash_code(
+            email=email,
+            code=code,
+            salt=_branch_staff_otp_salt(branch_id),
+        ),
+        expires_at=now_ts + timedelta(minutes=OTP_TTL_MINUTES),
+        attempts=0,
+        used=False,
+        sent_count=1,
+        last_sent_at=now_ts,
+    )
+
+    try:
+        send_mail(
+            subject=f"Staff Email Verification OTP · {branch.name}",
+            message=(
+                f"Your staff verification code is {code}. "
+                f"It expires in {OTP_TTL_MINUTES} minutes.\n"
+                f"Branch: {branch.name}\n"
+                f"Staff name: {name}"
+            ),
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@example.com"),
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception:
+        row.delete()
+        return JsonResponse(
+            {"ok": False, "error": "Failed to send OTP email."},
+            status=500,
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": "OTP sent to staff email.",
+            "resend_after_sec": RESEND_COOLDOWN_SECONDS,
+        }
+    )
+
+@require_POST
+@csrf_protect
+@require_branch_session
+def branch_staff_verify_otp_and_create_view(request):
+    branch_id = request.session.get("branch_id")
+    data = _json(request)
+
+    name, email, error = _validate_staff_payload(data)
+    if error:
+        return error
+
+    otp = (data.get("otp") or data.get("code") or "").strip()
+
+    if not otp:
+        return JsonResponse(
+            {"ok": False, "error": "Enter OTP."},
+            status=400,
+        )
+
+    if not otp.isdigit() or len(otp) != 6:
+        return JsonResponse(
+            {"ok": False, "error": "OTP must be 6 digits."},
+            status=400,
+        )
+
+    now_ts = now()
+
     try:
         with transaction.atomic():
-            # Same branch lo simultaneous staff create ayithe duplicate ID avoid cheyyadaniki lock.
             Branch.objects.select_for_update().only("id").get(id=branch_id)
 
             if BranchStaff.objects.filter(branch_id=branch_id, email__iexact=email).exists():
@@ -1259,14 +1392,62 @@ def branch_staff_create_view(request):
                     status=400,
                 )
 
-            staff_id = generate_branch_staff_id(branch_id, name)
+            row = (
+                BranchStaffEmailOTP.objects
+                .select_for_update()
+                .filter(
+                    branch_id=branch_id,
+                    email__iexact=email,
+                    used=False,
+                    expires_at__gte=now_ts,
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if not row:
+                return JsonResponse(
+                    {"ok": False, "error": "OTP expired or not found."},
+                    status=400,
+                )
+
+            if (row.attempts or 0) >= MAX_VERIFY_ATTEMPTS:
+                return JsonResponse(
+                    {"ok": False, "error": "Too many attempts. Request a new OTP."},
+                    status=429,
+                )
+
+            is_valid = codes_match(
+                stored_hash=row.code_hash,
+                email=email,
+                code=otp,
+                salt=_branch_staff_otp_salt(branch_id),
+            )
+
+            row.attempts = (row.attempts or 0) + 1
+
+            if not is_valid:
+                row.save(update_fields=["attempts"])
+                return JsonResponse(
+                    {"ok": False, "error": "Invalid OTP."},
+                    status=400,
+                )
+
+            verified_name = row.staff_name
+            verified_email = row.email
+
+            staff_id = generate_branch_staff_id(branch_id, verified_name)
 
             staff = BranchStaff.objects.create(
                 branch_id=branch_id,
-                name=name,
-                email=email,
+                name=verified_name,
+                email=verified_email,
                 staff_id=staff_id,
             )
+
+            row.used = True
+            row.used_at = timezone.now()
+            row.save(update_fields=["attempts", "used", "used_at"])
 
     except IntegrityError:
         return JsonResponse(
@@ -1279,5 +1460,288 @@ def branch_staff_create_view(request):
             "ok": True,
             "id": staff.id,
             "staff_id": staff.staff_id,
+            "message": "Staff email verified and staff created.",
+        }
+    )
+
+
+
+
+
+def _branch_staff_edit_otp_salt(branch_id, staff_id):
+    return f"branch_staff_edit:{branch_id}:{staff_id}"
+
+
+@require_POST
+@csrf_protect
+@require_branch_session
+def branch_staff_edit_start_view(request, staff_id):
+    """
+    Edit staff flow.
+
+    Case 1:
+      Same email -> direct update name only.
+
+    Case 2:
+      Email changed -> send OTP to new email.
+      Final update happens in branch_staff_edit_verify_otp_view.
+    """
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch.objects.only("id", "name"), id=branch_id)
+
+    staff = get_object_or_404(
+        BranchStaff.objects.only("id", "branch_id", "name", "email", "staff_id"),
+        id=staff_id,
+        branch_id=branch_id,
+    )
+
+    data = _json(request)
+    name, email, error = _validate_staff_payload(data)
+    if error:
+        return error
+
+    old_email = normalize_email(staff.email or "")
+    email_changed = old_email.lower() != email.lower()
+
+    duplicate_exists = (
+        BranchStaff.objects
+        .filter(branch_id=branch_id, email__iexact=email)
+        .exclude(id=staff.id)
+        .exists()
+    )
+
+    if duplicate_exists:
+        return JsonResponse(
+            {"ok": False, "error": "Email already exists in this branch."},
+            status=400,
+        )
+
+    # ✅ Same email: no OTP required, update name directly.
+    if not email_changed:
+        staff.name = name
+        staff.save(update_fields=["name", "updated_at"])
+
+        return JsonResponse(
+            {
+                "ok": True,
+                "updated": True,
+                "otp_required": False,
+                "id": staff.id,
+                "staff_id": staff.staff_id,
+                "name": staff.name,
+                "email": staff.email,
+                "message": "Staff updated successfully.",
+            }
+        )
+
+    # ✅ Email changed: send OTP to new email.
+    now_ts = now()
+
+    recent = (
+        BranchStaffEmailOTP.objects
+        .filter(branch_id=branch_id, email__iexact=email, used=False)
+        .order_by("-created_at")
+        .first()
+    )
+
+    if recent:
+        cooling, wait = in_cooldown(recent.last_sent_at or recent.created_at)
+        if cooling:
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "error": f"Please wait {max(1, wait)}s before requesting again.",
+                    "resend_after_sec": max(1, wait),
+                },
+                status=429,
+            )
+
+    since = now_ts - timedelta(minutes=RESEND_WINDOW_MINUTES)
+
+    recent_send_count = BranchStaffEmailOTP.objects.filter(
+        branch_id=branch_id,
+        email__iexact=email,
+        created_at__gte=since,
+    ).count()
+
+    if recent_send_count >= MAX_RESENDS_PER_15M:
+        return JsonResponse(
+            {"ok": False, "error": "Too many OTP requests. Try later."},
+            status=429,
+        )
+
+    code = gen_code()
+
+    row = BranchStaffEmailOTP.objects.create(
+        branch=branch,
+        staff_name=name,
+        email=email,
+        code_hash=hash_code(
+            email=email,
+            code=code,
+            salt=_branch_staff_edit_otp_salt(branch_id, staff.id),
+        ),
+        expires_at=now_ts + timedelta(minutes=OTP_TTL_MINUTES),
+        attempts=0,
+        used=False,
+        sent_count=1,
+        last_sent_at=now_ts,
+    )
+
+    try:
+        send_mail(
+            subject=f"Staff Email Change OTP · {branch.name}",
+            message=(
+                f"Your staff email change verification code is {code}. "
+                f"It expires in {OTP_TTL_MINUTES} minutes.\n"
+                f"Branch: {branch.name}\n"
+                f"Staff name: {name}\n"
+                f"Staff ID: {staff.staff_id or '-'}"
+            ),
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@example.com"),
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception:
+        row.delete()
+        return JsonResponse(
+            {"ok": False, "error": "Failed to send OTP email."},
+            status=500,
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "updated": False,
+            "otp_required": True,
+            "message": "OTP sent to new staff email.",
+            "resend_after_sec": RESEND_COOLDOWN_SECONDS,
+        }
+    )
+
+
+@require_POST
+@csrf_protect
+@require_branch_session
+def branch_staff_edit_verify_otp_view(request, staff_id):
+    """
+    Verify OTP and update staff name + email.
+    Used only when email changed.
+    """
+    branch_id = request.session.get("branch_id")
+    data = _json(request)
+
+    name, email, error = _validate_staff_payload(data)
+    if error:
+        return error
+
+    otp = (data.get("otp") or data.get("code") or "").strip()
+
+    if not otp:
+        return JsonResponse(
+            {"ok": False, "error": "Enter OTP."},
+            status=400,
+        )
+
+    if not otp.isdigit() or len(otp) != 6:
+        return JsonResponse(
+            {"ok": False, "error": "OTP must be 6 digits."},
+            status=400,
+        )
+
+    now_ts = now()
+
+    try:
+        with transaction.atomic():
+            staff = (
+                BranchStaff.objects
+                .select_for_update()
+                .get(id=staff_id, branch_id=branch_id)
+            )
+
+            duplicate_exists = (
+                BranchStaff.objects
+                .filter(branch_id=branch_id, email__iexact=email)
+                .exclude(id=staff.id)
+                .exists()
+            )
+
+            if duplicate_exists:
+                return JsonResponse(
+                    {"ok": False, "error": "Email already exists in this branch."},
+                    status=400,
+                )
+
+            row = (
+                BranchStaffEmailOTP.objects
+                .select_for_update()
+                .filter(
+                    branch_id=branch_id,
+                    email__iexact=email,
+                    used=False,
+                    expires_at__gte=now_ts,
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if not row:
+                return JsonResponse(
+                    {"ok": False, "error": "OTP expired or not found."},
+                    status=400,
+                )
+
+            if (row.attempts or 0) >= MAX_VERIFY_ATTEMPTS:
+                return JsonResponse(
+                    {"ok": False, "error": "Too many attempts. Request a new OTP."},
+                    status=429,
+                )
+
+            is_valid = codes_match(
+                stored_hash=row.code_hash,
+                email=email,
+                code=otp,
+                salt=_branch_staff_edit_otp_salt(branch_id, staff.id),
+            )
+
+            row.attempts = (row.attempts or 0) + 1
+
+            if not is_valid:
+                row.save(update_fields=["attempts"])
+                return JsonResponse(
+                    {"ok": False, "error": "Invalid OTP."},
+                    status=400,
+                )
+
+            # ✅ Use OTP row values as verified source.
+            staff.name = row.staff_name
+            staff.email = row.email
+            staff.save(update_fields=["name", "email", "updated_at"])
+
+            row.used = True
+            row.used_at = timezone.now()
+            row.save(update_fields=["attempts", "used", "used_at"])
+
+    except BranchStaff.DoesNotExist:
+        return JsonResponse(
+            {"ok": False, "error": "Staff not found."},
+            status=404,
+        )
+    except IntegrityError:
+        return JsonResponse(
+            {"ok": False, "error": "Staff could not be updated. Please try again."},
+            status=400,
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "updated": True,
+            "otp_required": False,
+            "id": staff.id,
+            "staff_id": staff.staff_id,
+            "name": staff.name,
+            "email": staff.email,
+            "message": "Staff updated successfully.",
         }
     )

@@ -958,3 +958,66 @@ class UserPendingVisitAttempt(models.Model):
 
     class Meta:
         ordering = ["-started_at"]
+
+
+
+class BranchStaffEmailOTP(models.Model):
+    """
+    Pending OTP for creating a new BranchStaff record.
+
+    Staff create flow:
+    1. Branch enters staff name + email
+    2. OTP sent to that email
+    3. OTP verify ayyaka matrame BranchStaff create avuthundhi
+    """
+
+    branch = models.ForeignKey(
+        "Branch",
+        on_delete=models.CASCADE,
+        related_name="staff_email_otps",
+    )
+
+    staff_name = models.CharField(max_length=12)
+    email = models.EmailField(db_index=True)
+
+    # Store only OTP hash, never raw OTP
+    code_hash = models.CharField(max_length=128)
+
+    expires_at = models.DateTimeField(db_index=True)
+
+    used = models.BooleanField(default=False, db_index=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    attempts = models.PositiveIntegerField(default=0)
+
+    # resend/cooldown tracking
+    sent_count = models.PositiveIntegerField(default=1)
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["branch", "email", "used"]),
+            models.Index(fields=["branch", "email", "expires_at"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.staff_name:
+            self.staff_name = self.staff_name.strip().upper()
+
+        if self.email:
+            self.email = self.email.strip().lower()
+
+        super().save(*args, **kwargs)
+
+    def mark_used(self):
+        if not self.used:
+            self.used = True
+            self.used_at = timezone.now()
+            self.save(update_fields=["used", "used_at"])
+
+    def __str__(self):
+        return f"{self.staff_name} <{self.email}> OTP for {self.branch_id}"

@@ -1,0 +1,94 @@
+<form id="addStaffForm" class="staff-form" novalidate>
+  {% csrf_token %}
+
+  <div class="staff-field">
+    <label for="staffBranch">Branch</label>
+    <input
+      id="staffBranch"
+      type="text"
+      value="{{ branch.name|default:request.session.branch_name|default:'—' }}"
+      readonly
+    >
+  </div>
+
+  <div class="staff-field">
+    <label for="staffName">Staff name</label>
+    <input
+      id="staffName"
+      type="text"
+      name="staff_name"
+      placeholder="E.G. RAVI KUMAR"
+      required
+      maxlength="12"
+      pattern="[A-Za-z][A-Za-z ]{0,11}"
+      title="Use letters and spaces only. First character must be a letter. Max 12 characters."
+      autocomplete="off"
+    >
+    <p class="staff-field-error" id="staffNameError"></p>
+
+  </div>
+
+<div class="staff-field staff-code-field" hidden>
+  <label for="staffCode">Staff ID</label>
+  <input
+    id="staffCode"
+    type="text"
+    value="Auto generated after OTP verification"
+    readonly
+  >
+</div>
+
+  <div class="staff-field">
+    <label for="staffEmail">Staff email</label>
+    <input
+      id="staffEmail"
+      type="email"
+      name="staff_email"
+      placeholder="name@example.com"
+      required
+      maxlength="254"
+      inputmode="email"
+      autocomplete="email"
+      autocapitalize="none"
+      spellcheck="false"
+      title="Enter a valid email address."
+    >
+    <p class="staff-field-error" id="staffEmailError"></p>
+    <p class="staff-field-help">
+      OTP will be sent to this email before staff account is created.
+    </p>
+  </div>
+
+  <div class="staff-field staff-otp-field" id="staffOtpBlock" hidden>
+    <label for="staffOtp">Email OTP</label>
+    <input
+      id="staffOtp"
+      type="text"
+      name="otp"
+      placeholder="Enter 6 digit OTP"
+      inputmode="numeric"
+      maxlength="6"
+      pattern="[0-9]{6}"
+      autocomplete="one-time-code"
+    >
+
+    <p class="staff-field-error" id="staffOtpError"></p>
+
+    <p class="staff-otp-help" id="staffOtpHelp">
+      OTP sent to staff email. Verify OTP to create staff.
+    </p>
+
+    <button
+      type="button"
+      class="staff-edit-email-btn"
+      id="editStaffEmailBtn"
+      hidden
+    >
+      Edit staff name / email
+    </button>
+  </div>
+
+  <button class="staff-submit-btn" type="submit" id="addStaffSaveBtn">
+    Send OTP
+  </button>
+</form>

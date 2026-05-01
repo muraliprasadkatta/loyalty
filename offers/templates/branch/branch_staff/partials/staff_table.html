@@ -1,0 +1,113 @@
+<div class="staff-table-wrap">
+  <table class="staff-table staff-table--compact">
+<thead>
+  <tr>
+    <th>
+      <span class="staff-th">
+        <span class="staff-th-icon staff-th-icon--staff">👤</span>
+        Staff
+      </span>
+    </th>
+
+    <th>
+      <span class="staff-th">
+        <span class="staff-th-icon staff-th-icon--code">#</span>
+        Code
+      </span>
+    </th>
+
+    <th>
+      <span class="staff-th">
+        <span class="staff-th-icon staff-th-icon--status">●</span>
+        Status
+      </span>
+    </th>
+
+    <th class="staff-actions-th">
+      <span class="staff-th">
+        <span class="staff-th-icon staff-th-icon--actions">⚙</span>
+        Actions
+      </span>
+    </th>
+  </tr>
+</thead>
+
+    <tbody>
+      {% for staff in staff_members %}
+        <tr>
+          <td>
+            <div class="staff-user-cell">
+              <span class="staff-avatar">
+                {{ staff.name|slice:":1"|upper }}
+              </span>
+
+              <div class="staff-user-info">
+                <strong>{{ staff.name }}</strong>
+
+                {% if staff.email %}
+                  <small class="staff-email-line">{{ staff.email }}</small>
+                {% endif %}
+
+                <small class="staff-date-line">
+                  Added {{ staff.created_at|date:"d M Y" }}
+                </small>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            {% if staff.staff_id %}
+              <span class="staff-code">{{ staff.staff_id }}</span>
+            {% else %}
+              <span class="staff-empty">—</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if staff.is_active %}
+              <span class="staff-status staff-status--active">Active</span>
+            {% else %}
+              <span class="staff-status staff-status--inactive">Inactive</span>
+            {% endif %}
+          </td>
+
+          <td>
+            <div class="staff-actions">
+            <button
+            type="button"
+            class="staff-action-btn staff-action-btn--edit js-staff-edit"
+            data-staff-id="{{ staff.id }}"
+            data-staff-name="{{ staff.name|default:''|escape }}"
+            data-staff-email="{{ staff.email|default:''|escape }}"
+            data-staff-code="{{ staff.staff_id|default:''|escape }}"
+            >
+            Edit
+            </button>
+
+              <form
+                method="post"
+                action="#"
+                onsubmit="return confirm('Deactivate this staff member?');"
+              >
+                {% csrf_token %}
+                <button class="staff-action-btn staff-action-btn--delete" type="submit">
+                  Delete
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4">
+            <div class="staff-empty-state">
+              <div class="staff-empty-icon">👥</div>
+              <strong>No staff added yet</strong>
+              <p>Add your first branch staff member using the form.</p>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

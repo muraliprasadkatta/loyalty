@@ -60,7 +60,6 @@ urlpatterns = [
     path("branch/auth/otp/verify", bviews.branch_otp_verify, name="branch_otp_verify"),
     path("branch/home/", bviews.branch_home_view, name="branch_home"),
     path("branch/logout/", bviews.branch_logout_view, name="branch_logout"),
-    path("branch/staff/create/",bviews.branch_staff_create_view,name="branch_staff_create"),
     path("branch/api/users/", bviews.branch_user_visit_list, name="branch_user_visit_list"),
     path("branch/offer-pin/verify/",branch_verify_offer_pin, name="branch_verify_offer_pin"),
     path("branch/visits/",bviews.branch_all_visits, name="branch_all_visits"),
@@ -71,12 +70,20 @@ urlpatterns = [
     path("branch/all-claims/",bviews.branch_all_claims,name="branch_all_claims"),
     path("branch/all-claims/live/",bviews.branch_all_claims_table_live,name="branch_all_claims_table_live",),
     path("branch/staff/",bviews.branch_staff_manage,name="branch_staff_manage",),
-    # offers/urls.py
+
+    path("branch/staff/send-otp/",bviews.branch_staff_send_otp_view,name="branch_staff_send_otp",),
+
+    path("branch/staff/verify-otp/",bviews.branch_staff_verify_otp_and_create_view,name="branch_staff_verify_otp",),
+        # offers/urls.py
 
     path(
         "branch/visit-pin/generate/",
         qr_pin_service.branch_generate_visit_pin,
         name="branch_generate_visit_pin",
     ),
+
+    path("branch/staff/<int:staff_id>/edit/start/",bviews.branch_staff_edit_start_view,name="branch_staff_edit_start",),
+
+    path("branch/staff/<int:staff_id>/edit/verify/",bviews.branch_staff_edit_verify_otp_view,name="branch_staff_edit_verify_otp",),
 
 ]
