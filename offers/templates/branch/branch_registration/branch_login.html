@@ -151,6 +151,18 @@
     color:var(--muted);
   }
 
+  .lg-staff-msg {
+  margin: 8px 0 0;
+  color: var(--err);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.lg-staff-msg[hidden] {
+  display: none;
+}
+
   .lg-chip{
     display:inline-block;
     padding:2px 8px;
@@ -226,6 +238,14 @@
       <select id="lgLoginFor" name="login_for">
         <option value="branch" selected>Branch main account</option>
       </select>
+
+      <div
+        id="lgStaffMsg"
+        class="lg-staff-msg"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
     </div>
 
     <div class="lg-row" style="margin-top:8px">
@@ -324,6 +344,7 @@
   const branchChip = document.getElementById('lgBranchChip');
   const branchMsg  = document.getElementById('lgBranchMsg');
   const loginForEl = document.getElementById('lgLoginFor');
+  const staffMsgEl = document.getElementById('lgStaffMsg');
   const linkUser   = document.getElementById('link-user');
   const linkAdmin  = document.getElementById('link-admin');
 
@@ -401,6 +422,18 @@
     msgEl.className = 'lg-msg ' + (type || '');
   }
 
+
+  function showStaffLoginError(message){
+    if (!staffMsgEl) return;
+
+    staffMsgEl.textContent = message || '';
+    staffMsgEl.hidden = !message;
+  }
+
+  function clearStaffLoginError(){
+    showStaffLoginError('');
+  }
+  
   function clearInlinePageError(){
     showMsg('');
   }
@@ -620,6 +653,8 @@
 
       hideGlobalError();
       clearInlinePageError();
+      clearStaffLoginError();
+
       lockEmail(email || '');
       resetOtpUi();
     });
@@ -657,6 +692,7 @@
   branchEl.addEventListener('input', () => {
     hideGlobalError();
     clearInlinePageError();
+    clearStaffLoginError();
 
     const before = branchEl.value;
     const after = sanitizeBranch(before);
@@ -804,6 +840,8 @@
   getBtn.addEventListener('click', async () => {
     hideGlobalError();
     clearInlinePageError();
+    clearStaffLoginError();
+
 
     if (otpRequestInFlight || !navigator.onLine) {
       refreshActionStates();
@@ -866,13 +904,21 @@
       otpSent = false;
       setOtpInputEnabled(false);
 
-      if (res?.error_code === 'offline') {
-        showMsg('No internet connection. Please check your network.', 'lg-err');
-      } else if (res?.error_code === 'timeout') {
-        showMsg('Request timed out. Please try again.', 'lg-err');
-      } else {
-        showMsg(res?.error || res?.message || 'Failed to send OTP.', 'lg-err');
-      }
+    const errorMessage = res?.error || res?.message || 'Failed to send OTP.';
+
+    if (res?.error_code === 'offline') {
+      showMsg('No internet connection. Please check your network.', 'lg-err');
+    } else if (res?.error_code === 'timeout') {
+      showMsg('Request timed out. Please try again.', 'lg-err');
+    } else if (
+      errorMessage.toLowerCase().includes('staff account is inactive')
+    ) {
+      clearInlinePageError();
+      showStaffLoginError(errorMessage);
+    } else {
+      showMsg(errorMessage, 'lg-err');
+    }
+
     } catch (err) {
       otpSent = false;
       setOtpInputEnabled(false);
@@ -891,6 +937,7 @@
     e.preventDefault();
     hideGlobalError();
     clearInlinePageError();
+    clearStaffLoginError();
 
     if (verifyRequestInFlight) return;
 

@@ -20,7 +20,6 @@
     <section class="staff-page">
       <div class="staff-shell">
 
-
         <div class="staff-layout">
 
           <!-- ADD STAFF FORM CARD -->
@@ -28,8 +27,8 @@
             <div class="staff-card-title">
               <span class="staff-card-icon">＋</span>
               <div>
-              <h2 id="staffFormTitle">Add Staff</h2>
-              <p id="staffFormSubtitle">Create a staff profile for this branch</p>
+                <h2 id="staffFormTitle">Add Staff</h2>
+                <p id="staffFormSubtitle">Create a staff profile for this branch</p>
               </div>
             </div>
 
@@ -60,6 +59,20 @@
           </section>
 
         </div>
+
+        <!-- STAFF ACTIVITY CARD -->
+        <section class="staff-card staff-activity-card">
+          <div class="staff-card-title">
+            <span class="staff-card-icon">🕘</span>
+            <div>
+              <h2>Staff Activity</h2>
+              <p>Recent create, update and deactivate history</p>
+            </div>
+          </div>
+
+          {% include "branch/branch_staff/partials/staff_activity_table.html" %}
+        </section>
+
       </div>
     </section>
   </main>
@@ -135,26 +148,32 @@
     box-shadow: 0 8px 18px rgba(45, 79, 160, 0.05);
   }
 
-  .staff-layout {
-    display: grid;
-    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-    gap: 18px;
-    align-items: start;
-  }
+.staff-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 18px;
 
-  .staff-card {
-    min-width: 0;
-    background: #ffffff;
-    border: 1px solid #e1e8fb;
-    border-radius: 22px;
-    box-shadow: 0 10px 30px rgba(45, 79, 160, 0.06);
-  }
+  /* OLD: align-items: start; */
+  align-items: stretch;
+}
 
-  .staff-form-card,
-  .staff-list-card {
-    padding: 18px;
-  }
+.staff-card {
+  min-width: 0;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid #e1e8fb;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(45, 79, 160, 0.06);
+}
 
+
+.staff-form-card,
+.staff-list-card {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
   .staff-card-title {
     margin-bottom: 18px;
     display: flex;
@@ -195,6 +214,11 @@
 .staff-form {
   display: grid;
   gap: 16px;
+  align-content: start;
+}
+.staff-list-card .staff-table-wrap {
+  flex: 1;
+  min-height: 0;
 }
 .staff-field {
   display: grid;
@@ -364,6 +388,7 @@
      Columns: Staff | Code | Status | Actions
   ========================= */
 
+  
 .staff-table-wrap {
   width: 100%;
   max-height: clamp(360px, 58vh, 620px);
@@ -616,6 +641,195 @@
     font-size: 13px;
     font-weight: 650;
   }
+.staff-activity-card {
+  margin-top: 18px;
+  padding: 18px;
+}
+
+.staff-activity-table-wrap {
+  width: 100%;
+  max-height: clamp(460px, 42vh, 440px);
+  overflow: auto;
+  border: 1px solid #e1e8f8;
+  border-radius: 16px;
+  scrollbar-gutter: stable;
+}
+
+.staff-activity-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.staff-activity-table th {
+  height: 52px;
+  padding: 0 16px;
+  background: #f3f6ff;
+  border-bottom: 1px solid #e1e8f8;
+  color: #5d6f9f;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.staff-activity-table td {
+  height: 74px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #edf1fa;
+  color: #24345f;
+  font-size: 13px;
+  font-weight: 650;
+  vertical-align: middle;
+}
+
+.staff-activity-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.staff-activity-time {
+  display: grid;
+  gap: 3px;
+}
+
+.staff-activity-time strong {
+  color: #071747;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.staff-activity-time small {
+  color: #8995bb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.staff-activity-user {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.staff-avatar--small {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  font-size: 14px;
+}
+
+.staff-activity-user strong {
+  display: block;
+  color: #071747;
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-activity-user small {
+  display: block;
+  margin-top: 3px;
+  color: #7b88ae;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.staff-activity-badge {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  background: #f2f4f8;
+  color: #65739b;
+}
+
+.staff-activity-badge--create {
+  background: #e9fbf1;
+  color: #13a962;
+}
+
+.staff-activity-badge--update {
+  background: #edf4ff;
+  color: #386cff;
+}
+
+.staff-activity-badge--deactivate {
+  background: #fff1f1;
+  color: #e54848;
+}
+
+.staff-activity-badge--reactivate {
+  background: #fff4e8;
+  color: #f47a24;
+}
+
+.staff-activity-actor {
+  color: #40517f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.staff-activity-message {
+  margin: 0;
+  color: #6274a8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.staff-empty-state--small {
+  min-height: 220px;
+  padding: 34px 20px;
+}
+
+.staff-activity-details {
+  display: grid;
+  gap: 6px;
+}
+
+.staff-change-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: #6274a8;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.staff-change-line span {
+  min-width: 46px;
+  color: #40517f;
+  font-weight: 900;
+}
+
+.staff-change-line strong {
+  color: #071747;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.staff-change-line em {
+  color: #386cff;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.staff-activity-message--muted {
+  color: #8995bb;
+  font-size: 11px;
+}
 
   /* =========================
      TOAST
@@ -684,17 +898,149 @@
   background: #f3efff;
   color: #6d5dfc;
 }
+
+.staff-action-btn--reactivate {
+  background: #e9fbf1;
+  color: #13a962;
+}
   /* =========================
      RESPONSIVE
   ========================= */
 
   @media (max-width: 1100px) {
-    .staff-layout {
-      grid-template-columns: 1fr;
-    }
+  .staff-layout {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+    .staff-card {
+    height: auto;
+  }
+
   }
 
   @media (max-width: 767px) {
+    
+.staff-activity-card {
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.staff-activity-table-wrap {
+  border: 0;
+  overflow: visible;
+  max-height: none;
+}
+
+.staff-activity-table {
+  min-width: 0;
+  display: block;
+}
+
+.staff-activity-table thead {
+  display: none;
+}
+
+.staff-activity-table tbody {
+  display: grid;
+  gap: 12px;
+}
+
+.staff-activity-table tr {
+  display: grid;
+  gap: 0;
+  padding: 14px;
+  border: 1px solid #e3eafb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(30, 58, 138, 0.07);
+}
+
+.staff-activity-table td {
+  height: auto;
+  min-height: 42px;
+  padding: 10px 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.staff-activity-table td + td {
+  border-top: 1px solid #edf2fb;
+}
+
+.staff-activity-table td::before {
+  margin: 2px 0 0;
+  color: #8995bb;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.staff-activity-table td:nth-child(1)::before {
+  content: "Time & Date";
+}
+
+.staff-activity-table td:nth-child(2)::before {
+  content: "Staff";
+}
+
+.staff-activity-table td:nth-child(3)::before {
+  content: "Action";
+}
+
+.staff-activity-table td:nth-child(4)::before {
+  content: "Changed By";
+}
+
+.staff-activity-table td:nth-child(5)::before {
+  content: "Details";
+}
+
+.staff-activity-user {
+  justify-content: flex-start;
+  min-width: 0;
+  gap: 0;
+}
+
+.staff-activity-user .staff-avatar,
+.staff-activity-user .staff-avatar--small {
+  display: none;
+}
+
+.staff-activity-user > div {
+  min-width: 0;
+}
+
+.staff-activity-user strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.staff-activity-actor,
+.staff-activity-message,
+.staff-activity-details,
+.staff-change-line {
+  min-width: 0;
+}
+
+.staff-change-line {
+  align-items: center;
+  gap: 6px;
+}
+
+.staff-change-line span {
+  min-width: auto;
+}
+
+.staff-change-line strong {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+    
     .staff-page {
       padding: 10px;
     }
@@ -769,13 +1115,16 @@
       text-align: left;
     }
 
-    .staff-table td:nth-child(2) {
-      grid-area: code;
-      width: auto;
-      border-top: 1px solid #edf2fb;
-      padding-top: 10px;
-      text-align: left;
-    }
+.staff-table tbody td:nth-child(2) {
+  grid-area: code;
+  width: auto;
+  border-top: 1px solid #edf2fb;
+  padding: 10px 14px 12px;
+  text-align: left;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
 
     .staff-table td:nth-child(3) {
       grid-area: status;
@@ -793,12 +1142,15 @@
       text-align: right;
     }
 
-    .staff-table tbody td:nth-child(2) .staff-code,
-    .staff-table tbody td:nth-child(3) .staff-status {
-      margin-left: 0;
-      margin-right: 0;
-    }
+.staff-table tbody td:nth-child(2) .staff-code {
+  margin-left: 0;
+  margin-right: auto;
+}
 
+.staff-table tbody td:nth-child(3) .staff-status {
+  margin-left: 0;
+  margin-right: 0;
+}
     .staff-actions {
       justify-content: flex-end;
     }

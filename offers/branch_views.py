@@ -30,7 +30,12 @@ from django.utils import timezone
 from django.db.models.functions import ExtractHour
 from .models import Branch, UserVisitEvent, UserOfferClaim
 from django.template.loader import render_to_string
-
+from offers.models import Branch, BranchStaff, BranchStaffActivityLog, BranchStaffEmailOTP
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_POST
+from django.contrib.sessions.models import Session
+from offers.models import Branch, BranchStaff, UserOfferClaim
 from offers.services.branch_api.branch_today_metrics_service import (
     get_branch_all_time_customer_summary_counts,
     get_branch_today_customer_summary_counts,
@@ -58,13 +63,19 @@ from .models import (
     Branch,
     BranchOTP,
     BranchStaff,
+    BranchStaffActivityLog,
     BranchStaffEmailOTP,
+    BranchGenerateVisitPin,
     QRToken,
     YashPin,
     UserVisitEvent,
+    UserVerifyVisitPin,
+    UserOfferClaim,
+    OfferDayPin,
     Profile,
     LoginVisit,
 )
+
 
 # ===== Config =====
 
@@ -185,9 +196,10 @@ def _resolve_branch_and_identifier(data):
     staff_obj = (
         BranchStaff.objects
         .filter(branch=branch, email__iexact=identifier)
-        .only("id", "name", "staff_id", "email")
+        .only("id", "name", "staff_id", "email", "is_active", "active_session_key")
         .first()
     )
+    
     if staff_obj:
         return branch, identifier, staff_obj, None
 
@@ -203,6 +215,80 @@ def _clear_branch_staff_session(request):
     request.session.pop("branch_staff_code", None)
 
 
+def _clear_branch_login_session(request):
+    staff_id = request.session.get("branch_staff_id")
+    session_key = request.session.session_key or ""
+
+    if staff_id and session_key:
+        BranchStaff.objects.filter(
+            id=staff_id,
+            active_session_key=session_key,
+        ).update(active_session_key="")
+
+    request.session.pop("branch_id", None)
+    request.session.pop("branch_name", None)
+    _clear_branch_staff_session(request)
+    request.session.modified = True
+
+
+def _kill_staff_active_session(staff):
+    session_key = (staff.active_session_key or "").strip()
+
+    if session_key:
+        Session.objects.filter(session_key=session_key).delete()
+
+    BranchStaff.objects.filter(id=staff.id).update(
+        active_session_key="",
+    )
+
+
+def _expire_staff_pending_access(branch, staff):
+    staff_code = staff.staff_id or ""
+
+    if not staff_code:
+        return
+
+    now_ts = timezone.now()
+
+    QRToken.objects.filter(
+        branch=branch,
+        staff_code=staff_code,
+        used=False,
+        expires_at__gt=now_ts,
+    ).update(
+        expires_at=now_ts,
+    )
+
+    YashPin.objects.filter(
+        branch=branch,
+        staff_code=staff_code,
+        used=False,
+        expires_at__gt=now_ts,
+    ).update(
+        expires_at=now_ts,
+    )
+
+    BranchGenerateVisitPin.objects.filter(
+        branch=branch,
+        staff_code=staff_code,
+        used=False,
+        expired=False,
+    ).update(
+        expired=True,
+        expired_at=now_ts,
+    )
+
+    OfferDayPin.objects.filter(
+        branch=branch,
+        used_by_staff_code=staff_code,
+        used=False,
+        expires_at__gt=now_ts,
+    ).update(
+        expires_at=now_ts,
+    )
+
+
+
 def _set_branch_session(request, branch, staff=None):
     request.session["branch_id"] = branch.id
     request.session["branch_name"] = branch.name
@@ -210,11 +296,27 @@ def _set_branch_session(request, branch, staff=None):
     _clear_branch_staff_session(request)
 
     if staff:
+        if not request.session.session_key:
+            request.session.save()
+
+        current_session_key = request.session.session_key or ""
+        old_session_key = (staff.active_session_key or "").strip()
+
+        # Single-device staff login:
+        # same staff old device/session ni logout cheyyadam.
+        if old_session_key and old_session_key != current_session_key:
+            Session.objects.filter(session_key=old_session_key).delete()
+
         request.session["branch_staff_id"] = staff.id
         request.session["branch_staff_name"] = staff.name
         request.session["branch_staff_code"] = staff.staff_id or ""
 
+        staff.active_session_key = current_session_key
+        staff.last_login_at = timezone.now()
+        staff.save(update_fields=["active_session_key", "last_login_at"])
+
     request.session.modified = True
+
 
 
 # ===== Views =====
@@ -275,6 +377,15 @@ def branch_otp_send(request: HttpRequest):
     if error:
         return error
 
+    if staff_obj and not staff_obj.is_active:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": "This staff account is inactive. Contact branch owner.",
+            },
+            status=403,
+        )
+
     now_ts = now()
 
     recent = (
@@ -286,19 +397,31 @@ def branch_otp_send(request: HttpRequest):
         .order_by("-created_at")
         .first()
     )
+
     if recent:
         cooling, wait = in_cooldown(recent.created_at)
         if cooling:
             return JsonResponse(
-                {"ok": False, "error": f"Please wait {max(1, wait)}s before requesting again."},
+                {
+                    "ok": False,
+                    "error": f"Please wait {max(1, wait)}s before requesting again.",
+                },
                 status=429,
             )
 
     since = now_ts - timedelta(minutes=RESEND_WINDOW_MINUTES)
-    if BranchOTP.objects.filter(identifier=identifier, created_at__gte=since).count() >= MAX_RESENDS_PER_15M:
-        return JsonResponse({"ok": False, "error": "Too many requests. Try later."}, status=429)
+
+    if BranchOTP.objects.filter(
+        identifier=identifier,
+        created_at__gte=since,
+    ).count() >= MAX_RESENDS_PER_15M:
+        return JsonResponse(
+            {"ok": False, "error": "Too many requests. Try later."},
+            status=429,
+        )
 
     code = gen_code()
+
     row = BranchOTP.objects.create(
         identifier=identifier,
         code_hash=make_password(code),
@@ -328,9 +451,13 @@ def branch_otp_send(request: HttpRequest):
         )
     except Exception:
         row.delete()
-        return JsonResponse({"ok": False, "error": "Failed to send OTP email."}, status=500)
+        return JsonResponse(
+            {"ok": False, "error": "Failed to send OTP email."},
+            status=500,
+        )
 
     return JsonResponse({"ok": True})
+
 
 
 @require_POST
@@ -374,11 +501,19 @@ def branch_otp_verify(request: HttpRequest):
     if not ok:
         return JsonResponse({"ok": False, "error": "Invalid OTP."}, status=400)
 
+    if staff_obj and not staff_obj.is_active:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": "This staff account is inactive. Contact branch owner.",
+            },
+            status=403,
+        )
+
     _set_branch_session(request, branch, staff=staff_obj)
 
     next_url = reverse("offers:branch_home")
     return JsonResponse({"ok": True, "next": next_url})
-
 
 @never_cache
 @require_branch_session
@@ -479,12 +614,8 @@ def branch_home_view(request):
 
 
 def branch_logout_view(request):
-    request.session.pop("branch_id", None)
-    request.session.pop("branch_name", None)
-    _clear_branch_staff_session(request)
-    request.session.modified = True
+    _clear_branch_login_session(request)
     return redirect(reverse("offers:branch_login"))
-
 
 
 @require_branch_session
@@ -1158,9 +1289,8 @@ def build_branch_claims_context(request, branch):
 
 
 from django.shortcuts import render, get_object_or_404
-from offers.models import Branch, BranchStaff
 
-
+@require_branch_session
 def branch_staff_manage(request):
     branch_id = request.session.get("branch_id")
     branch = get_object_or_404(Branch, id=branch_id)
@@ -1171,15 +1301,22 @@ def branch_staff_manage(request):
         .order_by("-created_at")
     )
 
+    staff_activity_logs = (
+        BranchStaffActivityLog.objects
+        .filter(branch=branch)
+        .select_related("staff")
+        .order_by("-created_at")[:10]
+    )
+
     return render(
         request,
         "branch/branch_staff/branch_staff_manage.html",
         {
             "branch": branch,
             "staff_members": staff_members,
+            "staff_activity_logs": staff_activity_logs,
         },
     )
-
 
 
 import re
@@ -1217,7 +1354,28 @@ def generate_branch_staff_id(branch_id, staff_name):
         next_number += 1
 
 
-
+def create_staff_activity_log(
+    *,
+    branch_id,
+    staff,
+    action,
+    message="",
+    old_values=None,
+    new_values=None,
+    changed_by_name="Branch owner",
+):
+    return BranchStaffActivityLog.objects.create(
+        branch_id=branch_id,
+        staff=staff,
+        action=action,
+        staff_name_snapshot=staff.name or "",
+        staff_email_snapshot=staff.email or "",
+        staff_id_snapshot=staff.staff_id or "",
+        old_values=old_values or {},
+        new_values=new_values or {},
+        changed_by_name=changed_by_name,
+        message=message,
+    )
 
 
 
@@ -1445,6 +1603,18 @@ def branch_staff_verify_otp_and_create_view(request):
                 staff_id=staff_id,
             )
 
+            create_staff_activity_log(
+                branch_id=branch_id,
+                staff=staff,
+                action=BranchStaffActivityLog.ACTION_CREATE,
+                message=f"Staff created with code {staff.staff_id}.",
+                new_values={
+                    "name": staff.name,
+                    "email": staff.email,
+                    "staff_id": staff.staff_id,
+                },
+            )
+
             row.used = True
             row.used_at = timezone.now()
             row.save(update_fields=["attempts", "used", "used_at"])
@@ -1466,6 +1636,157 @@ def branch_staff_verify_otp_and_create_view(request):
 
 
 
+
+@require_POST
+@require_branch_session
+def branch_staff_delete(request, staff_id):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    staff = get_object_or_404(
+        BranchStaff,
+        id=staff_id,
+        branch=branch,
+    )
+
+    staff_code = staff.staff_id or ""
+
+    has_staff_history = False
+
+    if staff_code:
+        has_staff_history = (
+            UserOfferClaim.objects.filter(
+                branch=branch,
+                staff_code=staff_code,
+            ).exists()
+            or UserVisitEvent.objects.filter(
+                branch=branch,
+                staff_code=staff_code,
+            ).exists()
+            or UserVerifyVisitPin.objects.filter(
+                branch=branch,
+                staff_code=staff_code,
+            ).exists()
+            or BranchGenerateVisitPin.objects.filter(
+                branch=branch,
+                staff_code=staff_code,
+            ).exists()
+            or OfferDayPin.objects.filter(
+                branch=branch,
+                used_by_staff_code=staff_code,
+            ).exists()
+            or QRToken.objects.filter(
+                branch=branch,
+                staff_code=staff_code,
+            ).exists()
+            or YashPin.objects.filter(
+                branch=branch,
+                staff_code=staff_code,
+            ).exists()
+        )
+
+    if has_staff_history:
+        if staff.is_active:
+            staff.is_active = False
+            staff.save(update_fields=["is_active", "updated_at"])
+
+            _kill_staff_active_session(staff)
+            _expire_staff_pending_access(branch, staff)
+
+            BranchStaffActivityLog.objects.create(
+                branch=branch,
+                staff=staff,
+                action=BranchStaffActivityLog.ACTION_DEACTIVATE,
+                staff_name_snapshot=staff.name,
+                staff_email_snapshot=staff.email,
+                staff_id_snapshot=staff.staff_id or "",
+                old_values={
+                    "is_active": True,
+                },
+                new_values={
+                    "is_active": False,
+                },
+                changed_by_name="Branch owner",
+                message="Staff has activity history, so account was deactivated instead of deleted.",
+            )
+
+            messages.success(
+                request,
+                "Staff has activity history, so account was deactivated instead of deleted."
+            )
+        else:
+            messages.info(request, "Staff is already inactive.")
+
+    else:
+        staff_name = staff.name
+        staff_email = staff.email
+        staff_code = staff.staff_id or ""
+
+        _kill_staff_active_session(staff)
+        _expire_staff_pending_access(branch, staff)
+
+        BranchStaffActivityLog.objects.create(
+            branch=branch,
+            staff=staff,
+            action=BranchStaffActivityLog.ACTION_DELETE,
+            staff_name_snapshot=staff_name,
+            staff_email_snapshot=staff_email,
+            staff_id_snapshot=staff_code,
+            old_values={
+                "name": staff_name,
+                "email": staff_email,
+                "staff_id": staff_code,
+                "is_active": staff.is_active,
+            },
+            new_values={},
+            changed_by_name="Branch owner",
+            message="Staff account deleted.",
+        )
+
+        staff.delete()
+
+        messages.success(request, "Staff deleted successfully.")
+
+    return redirect("offers:branch_staff_manage")
+
+@require_POST
+@require_branch_session
+def branch_staff_reactivate(request, staff_id):
+    branch_id = request.session.get("branch_id")
+    branch = get_object_or_404(Branch, id=branch_id)
+
+    staff = get_object_or_404(
+        BranchStaff,
+        id=staff_id,
+        branch=branch,
+    )
+
+    if staff.is_active:
+        messages.info(request, "Staff is already active.")
+        return redirect("offers:branch_staff_manage")
+
+    staff.is_active = True
+    staff.save(update_fields=["is_active", "updated_at"])
+
+    BranchStaffActivityLog.objects.create(
+        branch=branch,
+        staff=staff,
+        action=BranchStaffActivityLog.ACTION_REACTIVATE,
+        staff_name_snapshot=staff.name,
+        staff_email_snapshot=staff.email,
+        staff_id_snapshot=staff.staff_id or "",
+        old_values={
+            "is_active": False,
+        },
+        new_values={
+            "is_active": True,
+        },
+        changed_by_name="Branch owner",
+        message="Staff account reactivated.",
+    )
+
+    messages.success(request, "Staff reactivated successfully.")
+    return redirect("offers:branch_staff_manage")
 
 
 def _branch_staff_edit_otp_salt(branch_id, staff_id):
@@ -1518,8 +1839,25 @@ def branch_staff_edit_start_view(request, staff_id):
 
     # ✅ Same email: no OTP required, update name directly.
     if not email_changed:
+        old_values = {
+            "name": staff.name,
+            "email": staff.email,
+        }
+
         staff.name = name
         staff.save(update_fields=["name", "updated_at"])
+
+        create_staff_activity_log(
+            branch_id=branch_id,
+            staff=staff,
+            action=BranchStaffActivityLog.ACTION_UPDATE,
+            message="Staff name updated.",
+            old_values=old_values,
+            new_values={
+                "name": staff.name,
+                "email": staff.email,
+            },
+        )
 
         return JsonResponse(
             {
@@ -1714,10 +2052,27 @@ def branch_staff_edit_verify_otp_view(request, staff_id):
                 )
 
             # ✅ Use OTP row values as verified source.
+            old_values = {
+                "name": staff.name,
+                "email": staff.email,
+            }
+
+            # ✅ Use OTP row values as verified source.
             staff.name = row.staff_name
             staff.email = row.email
             staff.save(update_fields=["name", "email", "updated_at"])
 
+            create_staff_activity_log(
+                branch_id=branch_id,
+                staff=staff,
+                action=BranchStaffActivityLog.ACTION_UPDATE,
+                message="Staff name/email updated after OTP verification.",
+                old_values=old_values,
+                new_values={
+                    "name": staff.name,
+                    "email": staff.email,
+                },
+            )
             row.used = True
             row.used_at = timezone.now()
             row.save(update_fields=["attempts", "used", "used_at"])

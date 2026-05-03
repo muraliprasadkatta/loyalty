@@ -72,29 +72,44 @@
           </td>
 
           <td>
-            <div class="staff-actions">
-            <button
-            type="button"
-            class="staff-action-btn staff-action-btn--edit js-staff-edit"
-            data-staff-id="{{ staff.id }}"
-            data-staff-name="{{ staff.name|default:''|escape }}"
-            data-staff-email="{{ staff.email|default:''|escape }}"
-            data-staff-code="{{ staff.staff_id|default:''|escape }}"
-            >
-            Edit
-            </button>
+          <div class="staff-actions">
+            {% if staff.is_active %}
+              <button
+                type="button"
+                class="staff-action-btn staff-action-btn--edit js-staff-edit"
+                data-staff-id="{{ staff.id }}"
+                data-staff-name="{{ staff.name|default:''|escape }}"
+                data-staff-email="{{ staff.email|default:''|escape }}"
+                data-staff-code="{{ staff.staff_id|default:''|escape }}"
+              >
+                Edit
+              </button>
 
               <form
                 method="post"
-                action="#"
-                onsubmit="return confirm('Deactivate this staff member?');"
+                action="{% url 'offers:branch_staff_delete' staff.id %}"
+                onsubmit="return confirm('Remove this staff? If staff has offer claim history, account will be deactivated instead.');"
               >
                 {% csrf_token %}
-                <button class="staff-action-btn staff-action-btn--delete" type="submit">
-                  Delete
+                <button type="submit" class="staff-action-btn staff-action-btn--delete">
+                  Remove
                 </button>
               </form>
-            </div>
+            {% else %}
+              <form
+                method="post"
+                action="{% url 'offers:branch_staff_reactivate' staff.id %}"
+                onsubmit="return confirm('Reactivate this staff account?');"
+              >
+                {% csrf_token %}
+                <button type="submit" class="staff-action-btn staff-action-btn--reactivate">
+                  Reactivate
+                </button>
+              </form>
+            {% endif %}
+          </div>
+
+
           </td>
         </tr>
       {% empty %}

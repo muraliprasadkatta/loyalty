@@ -1,0 +1,57 @@
+{% load static %}
+<!-- Branches -->
+<div class="card card-branches" style="margin-top:16px">
+  <div class="br-head">
+    <strong>Branches ({{ branch_count }})</strong>
+
+    <a class="view-all" href="{% url 'offers:user_all_branches' %}" data-requires-network="1">
+      View all
+    </a>
+  </div>
+
+  {% if branch_count %}
+    <div class="br-grid">
+      {% for b in branches %}
+        <a
+          class="branch-tile branch-tile--active branch-offer-card"
+          href="{% url 'offers:offer_progress' b.id %}"
+          data-requires-network="1"
+        >
+          <div class="br-toprow">
+            <div class="br-location-title">
+              <span>📍</span>
+              <strong>Tadepalligudem</strong>
+            </div>
+
+            <span class="br-pill ok">ACTIVE 🎁</span>
+          </div>
+
+          <div class="br-card-body">
+            <div class="br-main-text">
+              <div class="branch-name">
+                Free Coke sjdhsdfhks
+              </div>
+
+              <div class="branch-meta br-date-row">
+                <span>🗓</span>
+                <span>03 May 2026 – 30 May 2026</span>
+              </div>
+            </div>
+
+<div class="br-offer-box">
+  <img
+    src="{% static 'offers/user_homepage/all_branches/pepsi_can_real_transparent.webp' %}"
+    alt="Pepsi can"
+    class="br-offer-thumb"
+    loading="lazy"
+    decoding="async"
+  >
+</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="msg">No branches yet.</div>
+  {% endif %}
+</div>

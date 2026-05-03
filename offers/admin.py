@@ -8,7 +8,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 import csv
 
 from .models import (
-    Branch, BranchOTP, BranchStaff,
+    Branch, BranchOTP, BranchStaff, BranchStaffEmailOTP, BranchStaffActivityLog,
     ComplementaryOffer,
     LoginOTP, LoginVisit,
     Profile, UserLocationPing,
@@ -308,16 +308,35 @@ class UserVisitEventAdmin(admin.ModelAdmin):
 # =========================
 @admin.register(BranchStaff)
 class BranchStaffAdmin(admin.ModelAdmin):
-    list_display = ("id","name","email","staff_id","branch","created_at")
-    list_filter  = ("branch",)
-    search_fields = ("name","email","staff_id")
+    list_display = (
+        "id",
+        "name",
+        "email",
+        "mobile",
+        "staff_id",
+        "branch",
+        "is_active",
+        "created_at",
+        "updated_at",
+    )
+    list_display_links = ("id", "name")
+    list_filter = ("branch", "is_active", "created_at", "updated_at")
+    search_fields = ("name", "email", "mobile", "staff_id", "branch__name")
     ordering = ("-id",)
-    readonly_fields = ("created_at",)
+    readonly_fields = ("created_at", "updated_at")
+    list_per_page = 50
+    autocomplete_fields = ("branch",)
 
     fieldsets = (
-        ("Staff Details", {"fields": ("name","email","mobile","staff_id")}),
-        ("Branch Info", {"fields": ("branch",)}),
-        ("Meta", {"fields": ("created_at",)}),
+        ("Staff Details", {
+            "fields": ("name", "email", "mobile", "staff_id", "is_active")
+        }),
+        ("Branch Info", {
+            "fields": ("branch",)
+        }),
+        ("Meta", {
+            "fields": ("created_at", "updated_at")
+        }),
     )
 
 
@@ -449,3 +468,117 @@ class UserPendingVisitAttemptAdmin(admin.ModelAdmin):
         ("Links", {"fields": ("qr_token","yashpin",)}),
         ("Timestamps", {"fields": ("started_at","updated_at","completed_at","expired_at","cancelled_at",)}),
     )
+
+
+@admin.register(BranchStaffEmailOTP)
+class BranchStaffEmailOTPAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "branch",
+        "staff_name",
+        "email",
+        "used",
+        "attempts",
+        "sent_count",
+        "expires_at",
+        "last_sent_at",
+        "used_at",
+        "created_at",
+    )
+    list_display_links = ("id", "staff_name", "email")
+    list_filter = ("branch", "used", "expires_at", "created_at")
+    search_fields = ("staff_name", "email", "branch__name")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+    autocomplete_fields = ("branch",)
+
+    readonly_fields = (
+        "branch",
+        "staff_name",
+        "email",
+        "code_hash",
+        "expires_at",
+        "used",
+        "used_at",
+        "attempts",
+        "sent_count",
+        "last_sent_at",
+        "created_at",
+    )
+
+    fieldsets = (
+        ("Staff OTP", {
+            "fields": ("branch", "staff_name", "email")
+        }),
+        ("Security", {
+            "fields": ("code_hash", "expires_at", "used", "used_at", "attempts")
+        }),
+        ("Send Tracking", {
+            "fields": ("sent_count", "last_sent_at")
+        }),
+        ("Meta", {
+            "fields": ("created_at",)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        return False
+    
+
+@admin.register(BranchStaffActivityLog)
+class BranchStaffActivityLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "branch",
+        "staff_name_snapshot",
+        "staff_id_snapshot",
+        "action",
+        "changed_by_name",
+        "created_at",
+    )
+    list_display_links = ("id", "staff_name_snapshot")
+    list_filter = ("branch", "action", "created_at")
+    search_fields = (
+        "staff_name_snapshot",
+        "staff_email_snapshot",
+        "staff_id_snapshot",
+        "changed_by_name",
+        "message",
+        "branch__name",
+    )
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    readonly_fields = (
+        "branch",
+        "staff",
+        "action",
+        "staff_name_snapshot",
+        "staff_email_snapshot",
+        "staff_id_snapshot",
+        "old_values",
+        "new_values",
+        "changed_by_name",
+        "message",
+        "created_at",
+    )
+
+    fieldsets = (
+        ("Log Info", {
+            "fields": ("branch", "staff", "action", "changed_by_name")
+        }),
+        ("Staff Snapshot", {
+            "fields": ("staff_name_snapshot", "staff_email_snapshot", "staff_id_snapshot")
+        }),
+        ("Changes", {
+            "fields": ("old_values", "new_values", "message")
+        }),
+        ("Meta", {
+            "fields": ("created_at",)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        return False

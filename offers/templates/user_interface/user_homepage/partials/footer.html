@@ -1,0 +1,14 @@
+  <footer class="nav">
+    <div class="tabs">
+      <a class="tab active" href="{% url 'offers:user_home' %}" data-requires-network="1">Home</a>
+      <a class="tab" href="#" >Offers</a>
+      <a class="tab" href="{% if request.user.is_authenticated %}{% url 'offers:user_status' %}{% else %}{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}{% endif %}" data-requires-network="1">Account</a>
+
+      {% if request.user.is_authenticated %}
+        <a class="tab" href="{% url 'offers:user_logout' %}" data-requires-network="1">Sign out</a>
+      {% else %}
+        <a class="tab" href="{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}" data-requires-network="1">Login</a>
+      {% endif %}
+
+    </div>
+  </footer>

@@ -226,6 +226,12 @@ class Branch(models.Model):
         validators=[branch_name_validator],
         help_text="lowercase a–z and 0–9 only; no spaces",
     )
+    display_title = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        help_text="User-facing branch title. Example: Prasad Family Restaurant",
+    )
     email = models.EmailField(blank=True, null=True, db_index=True)
 
     # ✅ Stable public unique id for QR/links
@@ -238,6 +244,7 @@ class Branch(models.Model):
         help_text="Stable public identifier for URLs/QR (immutable).",
     )
 
+    # ✅ manual coords (no auto-geo)
     # ✅ manual coords (no auto-geo)
     latitude = models.DecimalField(
         max_digits=9,
@@ -260,6 +267,20 @@ class Branch(models.Model):
             MaxValueValidator(Decimal("180")),
         ],
         help_text="decimal degrees (−180..180) — 6 d.p.",
+    )
+
+    # ✅ user-facing short location text
+    location_title = models.CharField(
+        max_length=80,
+        blank=True,
+        default="",
+        help_text="Short area name shown on user branch card. Example: Kukatpally",
+    )
+    location_subtitle = models.CharField(
+        max_length=160,
+        blank=True,
+        default="",
+        help_text="Optional street / landmark details. Example: Ramalayam Street, 4th Phase",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -378,8 +399,6 @@ class Branch(models.Model):
 
 
 
-
-
 # offers/models.py
 from django.db import models
 
@@ -418,6 +437,15 @@ class BranchStaff(models.Model):
 
     is_active = models.BooleanField(default=True, db_index=True)
 
+    active_session_key = models.CharField(
+        max_length=40,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
+    last_login_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -444,6 +472,7 @@ class BranchStaff(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.branch.name})"
+
 # assume Branch model already defined above or imported from same app
 # from .models import Branch  # if in another file
 
@@ -1021,3 +1050,46 @@ class BranchStaffEmailOTP(models.Model):
 
     def __str__(self):
         return f"{self.staff_name} <{self.email}> OTP for {self.branch_id}"
+
+
+
+class BranchStaffActivityLog(models.Model):
+    ACTION_CREATE = "create"
+    ACTION_UPDATE = "update"
+    ACTION_DEACTIVATE = "deactivate"
+    ACTION_REACTIVATE = "reactivate"
+    ACTION_DELETE = "delete"
+
+    ACTION_CHOICES = [
+        (ACTION_CREATE, "Created"),
+        (ACTION_UPDATE, "Updated"),
+        (ACTION_DEACTIVATE, "Deactivated"),
+        (ACTION_REACTIVATE, "Reactivated"),
+        (ACTION_DELETE, "Deleted"),
+    ]
+
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    staff = models.ForeignKey(
+        BranchStaff,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs"
+    )
+
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+
+    staff_name_snapshot = models.CharField(max_length=80, blank=True)
+    staff_email_snapshot = models.EmailField(blank=True)
+    staff_id_snapshot = models.CharField(max_length=30, blank=True)
+
+    old_values = models.JSONField(default=dict, blank=True)
+    new_values = models.JSONField(default=dict, blank=True)
+
+    changed_by_name = models.CharField(max_length=80, default="Branch owner")
+    message = models.CharField(max_length=255, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

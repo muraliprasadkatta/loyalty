@@ -1,0 +1,37 @@
+    <div class="wrap" style="padding:0; margin-top:16px">
+      <div class="grid">
+        <a
+          class="tile"
+          href="{% if request.user.is_authenticated %}#{% else %}{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}{% endif %}"
+          {% if request.user.is_authenticated %}data-open="#freeplateCalendarModal"{% endif %}
+        >
+          <strong>Enjoy Your Free Treat</strong>
+          <small>Visit count & free Treat progress</small>
+        </a>
+
+        <a class="tile" href="#">
+          <strong>Today’s Offers</strong>
+          <small>Active deals you can claim now</small>
+        </a>
+
+        <a class="tile" href="{% if request.user.is_authenticated %}#{% else %}{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}{% endif %}">
+          <strong>Order History</strong>
+          <small>Past redemptions & invoices</small>
+        </a>
+
+        <a class="tile" href="{% if request.user.is_authenticated %}{% url 'offers:user_status' %}{% else %}{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}{% endif %}">
+          <strong>Account & Help</strong>
+          <small>Profile, support, FAQs</small>
+        </a>
+
+        <a class="tile" href="#">
+          <strong>Locations</strong>
+          <small>Nearby partner canteens</small>
+        </a>
+
+        <a class="tile" href="{% if request.user.is_authenticated %}#{% else %}{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}{% endif %}">
+          <strong>Refer & Earn</strong>
+          <small>Invite friends and get rewards</small>
+        </a>
+      </div>
+    </div>

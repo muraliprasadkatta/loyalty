@@ -75,7 +75,6 @@
   <div class="topbar">
     <a href="{% url 'offers:admin_home' %}" class="back">← Back</a>
 
-    <input type="hidden" name="mode" value="normal">
 
     <!-- ✅ Default disabled until status check completes -->
     <a href="#"
@@ -136,7 +135,7 @@
 
 
 
-  {% include "homepage/complementary_offer_modal.html" %}
+  {% include "admin_home_page/partials/offers_create_form.html" with offer_mode="normal" %}
 
   <script>
   (function(){
@@ -266,34 +265,6 @@
       console.warn(err);
       alert("Delete failed");
     }
-  });
-})();
-</script>
-
-<script>
-(function(){
-  const btn = document.getElementById('editOfferBtn');
-  if (!btn) return;
-
-  btn.addEventListener('click', (e) => {
-    // disabled gate
-    if (btn.classList.contains('is-disabled') || btn.getAttribute('aria-disabled') === 'true') {
-      e.preventDefault();
-      return;
-    }
-
-    const sel = btn.getAttribute('data-open');
-    if (!sel) return;
-
-    const modal = document.querySelector(sel);
-    if (!modal) {
-      alert("Modal not found: " + sel);
-      return;
-    }
-
-    e.preventDefault();
-    modal.classList.add('is-open');          // your CSS uses is-open pattern
-    modal.setAttribute('aria-hidden','false');
   });
 })();
 </script>

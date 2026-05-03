@@ -1,0 +1,201 @@
+<div class="staff-activity-table-wrap">
+  <table class="staff-activity-table">
+    <thead>
+      <tr>
+        <th>
+          <span class="staff-th">
+            <span class="staff-th-icon">🕘</span>
+            Time & Date
+          </span>
+        </th>
+
+        <th>
+          <span class="staff-th">
+            <span class="staff-th-icon">👤</span>
+            Staff
+          </span>
+        </th>
+
+        <th>
+          <span class="staff-th">
+            <span class="staff-th-icon">⚡</span>
+            Action
+          </span>
+        </th>
+
+        <th>
+          <span class="staff-th">
+            <span class="staff-th-icon">👑</span>
+            Changed By
+          </span>
+        </th>
+
+        <th>
+          <span class="staff-th">
+            <span class="staff-th-icon">📝</span>
+            Details
+          </span>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for log in staff_activity_logs %}
+        <tr>
+          <!-- TIME -->
+          <td>
+            <div class="staff-activity-time">
+              <strong>{{ log.created_at|date:"h:i A" }}</strong>
+              <small>{{ log.created_at|date:"d M Y" }}</small>
+            </div>
+          </td>
+
+          <!-- STAFF -->
+<td>
+  <div class="staff-activity-user">
+    <span class="staff-avatar staff-avatar--small">
+      {% if log.staff_name_snapshot %}
+        {{ log.staff_name_snapshot|slice:":1"|upper }}
+      {% elif log.staff %}
+        {{ log.staff.name|slice:":1"|upper }}
+      {% else %}
+        ?
+      {% endif %}
+    </span>
+
+    <div>
+      <strong>
+        {% if log.staff_name_snapshot %}
+          {{ log.staff_name_snapshot }}
+        {% elif log.staff %}
+          {{ log.staff.name }}
+        {% else %}
+          Unknown staff
+        {% endif %}
+      </strong>
+
+      {% if log.staff_id_snapshot %}
+        <small>{{ log.staff_id_snapshot }}</small>
+      {% elif log.staff and log.staff.staff_id %}
+        <small>{{ log.staff.staff_id }}</small>
+      {% endif %}
+    </div>
+  </div>
+</td>
+          <!-- ACTION -->
+          <td>
+            {% if log.action == "create" %}
+              <span class="staff-activity-badge staff-activity-badge--create">
+                Created
+              </span>
+            {% elif log.action == "update" %}
+              <span class="staff-activity-badge staff-activity-badge--update">
+                Updated
+              </span>
+            {% elif log.action == "deactivate" %}
+              <span class="staff-activity-badge staff-activity-badge--deactivate">
+                Deactivated
+              </span>
+            {% elif log.action == "reactivate" %}
+              <span class="staff-activity-badge staff-activity-badge--reactivate">
+                Reactivated
+              </span>
+            {% else %}
+              <span class="staff-activity-badge">
+                {{ log.get_action_display|default:log.action|title }}
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- CHANGED BY -->
+          <td>
+            <span class="staff-activity-actor">
+              {{ log.changed_by_name|default:"Branch owner" }}
+            </span>
+          </td>
+
+          <!-- DETAILS -->
+<!-- DETAILS -->
+<td>
+  <div class="staff-activity-details">
+
+    {% if log.action == "create" %}
+      <p class="staff-activity-message">
+        Staff created with code
+        <strong>{{ log.staff_id_snapshot|default:"—" }}</strong>.
+      </p>
+
+      {% if log.new_values.email %}
+        <div class="staff-change-line">
+          <span>Email</span>
+          <strong>{{ log.new_values.email }}</strong>
+        </div>
+      {% endif %}
+
+    {% elif log.action == "update" %}
+
+      {% if log.old_values.name and log.new_values.name and log.old_values.name != log.new_values.name %}
+        <div class="staff-change-line">
+          <span>Name</span>
+          <strong>{{ log.old_values.name }}</strong>
+          <em>→</em>
+          <strong>{{ log.new_values.name }}</strong>
+        </div>
+      {% endif %}
+
+      {% if log.old_values.email and log.new_values.email and log.old_values.email != log.new_values.email %}
+        <div class="staff-change-line">
+          <span>Email</span>
+          <strong>{{ log.old_values.email }}</strong>
+          <em>→</em>
+          <strong>{{ log.new_values.email }}</strong>
+        </div>
+      {% endif %}
+
+{% if log.old_values.email and log.new_values.email and log.old_values.email != log.new_values.email %}
+  <p class="staff-activity-message staff-activity-message--muted">
+    Staff email updated after OTP verification.
+  </p>
+{% elif log.old_values.name and log.new_values.name and log.old_values.name != log.new_values.name %}
+  <p class="staff-activity-message staff-activity-message--muted">
+    Staff name updated.
+  </p>
+{% elif log.message %}
+  <p class="staff-activity-message staff-activity-message--muted">
+    {{ log.message }}
+  </p>
+{% endif %}
+
+    {% elif log.action == "deactivate" %}
+      <p class="staff-activity-message">
+        Staff account deactivated.
+      </p>
+
+    {% elif log.action == "reactivate" %}
+      <p class="staff-activity-message">
+        Staff account reactivated.
+      </p>
+
+    {% else %}
+      <p class="staff-activity-message">
+        {{ log.message|default:"Staff record changed." }}
+      </p>
+    {% endif %}
+
+  </div>
+</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">
+            <div class="staff-empty-state staff-empty-state--small">
+              <div class="staff-empty-icon">🕘</div>
+              <strong>No staff activity yet</strong>
+              <p>Create or update staff records to see activity here.</p>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

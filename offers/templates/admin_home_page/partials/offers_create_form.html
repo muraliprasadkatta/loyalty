@@ -13,254 +13,242 @@
 </div>
 
 
-    <form class="freeplate-form" action="#" method="post" onsubmit="return false;">
-        {% csrf_token %}
+<form class="freeplate-form" action="#" method="post" onsubmit="return false;">
+  {% csrf_token %}
 
   <input type="hidden" name="offer_id" id="offerId" value="">
+  <input type="hidden" name="mode" value="{{ offer_mode|default:'new_only' }}">
 
-  <input type="hidden" name="mode" value="new_only">
-
-          <!-- ✅ added: current branch context (so Save can read it) -->
+  <!-- current branch context -->
   <input type="hidden" name="source_branch_id" value="{{ branch.id }}">
   <input type="hidden" name="source_branch_name" value="{{ branch.name }}">
 
-      <!-- ===== ELIGIBILITY (VISITS) ===== -->
-      <fieldset class="freeplate-group">
-        <legend>Eligibility · Visits</legend>
+  <!-- ===== OFFER DETAILS ===== -->
+  <fieldset class="freeplate-group freeplate-group--offer-details">
+    <legend>Offer Details</legend>
 
+    <div class="freeplate-grid freeplate-grid--offer">
+    <label class="freeplate-field">
+      <span>Offer title</span>
+      <input
+        type="text"
+        name="title"
+        maxlength="120"
+        placeholder="Ex: Free Chicken Biryani / Free Coffee / 20% Discount"
+        required
+      >
+      <small class="freeplate-hint">Users will see this as the main offer title.</small>
+    </label>
+    </div>
 
-<div class="freeplate-2col">
-  <!-- WAS: one big label -->
-  <div class="freeplate-field">
-    <span>Counting start</span>
-    <select name="count_start">
-      <option value="user_registration" selected>User registration date</option>
-      <option value="campaign_start">Campaign start date</option>
-    </select>
-  </div>
+    
+  </fieldset>
 
-  <div class="freeplate-field freeplate-inline">
-    <input id="backfill" type="checkbox" name="backfill">
-    <label for="backfill">Backfill if user already crossed N</label>
-  </div>
-</div>
+  <!-- ===== ELIGIBILITY (VISITS) ===== -->
+  <fieldset class="freeplate-group freeplate-group--eligibility">
+    <legend>Eligibility · Visits</legend>
 
-        <div class="freeplate-2col">
-          <label class="freeplate-field">
-            <span>Start date & time</span>
-            <input type="datetime-local" name="start_at" required>
-          </label>
+    <div class="freeplate-grid">
 
-          <label class="freeplate-field">
-            <span>End date & time</span>
-            <input type="datetime-local" name="end_at">
-          </label>
-        </div>
-  
+      <label class="freeplate-field">
+        <span>Start date & time</span>
+        <input type="datetime-local" name="start_at" required>
+      </label>
 
+      <label class="freeplate-field">
+        <span>End date & time</span>
+        <input type="datetime-local" name="end_at">
+      </label>
+            <!-- Counting start + related checkbox same column -->
+      <div class="freeplate-stack">
+        <label class="freeplate-field">
+          <span>Counting start</span>
+          <select name="count_start">
+            <option value="user_registration" selected>User registration date</option>
+            <option value="campaign_start">Campaign start date</option>
+          </select>
+        </label>
 
-<div class="freeplate-2col">
-  <!-- split into number field + separate checkbox label -->
-  <div class="freeplate-field">
-    <span>Free on every Nth visit</span>
-    <!-- ✅ 6 as watermark/placeholder -->
-    <input
-      type="number"
-      name="nth"
-      min="1"
-      placeholder=" e.g.6"
-    >
-    <small class="freeplate-hint">6 ⇒ eligible on 6, 12, 18…</small>
-  </div>
-
-  <div class="freeplate-field freeplate-inline">
-    <input id="repeat" type="checkbox" name="repeat">
-    <label for="repeat">Repeat on 12th, 18th… (multiples of N)</label>
-  </div>
-</div>
-
-
-
-<div class="freeplate-2col">
-  <div class="freeplate-field">
-    <span>Extra milestones (optional)</span>
-
-    <div id="fpMilestones" class="bp">
-      <div class="bp-row">
-        <input
-          type="number"
-          name="extra_nths[]"
-          min="1"
-          placeholder="e.g. 9"
-        >
-        <button type="button" class="freeplate-btn bp-add" id="fpAddMilestone">
-          + Add
-        </button>
+        <label class="freeplate-check" for="backfill">
+          <input id="backfill" type="checkbox" name="backfill">
+          <span>Backfill if user already crossed N</span>
+        </label>
       </div>
 
-      <small class="freeplate-hint">
-        Eg: 9, 13, 20… (later manam meaning decide chestham – free coffee, etc.)
-      </small>
+      <!-- Nth + repeat checkbox same column -->
+      <div class="freeplate-stack">
+        <label class="freeplate-field">
+          <span>Free on every Nth visit</span>
+          <input
+            type="number"
+            name="nth"
+            min="1"
+            placeholder="e.g. 6"
+          >
+        </label>
+
+        <label class="freeplate-check" for="repeat">
+          <input id="repeat" type="checkbox" name="repeat">
+          <span>Repeat on 12th, 18th… (multiples of N)</span>
+        </label>
+      </div>
+
+      <div class="freeplate-field">
+        <span>Extra milestones (optional)</span>
+
+        <div id="fpMilestones" class="bp">
+          <div class="bp-row">
+            <input
+              type="number"
+              name="extra_nths[]"
+              min="1"
+              placeholder="e.g. 9"
+            >
+            <button type="button" class="freeplate-btn bp-add" id="fpAddMilestone">
+              + Add
+            </button>
+          </div>
+
+          <small class="freeplate-hint">
+            Eg: 9, 13, 20… later manam meaning decide chestham — free coffee, etc.
+          </small>
+        </div>
+      </div>
+
+      <label class="freeplate-field">
+        <span>Visit unit</span>
+        <select name="visit_unit">
+          <option value="qr_code">QR code</option>
+          <option value="qr_pin" selected>QR scan + PIN at outlet</option>
+        </select>
+
+        <small class="freeplate-hint" id="visitUnitHint">
+          Selected option ప్రకారం user visit count జరుగుతుంది.
+        </small>
+      </label>
+
     </div>
-  </div>
-</div>
+  </fieldset>
 
+  <!-- ===== LIMITS & SCHEDULE ===== -->
+  <fieldset class="freeplate-group freeplate-group--limits">
+    <legend>Limits & Schedule</legend>
 
-      <div class="freeplate-2col">
-<label class="freeplate-field">
-  <span>Visit unit</span>
-<select name="visit_unit">
-  <option value="qr_code">QR code</option>
+    <div class="freeplate-grid">
 
-  <option value="qr_pin" selected>
-    QR scan + PIN at outlet
-  </option>
-</select>
+      <!-- Eligible branches + related checkbox same column -->
+      <div class="freeplate-stack" id="branchPicker">
+        <div class="freeplate-field">
+          <span>Eligible branches</span>
 
-  <!-- Simple Static Hint (నీకు కావాల్సినట్టు) -->
-  <small class="freeplate-hint" id="visitUnitHint">
-    Selected option ప్రకారం user visit count జరుగుతుంది.
-  </small>
-</label>
+          <label class="freeplate-check" for="allBranches">
+            <input type="checkbox" id="allBranches" name="all_branches">
+            <span>All branches</span>
+          </label>
 
-          <label class="freeplate-field">
-            <span>De-dupe window</span>
-            <div class="freeplate-inline">
-              <input type="number" name="dedupe_value" min="1" value="1" style="width:90px">
-              <select name="dedupe_unit">
-                <option value="day" selected>day</option>
-                <option value="hour">hour</option>
-                <option value="minute">minute</option>
-              </select>
+          <div id="allBranchesInfo" class="freeplate-hint" style="display:none;">
+            This offer is available at all branches.
+          </div>
+
+          <div class="branch-picker">
+            <div class="branch-picker__row">
+              <input
+                id="branchSearch"
+                type="text"
+                placeholder="Search branches…"
+                autocomplete="off"
+              >
+              <button type="button" id="btnAddBranch" class="freeplate-btn">
+                + Add branch
+              </button>
             </div>
-            <small class="freeplate-hint">Within this window, multiple logins count as 1 visit.</small>
-          </label>
+
+            <div
+              id="branchResults"
+              class="branch-picker__dropdown"
+              role="listbox"
+              aria-label="Search results"
+            ></div>
+
+            <div id="branchChips" class="branch-picker__chips" aria-live="polite"></div>
+            <input type="hidden" name="branch_ids" id="branchIds">
+          </div>
+
+          <small class="freeplate-hint">
+            Pick one or more. If you need a new branch, click “Add branch”.
+          </small>
         </div>
-      </fieldset>
+      </div>
 
-      <!-- ===== LIMITS & SCHEDULE ===== -->
-      <fieldset class="freeplate-group">
-        <legend>Limits & Schedule</legend>
+      <label class="freeplate-field">
+        <span>Active hours (daily)</span>
 
-        <div class="freeplate-2col">
-          <label class="freeplate-field">
-            <span>Per-user redemption</span>
-            <select name="per_user_limit">
-              <option value="per_multiple" selected>Once per eligible multiple</option>
-              <option value="once">Once only (lifetime)</option>
-            </select>
-          </label>
-
-          <label class="freeplate-field">
-            <span>Claim expiry (hours)</span>
-            <input type="number" name="claim_expiry_hours" min="1" value="24">
-          </label>
-        </div>
-
-        <div class="freeplate-2col">
-          <label class="freeplate-field">
-            <span>Total campaign cap</span>
-            <input type="number" name="total_cap" min="0" value="0">
-            <small class="freeplate-hint">0 = unlimited</small>
-          </label>
-
-          <label class="freeplate-field">
-            <span>Daily cap (per outlet)</span>
-            <input type="number" name="daily_cap" min="0" value="0">
-            <small class="freeplate-hint">0 = unlimited</small>
-          </label>
+        <div class="freeplate-inline-row freeplate-inline-row--time">
+          <input type="time" name="active_from">
+          <span class="freeplate-mid-text">to</span>
+          <input type="time" name="active_to">
         </div>
 
+        <small class="freeplate-hint">Leave empty for all day.</small>
+      </label>
 
-        <div class="freeplate-2col">
-          <label class="freeplate-field">
-            <span>Active hours (daily)</span>
-            <div class="freeplate-inline">
-              <input type="time" name="active_from">
-              <span>&nbsp;to&nbsp;</span>
-              <input type="time" name="active_to">
-            </div>
-            <small class="freeplate-hint">Leave empty for all day.</small>
-          </label>
 
-<!-- Eligible branches (replaces old text input) -->
-<div class="freeplate-field" id="branchPicker">
-  <span>Eligible branches</span>
-
-  <label class="freeplate-inline" style="margin-bottom:8px;">
-    <input type="checkbox" id="allBranches" name="all_branches">
-    <span>All branches</span>
-  </label>
-  <div id="allBranchesInfo" class="freeplate-hint" style="margin-top:6px; display:none;">This offer is available at all branches.</div>
-  <div class="branch-picker">
-    <div class="branch-picker__row">
-      <input id="branchSearch" type="text" placeholder="Search branches…" autocomplete="off" > 
-      <button type="button" id="btnAddBranch" class="freeplate-btn" style="margin-left:8px;">+ Add branch</button>
     </div>
+  </fieldset>
 
-    <div id="branchResults" class="branch-picker__dropdown" role="listbox" aria-label="Search results"></div>
+  <!-- ===== REDEMPTION ===== -->
+  <fieldset class="freeplate-group freeplate-group--redemption">
+    <legend>Redemption</legend>
 
-    <div id="branchChips" class="branch-picker__chips" aria-live="polite"></div>
-    <input type="hidden" name="branch_ids" id="branchIds">
-  </div>
-
-  <small class="freeplate-hint">Pick one or more. If you need a new branch, click “Add branch”.</small>
-</div>
-
-
-        </div>
-      </fieldset>
-
-<!-- ===== REDEMPTION (simplified — always QR + PIN) ===== -->
-<fieldset class="freeplate-group">
-  <legend>Redemption</legend>
-  <div class="freeplate-field">
-    <span>Mode</span>
-    <div class="freeplate-hint">
-      QR will be shown to the user and a short one-time PIN is also displayed as fallback.
-      (PIN auto-generated, short-lived, no admin input needed.)
-    </div>
-  </div>
-</fieldset>
-
-
-      <!-- ===== TARGETING ===== -->
-<!-- Targeting -->
-<fieldset class="freeplate-group">
-  <legend>Targeting</legend>
-  <div class="freeplate-2col">
-
-    <!-- User segment (normal field wrapper, NOT a label) -->
     <div class="freeplate-field">
-      <span>User segment</span>
-      <select name="segment">
-        <option value="all" selected>All users</option>
-        <option value="new_30">New users (≤ 30 days)</option>
-        <option value="custom">Custom</option>
-      </select>
+      <span>Mode</span>
+      <div class="freeplate-info-box">
+        QR will be shown to the user and a short one-time PIN is also displayed as fallback.
+        PIN auto-generated, short-lived, no admin input needed.
+      </div>
     </div>
+  </fieldset>
 
-    <!-- Exclude admin (only this label ties to this checkbox) -->
-    <div class="freeplate-field freeplate-inline">
-      <input id="exclude_admin" type="checkbox" name="exclude_admin" checked>
-      <label for="exclude_admin">Exclude admin / test accounts</label>
+  <!-- ===== TARGETING ===== -->
+  <fieldset class="freeplate-group freeplate-group--targeting">
+    <legend>Targeting</legend>
+
+    <div class="freeplate-grid">
+
+      <!-- User segment + related checkbox same column -->
+      <div class="freeplate-stack">
+        <label class="freeplate-field">
+          <span>User segment</span>
+          <select name="segment">
+            <option value="all" selected>All users</option>
+            <option value="new_30">New users (≤ 30 days)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+
+        <label class="freeplate-check" for="exclude_admin">
+          <input id="exclude_admin" type="checkbox" name="exclude_admin" checked>
+          <span>Exclude admin / test accounts</span>
+        </label>
+      </div>
+
     </div>
+  </fieldset>
 
+  <div class="freeplate-preview">
+    <small class="freeplate-hint">
+      Preview: with N=<strong>6</strong>, repeat ON → eligible on 6, 12, 18…
+      from registration; 1/day de-dupe.
+    </small>
   </div>
 
-
-</fieldset>
-
-
-      <div class="freeplate-preview">
-        <small class="freeplate-hint">Preview: with N=<strong>6</strong>, repeat ON → eligible on 6, 12, 18… (from registration; 1/day de-dupe).</small>
-      </div>
-
-      <div class="freeplate-actions freeplate-sticky--bottom">
-        <a href="#" class="freeplate-btn freeplate-btn--ghost" data-open="#offerModal">Back</a>
-        <button type="button" class="freeplate-btn" id="offerSaveBtn">Save</button>
-      </div>
-    </form>
+  <div class="freeplate-actions freeplate-sticky--bottom">
+    <a href="#" class="freeplate-btn freeplate-btn--ghost" data-open="#offerModal">Back</a>
+    <button type="button" class="freeplate-btn freeplate-btn--primary" id="offerSaveBtn">
+      Save
+    </button>
+  </div>
+</form>
   </div>
 
 <!-- put this AFTER the closing </form> of the Complementary Offer form (or even at the end of body) -->
@@ -277,67 +265,123 @@
     </div>
 
     <!-- Standalone form (NOT nested) -->
-  <form id="branchAddForm" novalidate>
-    {% csrf_token %}
+    <form id="branchAddForm" novalidate>
+      {% csrf_token %}
 
-    <!-- ✅ ADD THIS -->
-    <input type="hidden" id="editBranchId" name="branch_id" value="">
+      <input type="hidden" id="editBranchId" name="branch_id" value="">
 
-    <div class="freeplate-form" style="padding:16px">
-      <label class="freeplate-field" for="newBranchName">
-        <span>Branch name</span>
-        <input
-          type="text"
-          id="newBranchName"
-          name="name"
-          required
-          pattern="[a-z0-9]*"
-          title="Only lowercase letters and numbers (no spaces)"
-        >
-      </label>
+      <div class="freeplate-form" style="padding:16px">
 
-      <label class="freeplate-field" for="newBranchEmail">
-        <span>Branch email (optional)</span>
-        <input type="email" id="newBranchEmail" name="email" placeholder="name@branch.com">
-      </label>
-
-      <div class="freeplate-2col" style="margin-top:8px">
-        <label class="freeplate-field" for="newBranchLat">
-          <span>Latitude</span>
+        <label class="freeplate-field" for="newBranchName">
+          <span>Branch name</span>
           <input
-            type="number"
-            id="newBranchLat"
-            name="latitude"
-            step="0.000001"
-            min="-90"
-            max="90"
+            type="text"
+            id="newBranchName"
+            name="name"
+            required
+            pattern="[a-z0-9]*"
+            title="Only lowercase letters and numbers (no spaces)"
+          >
+          <small class="freeplate-hint">
+            Internal branch code. No spaces. Example: kakinada01
+          </small>
+        </label>
+
+        <label class="freeplate-field" for="newBranchDisplayTitle">
+          <span>Branch display title</span>
+          <input
+            type="text"
+            id="newBranchDisplayTitle"
+            name="display_title"
+            maxlength="120"
+            placeholder="Ex: Prasad Family Restaurant"
+          >
+          <small class="freeplate-hint">
+            User-facing branch name. Spaces allowed.
+          </small>
+        </label>
+
+        <label class="freeplate-field" for="newBranchEmail">
+          <span>Branch email (optional)</span>
+          <input
+            type="email"
+            id="newBranchEmail"
+            name="email"
+            placeholder="name@branch.com"
           >
         </label>
 
-        <label class="freeplate-field" for="newBranchLon">
-          <span>Longitude</span>
-          <input
-            type="number"
-            id="newBranchLon"
-            name="longitude"
-            step="0.000001"
-            min="-180"
-            max="180"
-          >
-        </label>
+        <div class="freeplate-location-box">
+          <label class="freeplate-field" for="newBranchLocationTitle">
+            <span>Location title</span>
+            <input
+              type="text"
+              id="newBranchLocationTitle"
+              name="location_title"
+              maxlength="80"
+              placeholder="Ex: Kakinada"
+            >
+            <small class="freeplate-hint">
+              Short area name shown on user branch card.
+            </small>
+          </label>
+
+          <label class="freeplate-field" for="newBranchLocationSubtitle">
+            <span>Location details</span>
+            <input
+              type="text"
+              id="newBranchLocationSubtitle"
+              name="location_subtitle"
+              maxlength="160"
+              placeholder="Ex: Bhanugudi Center, 2nd line"
+            >
+            <small class="freeplate-hint">
+              Optional street / landmark details.
+            </small>
+          </label>
+        </div>
+
+        <div class="freeplate-2col" style="margin-top:8px">
+          <label class="freeplate-field" for="newBranchLat">
+            <span>Latitude</span>
+            <input
+              type="number"
+              id="newBranchLat"
+              name="latitude"
+              step="0.000001"
+              min="-90"
+              max="90"
+            >
+          </label>
+
+          <label class="freeplate-field" for="newBranchLon">
+            <span>Longitude</span>
+            <input
+              type="number"
+              id="newBranchLon"
+              name="longitude"
+              step="0.000001"
+              min="-180"
+              max="180"
+            >
+          </label>
+        </div>
+
       </div>
-    </div>
 
-    <div class="freeplate-actions">
-      <button type="button" class="freeplate-btn freeplate-btn--ghost" data-close="#branchAddModal">Cancel</button>
-      <button type="submit" class="freeplate-btn" id="branchSaveBtn">Save</button>
-    </div>
-  </form>
 
+      <div class="freeplate-actions">
+        <button type="button" class="freeplate-btn freeplate-btn--ghost" data-close="#branchAddModal">
+          Cancel
+        </button>
+        <button type="submit" class="freeplate-btn" id="branchSaveBtn">
+          Save
+        </button>
+      </div>
+    </form>
 
   </div>
 </div>
-
 
 <style>
   /* ✅ Visit-start badge */
@@ -469,282 +513,465 @@
 
 
 <style>
-  /* === Complementary Offer Modal — Clean CSS === */
+/* =========================================================
+   COMPLEMENTARY OFFER MODAL — CLEAN CONSOLIDATED CSS
+   ========================================================= */
 
-/* Backdrop + visibility (single definition) */
+/* -------------------------
+   MODAL BASE
+   ------------------------- */
 .freeplate-modal{
-  position: fixed; inset: 0;
-  display: none;                 /* hidden by default */
-  place-items: center;
-  background: rgba(0,0,0,.65);   /* dim overlay */
-  z-index: 60;                   /* above oz-modal */
-  overflow: auto;                /* allow page scroll inside overlay */
-  overscroll-behavior: contain;
+  position:fixed;
+  inset:0;
+  display:none;
+  place-items:stretch;
+  background:rgba(0,0,0,.65);
+  z-index:60;
+  overflow:auto;
+  overscroll-behavior:contain;
 }
+
 .freeplate-modal.open,
-.freeplate-modal[aria-hidden="false"]{ display: grid; }
+.freeplate-modal[aria-hidden="false"]{
+  display:grid;
+}
 
-/* Modal card: white bg, capped height, column layout */
 .freeplate-modal__card{
-  width: min(960px, 96vw);
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 16px;
-  background: #ffffff;           /* ← ensure not transparent */
-}
-
-/* Sticky header/footer helpers */
-.freeplate-sticky--top{ position: sticky; top: 0; z-index: 2; }
-.freeplate-sticky--bottom{ position: sticky; bottom: 0; z-index: 2; }
-
-/* Scroll area = form body */
-.freeplate-form{
-  flex: 1 1 auto;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 8px;
-}
-
-/* Inputs/selects general sizing */
-.freeplate-form input[type="number"],
-.freeplate-form input[type="text"],
-.freeplate-form input[type="datetime-local"],
-.freeplate-form input[type="time"],
-.freeplate-form select{
-  width: 100%;
-  min-width: 150px;
-  box-sizing: border-box;
-  padding: 8px;
-}
-
-/* Label block */
-.freeplate-field{ display: block; }
-
-/* --- Only FIRST fieldset → 2 columns layout --- */
-.freeplate-group:first-of-type{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-/* Flatten inner rows to flow into the grid */
-.freeplate-group:first-of-type > .freeplate-2col{ display: contents; }
-/* Fields fit their grid cell */
-.freeplate-group:first-of-type .freeplate-field{ width: 100%; }
-
-/* De-dupe inline controls side-by-side */
-.freeplate-group:first-of-type .freeplate-inline{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-}
-.freeplate-group:first-of-type .freeplate-inline input[type="number"],
-.freeplate-group:first-of-type .freeplate-inline select{
-  width: auto !important; /* override global 100% */
-  flex: 0 0 auto;
-}
-.freeplate-group:first-of-type .freeplate-inline input[type="number"]{
-  min-width: 90px;
-  text-align: left;
-}
-.freeplate-group:first-of-type .freeplate-inline select{
-  min-width: 120px;
-}
-/* Headings inside each fieldset */
-.freeplate-group > legend{
-  font-weight: 700;
-  color: #0b1020;
-  background: #eef2ff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
-
-/* Field names (first <span> inside each .freeplate-field) */
-.freeplate-field > span:first-child{
-  display: block;
-  font-weight: 600;
-  color: #0b1020;        /* dark text on white card */
-  letter-spacing: .2px;
-  margin-bottom: 6px;    /* space above input */
-}
-
-/* Inline checkbox/controls: keep label text bold & aligned */
-.freeplate-field.freeplate-inline{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.freeplate-field.freeplate-inline > span{
-  font-weight: 600;
-  color: #0b1020;
-}
-
-.freeplate-field.freeplate-inline label{ cursor: pointer; }
-
-
-/* Hint text stays subtle */
-.freeplate-hint{
-  display: block;
-  color: #6b7280;
-  font-size: 12px;
-  margin-top: 6px;
-}
-
-/* Field name titles – a tad bigger & bolder */
-.freeplate-field > span:first-child{
-  display:block;
-  font-weight:700;        /* was 600 */
-  font-size:16px;         /* highlight */
-  color:#0b1020;
-  letter-spacing:.2px;
-  margin-bottom:8px;
-}
-
-/* Any checkbox text inside a field – make it clear & not faded */
-.freeplate-field input[type="checkbox"] + span{
-  font-weight:600;
-  color:#0b1020;
-  opacity:1;              /* remove any faded look */
-}
-
-/* If you ever disable a checkbox, only then fade its text */
-.freeplate-field input[type="checkbox"]:disabled + span{
-  opacity:.5;
-}
-
-/* ✅ Checkbox label text — make it dark & bold */
-.freeplate-field input[type="checkbox"] + label,
-.freeplate-field.freeplate-inline label,
-.freeplate-check span {
-  font-weight: 600;
-  color: #0b1020;
-  opacity: 1;
-}
-
-/* 🚫 Only fade when checkbox is disabled */
-.freeplate-field input[type="checkbox"]:disabled + label {
-  opacity: .5;
-}
-
-/* Legend chip—slightly stronger contrast */
-.freeplate-group > legend{
-  font-weight:800;
-  color:#0b1020;
-  background:#e6ebff;     /* a bit darker than before */
-  padding:6px 12px;
-  border-radius:10px;
-}
-/* ===== Modal header: make links & title crisp ===== */
-.freeplate-modal__head{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:12px 16px;
-  background:#fff;                /* no transparency */
-  border-bottom:1px solid #e9eef5;
-}
-
-/* Title stronger */
-.freeplate-modal__head strong{
-  font-weight:800;
-  color:#0b1020;
-  letter-spacing:.2px;
-}
-
-/* Generic header links (Back & Close) */
-.freeplate-modal__head a{
-  color:#0b5cff;                  /* bright link */
-  font-weight:700;
-  text-decoration:none;
-  opacity:1;                      /* kill any inherited fade */
-}
-
-/* Back link → chip highlight */
-.freeplate-back{
-  display:inline-flex; align-items:center; gap:8px;
-  background:#eaf0ff;             /* soft blue tint */
-  color:#0b5cff;
-  padding:6px 10px;
-  border-radius:10px;
-  box-shadow:0 1px 0 rgba(0,0,0,.04);
-}
-.freeplate-back:hover{ background:#dfe7ff; }
-.freeplate-back:active{ background:#d4defe; }
-.freeplate-back:focus{ outline:2px solid #bcd0ff; outline-offset:2px; }
-
-/* Close (✕) clearer */
-.freeplate-close{
-  color:#0b1020;
-  font-weight:800;
-  padding:4px 8px;
-  border-radius:8px;
-}
-.freeplate-close:hover{ background:#f2f4f8; }
-.freeplate-close:focus{ outline:2px solid #cfd8ff; outline-offset:2px; }
-
-/* ===== Bottom bar: keep visible and highlight Back link ===== */
-.freeplate-actions{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:12px; padding:12px 16px;
-  background:#fff;                /* solid white */
-  border-top:1px solid #e9eef5;
-}
-
-.freeplate-btn{                    /* Save button (existing) */
-  font-weight:700;
-}
-
-/* Ghost Back in footer → same chip style */
-.freeplate-actions .freeplate-btn--ghost{
-  background:#eaf0ff;
-  color:#0b5cff;
-  font-weight:700;
-  border-radius:10px;
-  padding:8px 12px;
-  text-decoration:none;
-}
-.freeplate-actions .freeplate-btn--ghost:hover{ background:#dfe7ff; }
-.freeplate-actions .freeplate-btn--ghost:focus{ outline:2px solid #bcd0ff; outline-offset:2px; }
-
-/* Avoid visited links becoming dull */
-.freeplate-modal__head a:visited,
-.freeplate-actions a:visited{
-  color:#0b5cff;
-  opacity:1;
-}
-
-
-/* ==== Full-screen modal (edge-to-edge) ==== */
-.freeplate-modal{
-  place-items: stretch;           /* stretch card to full width */
+  width:min(960px,96vw);
+  max-height:90vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border-radius:16px;
+  background:#fff;
 }
 
 .freeplate-modal__card--fullscreen{
-  width: 100vw;
-  height: 100vh;                  /* full height */
-  max-height: none;               /* remove earlier cap */
-  border-radius: 0;               /* no rounded corners */
-  display: flex;
-  flex-direction: column;
-  background: #fff;
+  width:100vw;
+  height:100vh;
+  max-height:none;
+  border-radius:0;
 }
 
-/* Header & footer stay visible while body scrolls */
-.freeplate-modal__head,
-.freeplate-actions{
-  position: sticky;
-  left: 0; right: 0;
-  background: #fff;
-  z-index: 2;
+/* -------------------------
+   HEADER
+   ------------------------- */
+.freeplate-modal__head{
+  position:sticky;
+  top:0;
+  left:0;
+  right:0;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  background:#fff;
+  border-bottom:1px solid #e9eef5;
 }
 
-/* Scrollable body */
+.freeplate-modal__head strong{
+  font-weight:900;
+  color:#0b1020;
+  letter-spacing:.2px;
+}
+
+.freeplate-modal__head a{
+  color:#0b5cff;
+  font-weight:800;
+  text-decoration:none;
+  opacity:1;
+}
+
+.freeplate-close{
+  color:#0b1020;
+  font-weight:900;
+  padding:5px 9px;
+  border-radius:10px;
+}
+
+.freeplate-close:hover{
+  background:#f2f4f8;
+}
+
+.freeplate-sticky--top{
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+
+.freeplate-sticky--bottom{
+  position:sticky;
+  bottom:0;
+  z-index:5;
+}
+
+/* -------------------------
+   VISIT START BADGE
+   ------------------------- */
+.fp-badge{
+  margin-left:auto;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:900;
+  border:1px solid #e5e7eb;
+  background:#f8fafc;
+  color:#0b1020;
+  white-space:nowrap;
+}
+
+.fp-badge b{
+  font-weight:950;
+}
+
+.fp-badge--no{
+  background:#fef2f2;
+  border-color:#fecaca;
+  color:#7f1d1d;
+}
+
+.fp-badge--yes{
+  background:#ecfdf5;
+  border-color:#bbf7d0;
+  color:#065f46;
+}
+
+/* -------------------------
+   FORM AREA
+   ------------------------- */
 .freeplate-form{
-  flex: 1 1 auto;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 16px;                  /* inner padding for content */
+  flex:1 1 auto;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:18px 22px 96px;
+  background:#fff;
+}
+
+.freeplate-group{
+  margin:0 0 20px;
+  padding:24px 20px 20px;
+  border:1px solid #dde4f0;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 6px 22px rgba(15,23,42,.035);
+}
+
+.freeplate-group > legend{
+  font-weight:900;
+  color:#0b1020;
+  background:#e7ecff;
+  padding:7px 14px;
+  border-radius:999px;
+  letter-spacing:.2px;
+}
+
+/* -------------------------
+   GRID
+   ------------------------- */
+.freeplate-grid,
+.freeplate-2col{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:18px 20px;
+  align-items:start;
+}
+
+.freeplate-grid--offer{
+  grid-template-columns:minmax(280px,560px);
+}
+
+.freeplate-stack{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:0;
+}
+
+/* -------------------------
+   FIELDS
+   ------------------------- */
+.freeplate-field{
+  display:block;
+  min-width:0;
+}
+
+.freeplate-field > span:first-child{
+  display:block;
+  margin-bottom:8px;
+  font-size:15px;
+  font-weight:900;
+  color:#0b1020;
+  letter-spacing:.15px;
+}
+
+.freeplate-form input[type="number"],
+.freeplate-form input[type="text"],
+.freeplate-form input[type="email"],
+.freeplate-form input[type="datetime-local"],
+.freeplate-form input[type="time"],
+.freeplate-form select{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  padding:11px 12px;
+  border:1px solid #cfd7e6;
+  border-radius:11px;
+  background:#fff;
+  color:#0b1020;
+  font-size:14px;
+  outline:none;
+}
+
+.freeplate-form input:focus,
+.freeplate-form select:focus{
+  border-color:#4c74ff;
+  box-shadow:0 0 0 3px rgba(76,116,255,.14);
+}
+
+.freeplate-hint{
+  display:block;
+  margin-top:7px;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.45;
+}
+
+/* -------------------------
+   CHECKBOX CARD
+   ------------------------- */
+.freeplate-check{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  width:100%;
+  min-height:40px;
+  padding:10px 12px;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  background:#f8fafc;
+  color:#0b1020;
+  font-weight:750;
+  line-height:1.35;
+  cursor:pointer;
+  box-sizing:border-box;
+}
+
+.freeplate-check input[type="checkbox"]{
+  flex:0 0 auto;
+  width:16px;
+  height:16px;
+  margin-top:1px;
+  cursor:pointer;
+}
+
+.freeplate-check span{
+  color:#0b1020;
+  opacity:1;
+}
+
+.freeplate-check:hover{
+  border-color:#c7d2fe;
+  background:#f1f5ff;
+}
+
+.freeplate-check input[type="checkbox"]:disabled + span{
+  opacity:.5;
+}
+
+/* -------------------------
+   INLINE ROWS
+   Only keep this if active hours still exists.
+   If active hours removed, this is harmless.
+   ------------------------- */
+.freeplate-inline-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.freeplate-inline-row--time input[type="time"]{
+  flex:1 1 0;
+}
+
+.freeplate-mid-text{
+  flex:0 0 auto;
+  color:#64748b;
+  font-weight:800;
+}
+
+/* Legacy support for older inline wrappers */
+.freeplate-inline{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+/* -------------------------
+   EXTRA MILESTONES
+   ------------------------- */
+.bp{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.bp-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.bp-row input{
+  flex:1 1 auto;
+  min-width:0;
+}
+
+.bp-add{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+
+.bp-invalid{
+  border-color:#f77 !important;
+}
+
+.bp-hint{
+  display:block;
+  margin-top:6px;
+  font-size:12px;
+  color:#ffb3b3;
+}
+
+/* -------------------------
+   BRANCH PICKER
+   ------------------------- */
+.branch-picker{
+  position:relative;
+}
+
+.branch-picker__row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+#branchSearch{
+  flex:1 1 auto;
+  min-width:0;
+}
+
+#btnAddBranch{
+  flex:0 0 auto;
+  white-space:nowrap;
+  margin-left:0 !important;
+}
+
+.branch-picker__chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+
+.branch-picker__chips .bp-chip,
+.bp-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#0b1020;
+  font-weight:700;
+}
+
+.bp-chip b{
+  font-weight:800;
+  color:#0b1020;
+}
+
+.bp-chip button,
+.branch-picker__chips .bp-chip button{
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  font-weight:900;
+  line-height:1;
+}
+
+.bp-edit{
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  font-weight:900;
+  opacity:.85;
+}
+
+.bp-edit:hover{
+  opacity:1;
+}
+
+.branch-picker__dropdown{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  z-index:200;
+  display:none;
+  max-height:260px;
+  overflow:auto;
+  padding:6px 0;
+  border:1px solid #e4e8f0;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 12px 28px rgba(11,16,32,.12);
+}
+
+.branch-picker__dropdown.open{
+  display:block;
+}
+
+.branch-picker__dropdown,
+.branch-picker__dropdown *{
+  opacity:1 !important;
+}
+
+.branch-picker__dropdown ul{
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.branch-picker__dropdown li{
+  padding:10px 12px;
+  cursor:pointer;
+  color:#0b1020;
+  font-weight:650;
+}
+
+.branch-picker__dropdown li:hover,
+.branch-picker__dropdown li[aria-selected="true"]{
+  background:#eef2ff;
+}
+
+/* -------------------------
+   INFO BOX / NOTES
+   ------------------------- */
+.freeplate-info-box{
+  padding:12px 14px;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  background:#f8fafc;
+  color:#475569;
+  font-weight:650;
+  line-height:1.5;
 }
 
 .fp-note{
@@ -754,29 +981,251 @@
   background:#fff7ed;
   border:1px solid #fed7aa;
   color:#9a3412;
-  font-weight:700;
+  font-weight:800;
 }
 
-/* Safe-area padding for notch devices */
+.freeplate-preview{
+  margin:-4px 0 14px;
+  padding:0 2px;
+}
+
+/* -------------------------
+   BUTTONS
+   ------------------------- */
+.freeplate-btn{
+  border:1px solid #d8dee9;
+  background:#f7f9fc;
+  border-radius:11px;
+  padding:9px 13px;
+  font-weight:850;
+  cursor:pointer;
+  color:#0b1020;
+}
+
+.freeplate-btn:hover{
+  background:#eef2ff;
+}
+
+.freeplate-btn--primary{
+  background:#0b5cff;
+  border-color:#0b5cff;
+  color:#fff;
+}
+
+.freeplate-btn--primary:hover{
+  background:#084bd1;
+}
+
+.freeplate-btn--ghost{
+  background:#eaf0ff;
+  color:#0b5cff;
+  border-color:#d8e3ff;
+  text-decoration:none;
+}
+
+/* -------------------------
+   FOOTER ACTIONS
+   ------------------------- */
+.freeplate-actions{
+  position:sticky;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(10px);
+  border-top:1px solid #e9eef5;
+}
+
+.freeplate-actions .freeplate-btn--ghost{
+  font-weight:900;
+}
+
+.freeplate-actions .freeplate-btn--ghost:hover{
+  background:#dfe7ff;
+}
+
+.freeplate-modal__head a:visited,
+.freeplate-actions a:visited{
+  color:#0b5cff;
+  opacity:1;
+}
+
+
+/* -------------------------
+   ADD BRANCH MODAL
+   ------------------------- */
+/* -------------------------
+   ADD BRANCH MODAL
+   ------------------------- */
+#branchAddModal .freeplate-modal__card{
+  width:min(560px,94vw);
+  height:min(720px,92vh);
+  max-height:92vh;
+  border-radius:16px;
+  overflow:hidden;
+}
+
+/* ✅ form should control internal scrolling */
+#branchAddForm{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* ✅ only fields area scrolls */
+#branchAddModal .freeplate-form{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:16px 16px 20px;
+  overflow:auto;
+
+}
+
+/* ✅ Save/Cancel always visible */
+#branchAddModal .freeplate-actions{
+  flex:0 0 auto;
+  position:sticky;
+  bottom:0;
+  z-index:10;
+  border-top:1px solid #e9eef5;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(10px);
+}
+
+#branchAddModal .freeplate-location-box{
+  margin-top:12px;
+  margin-bottom:10px;
+  display:grid;
+  gap:12px;
+  padding:12px;
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  background:#f8fafc;
+}
+
+#branchAddModal .freeplate-location-box .freeplate-field > span:first-child{
+  font-size:14px;
+}
+
+/* -------------------------
+   SAFE AREA
+   ------------------------- */
 @supports (padding: max(0px)) {
-  .freeplate-modal__head{ padding-top: max(12px, env(safe-area-inset-top)); }
-  .freeplate-actions{ padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .freeplate-modal__head{
+    padding-top:max(12px, env(safe-area-inset-top));
+  }
+
+  .freeplate-actions{
+    padding-bottom:max(12px, env(safe-area-inset-bottom));
+  }
+
   .freeplate-modal__card--fullscreen{
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
   }
 }
 
+/* -------------------------
+   RESPONSIVE
+   ------------------------- */
 
-/* --- Small screens --- */
-@media (max-width: 520px){
-  .freeplate-group:first-of-type{ grid-template-columns: 1fr; }
-  .freeplate-group:first-of-type .freeplate-inline{ flex-wrap: wrap; }
-  .freeplate-group:first-of-type .freeplate-inline select{
-    flex: 1 1 160px; /* dropdown can wrap to next line nicely */
+/* Small laptop / tablet */
+@media (max-width:1100px){
+  .freeplate-form{
+    padding-inline:18px;
   }
 }
 
+/* Main mobile/tablet switch */
+@media (max-width:767px){
+  .freeplate-modal__head{
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+
+  .freeplate-modal__head strong{
+    flex:1 1 100%;
+  }
+
+  .fp-badge{
+    margin-left:0;
+    font-size:12px;
+  }
+
+  .freeplate-grid,
+  .freeplate-2col,
+  .freeplate-grid--offer{
+    grid-template-columns:1fr;
+  }
+
+  .freeplate-group{
+    padding:18px 14px 16px;
+    border-radius:14px;
+  }
+
+  .branch-picker__row{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  #btnAddBranch{
+    width:100%;
+  }
+}
+
+/* Compact mobile */
+@media (max-width:640px){
+  .freeplate-form{
+    padding:14px 12px 92px;
+  }
+
+  .freeplate-field > span:first-child{
+    font-size:14px;
+  }
+
+  .freeplate-inline-row--time{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .freeplate-mid-text{
+    text-align:center;
+  }
+}
+
+/* Small phone polish */
+@media (max-width:480px){
+  .freeplate-modal__head{
+    padding-inline:12px;
+  }
+
+  .freeplate-actions{
+    padding-inline:12px;
+  }
+
+  .freeplate-btn{
+    padding:9px 11px;
+  }
+
+  .bp-row{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .bp-add{
+    width:100%;
+  }
+}
 </style>
 
 <!-- ✅ Complementary Offer: N + Extra milestones must stay within date range -->
@@ -1033,24 +1482,32 @@
   }
 
   function resetBranchAddModalForm(){
-    const nameInput  = document.getElementById('newBranchName');
-    const emailInput = document.getElementById('newBranchEmail');
-    const latInput   = document.getElementById('newBranchLat');
-    const lonInput   = document.getElementById('newBranchLon');
+  const nameInput = document.getElementById('newBranchName');
+  const emailInput = document.getElementById('newBranchEmail');
+  const locationTitleInput = document.getElementById('newBranchLocationTitle');
+  const locationSubtitleInput = document.getElementById('newBranchLocationSubtitle');
+  const latInput = document.getElementById('newBranchLat');
+  const lonInput = document.getElementById('newBranchLon');
+  const displayTitleInput = document.getElementById('newBranchDisplayTitle');
 
-    clearBranchEditId();
+  clearBranchEditId();
 
-    if (nameInput) {
-      nameInput.readOnly = false;
-      delete nameInput.dataset.locked;
-      nameInput.classList.remove('is-locked');
-      nameInput.value = '';
-    }
-    if (emailInput) emailInput.value = '';
-    if (latInput)   latInput.value = '';
-    if (lonInput)   lonInput.value = '';
+  if (nameInput) {
+    nameInput.readOnly = false;
+    delete nameInput.dataset.locked;
+    nameInput.classList.remove('is-locked');
+    nameInput.value = '';
   }
-  
+
+  if (emailInput) emailInput.value = '';
+  if (locationTitleInput) locationTitleInput.value = '';
+  if (locationSubtitleInput) locationSubtitleInput.value = '';
+  if (latInput) latInput.value = '';
+  if (lonInput) lonInput.value = '';
+  if (displayTitleInput) displayTitleInput.value = '';
+}
+
+
   window.resetBranchAddModalForm = resetBranchAddModalForm;  // ✅ expose globally
 
   // ---------------------------
@@ -1188,6 +1645,7 @@
     if (offerIdEl) offerIdEl.value = '';
 
     [
+      'title',
       'start_at', 'end_at', 'nth',
       'dedupe_value', 'claim_expiry_hours',
       'total_cap', 'daily_cap', 'active_from', 'active_to'
@@ -1262,6 +1720,7 @@
       const o = j.offer;
 
       setVal('offer_id', o.id || '');
+      setVal('title', o.title || '');   // ✅ add this line
       window.FreeplateDatePolicy?.apply?.();
 
       setVal('count_start', o.count_start || 'user_registration');
@@ -1564,45 +2023,78 @@
     const idsEl         = document.getElementById('branchIds');
     const addBtn        = document.getElementById('btnAddBranch');
     const allBranchesCb = document.getElementById('allBranches');
-
-    // ✅ NEW: info area under checkbox (add <div id="allBranchesInfo"></div> in HTML)
     const infoEl        = document.getElementById('allBranchesInfo');
 
     console.log('[BranchPicker] DOM check', {
-      form: !!form, chipsEl: !!chipsEl, searchEl: !!searchEl, resultsEl: !!resultsEl, idsEl: !!idsEl
+      form: !!form,
+      chipsEl: !!chipsEl,
+      searchEl: !!searchEl,
+      resultsEl: !!resultsEl,
+      idsEl: !!idsEl
     });
 
-    // ✅ DON’T RETURN AND DIE FOREVER
     if (!form || !chipsEl || !searchEl || !resultsEl || !idsEl) {
       console.warn('[BranchPicker] ❌ elements missing, will retry later');
       return false;
     }
 
-    // ✅ prevent double init
     if (window.FreeplateBranchPicker && window.FreeplateBranchPicker.__inited) {
       console.log('[BranchPicker] already initialized');
       return true;
     }
 
-    const selected = new Map(); // id -> name
+    const selected = new Map();
+
     const normId = (v) => {
       const n = parseInt(v, 10);
       return Number.isFinite(n) ? n : null;
     };
 
-    let listItems   = [];
+    let listItems = [];
     let highlighted = -1;
-    let aborter     = null;
-    let debT        = null;
+    let aborter = null;
+    let debT = null;
 
     const getAddFormEls = () => ({
       addForm: document.getElementById('branchAddForm'),
       nameInput: document.getElementById('newBranchName'),
+      displayTitleInput: document.getElementById('newBranchDisplayTitle'),
       emailInput: document.getElementById('newBranchEmail'),
+      locationTitleInput: document.getElementById('newBranchLocationTitle'),
+      locationSubtitleInput: document.getElementById('newBranchLocationSubtitle'),
       latInput: document.getElementById('newBranchLat'),
       lonInput: document.getElementById('newBranchLon'),
       editIdInput: document.getElementById('editBranchId'),
     });
+
+    const clearAddBranchForm = () => {
+      const {
+        nameInput,
+        displayTitleInput,
+        emailInput,
+        locationTitleInput,
+        locationSubtitleInput,
+        latInput,
+        lonInput,
+        editIdInput
+      } = getAddFormEls();
+
+      if (editIdInput) editIdInput.value = '';
+
+      if (nameInput) {
+        nameInput.value = '';
+        nameInput.readOnly = false;
+        delete nameInput.dataset.locked;
+        nameInput.classList.remove('is-locked');
+      }
+
+      if (displayTitleInput) displayTitleInput.value = '';
+      if (emailInput) emailInput.value = '';
+      if (locationTitleInput) locationTitleInput.value = '';
+      if (locationSubtitleInput) locationSubtitleInput.value = '';
+      if (latInput) latInput.value = '';
+      if (lonInput) lonInput.value = '';
+    };
 
     const getCSRF = () =>
       form.querySelector('input[name=csrfmiddlewaretoken]')?.value || '';
@@ -1610,6 +2102,41 @@
     const setIds = () => {
       idsEl.value = JSON.stringify([...selected.keys()]);
       console.log('[BranchPicker] setIds', idsEl.value);
+    };
+
+    const clearResults = () => {
+      resultsEl.innerHTML = '';
+      resultsEl.classList.remove('open');
+      listItems = [];
+      highlighted = -1;
+    };
+
+    const doSearch = (q) => {
+      if (aborter) aborter.abort();
+      aborter = new AbortController();
+
+      const mode = (form?.querySelector('input[name="mode"]')?.value || '').trim();
+      const onlyNew = (mode === 'new_only');
+
+      let url = API.search;
+
+      if (q) {
+        url += '?q=' + encodeURIComponent(q);
+      } else {
+        url += '?';
+      }
+
+      if (onlyNew) {
+        url += (url.includes('q=') ? '&' : '') + 'only_new=1';
+      }
+
+      fetch(url, {
+        credentials: 'same-origin',
+        signal: aborter.signal
+      })
+        .then(r => r.ok ? r.json() : [])
+        .then(list => showResults(list || []))
+        .catch(() => {});
     };
 
     const renderChips = () => {
@@ -1625,12 +2152,13 @@
           <button type="button" aria-label="Remove">×</button>
         `;
 
-        const editBtn   = chip.querySelector('.bp-edit');
+        const editBtn = chip.querySelector('.bp-edit');
         const removeBtn = chip.querySelector('button[aria-label="Remove"]');
 
         removeBtn.onclick = () => {
           selected.delete(id);
-          setIds(); renderChips();
+          setIds();
+          renderChips();
           doSearch(searchEl.value.trim());
         };
 
@@ -1638,27 +2166,66 @@
           window.FreeplateModals?.setOpen('#branchAddModal', true);
 
           setTimeout(async () => {
-            const { nameInput, emailInput, latInput, lonInput, editIdInput } = getAddFormEls();
+            const {
+              nameInput,
+              displayTitleInput,
+              emailInput,
+              locationTitleInput,
+              locationSubtitleInput,
+              latInput,
+              lonInput,
+              editIdInput
+            } = getAddFormEls();
 
             if (editIdInput) editIdInput.value = String(id);
 
             try {
-              const res = await fetch(`/admin/branch/${id}/json/`, { credentials:'same-origin' });
-              const j = await res.json().catch(()=>({}));
+              const res = await fetch(`/admin/branch/${id}/json/`, {
+                credentials: 'same-origin'
+              });
 
-              if (j.ok && j.branch){
-                if (nameInput)  nameInput.value  = j.branch.name || '';
-                if (emailInput) emailInput.value = j.branch.email || '';
-                if (latInput)   latInput.value   = (j.branch.latitude ?? '');
-                if (lonInput)   lonInput.value   = (j.branch.longitude ?? '');
+              const j = await res.json().catch(() => ({}));
+
+              if (j.ok && j.branch) {
+                if (nameInput) nameInput.value = j.branch.name || '';
+
+                if (displayTitleInput) {
+                  displayTitleInput.value = j.branch.display_title || '';
+                }
+
+                if (emailInput) {
+                  emailInput.value = j.branch.email || '';
+                }
+
+                if (locationTitleInput) {
+                  locationTitleInput.value = j.branch.location_title || '';
+                }
+
+                if (locationSubtitleInput) {
+                  locationSubtitleInput.value = j.branch.location_subtitle || '';
+                }
+
+                if (latInput) latInput.value = (j.branch.latitude ?? '');
+                if (lonInput) lonInput.value = (j.branch.longitude ?? '');
               } else {
                 if (nameInput) nameInput.value = name || '';
+                if (displayTitleInput) displayTitleInput.value = '';
+                if (emailInput) emailInput.value = '';
+                if (locationTitleInput) locationTitleInput.value = '';
+                if (locationSubtitleInput) locationSubtitleInput.value = '';
+                if (latInput) latInput.value = '';
+                if (lonInput) lonInput.value = '';
               }
             } catch (e) {
               if (nameInput) nameInput.value = name || '';
+              if (displayTitleInput) displayTitleInput.value = '';
+              if (emailInput) emailInput.value = '';
+              if (locationTitleInput) locationTitleInput.value = '';
+              if (locationSubtitleInput) locationSubtitleInput.value = '';
+              if (latInput) latInput.value = '';
+              if (lonInput) lonInput.value = '';
             }
 
-            // ✅ EDIT MODE lock
             if (nameInput) {
               nameInput.readOnly = true;
               nameInput.dataset.locked = "1";
@@ -1673,13 +2240,6 @@
       });
     };
 
-    const clearResults = () => {
-      resultsEl.innerHTML = '';
-      resultsEl.classList.remove('open');
-      listItems = [];
-      highlighted = -1;
-    };
-
     const applyHighlight = () => {
       [...resultsEl.querySelectorAll('li')].forEach((li, i) => {
         li.setAttribute('aria-selected', i === highlighted ? 'true' : 'false');
@@ -1690,11 +2250,19 @@
       const id = normId(it.id);
       if (id === null) return;
 
+      const branchLabel =
+        it.display_title ||
+        it.branch_title ||
+        it.name ||
+        ('Branch ' + id);
+
       if (!selected.has(id)) {
-        selected.set(id, it.name);
-        console.log('[BranchPicker] selected add', {id, name: it.name});
-        setIds(); renderChips();
+        selected.set(id, branchLabel);
+        console.log('[BranchPicker] selected add', { id, name: branchLabel });
+        setIds();
+        renderChips();
       }
+
       searchEl.value = '';
       doSearch('');
       searchEl.focus();
@@ -1702,17 +2270,26 @@
 
     const showResults = (items) => {
       const filtered = (items || [])
-        .map(it => ({ id: normId(it.id), name: it.name }))
+        .map(it => ({
+          id: normId(it.id),
+          name: it.name,
+          display_title: it.display_title,
+          branch_title: it.branch_title,
+        }))
         .filter(it => it.id !== null && !selected.has(it.id));
 
-      if (!filtered.length) { clearResults(); return; }
+      if (!filtered.length) {
+        clearResults();
+        return;
+      }
 
       listItems = filtered;
+
       const ul = document.createElement('ul');
 
       filtered.forEach((it) => {
         const li = document.createElement('li');
-        li.textContent = it.name;
+        li.textContent = it.display_title || it.branch_title || it.name || ('Branch ' + it.id);
         li.setAttribute('role', 'option');
         li.onclick = () => selectBranch(it);
         ul.appendChild(li);
@@ -1721,37 +2298,13 @@
       resultsEl.innerHTML = '';
       resultsEl.appendChild(ul);
       resultsEl.classList.add('open');
-      highlighted = 0; applyHighlight();
+      highlighted = 0;
+      applyHighlight();
     };
 
-    const doSearch = (q) => {
-      if (aborter) aborter.abort();
-      aborter = new AbortController();
-
-      // ✅ NEW: home create-offer mode => only new branches in search
-      const mode = (form?.querySelector('input[name="mode"]')?.value || '').trim();
-      const onlyNew = (mode === 'new_only');
-
-      let url = API.search;
-      if (q) {
-        url += '?q=' + encodeURIComponent(q);
-      } else {
-        url += '?'; // so we can append params
-      }
-
-      if (onlyNew) {
-        url += (url.includes('q=') ? '&' : '') + 'only_new=1';
-      }
-
-      fetch(url, { credentials: 'same-origin', signal: aborter.signal })
-        .then(r => r.ok ? r.json() : [])
-        .then(list => showResults(list || []))
-        .catch(() => {});
-    };
-
-    // ✅ attach events ONCE
     searchEl.addEventListener('focus', () => doSearch(searchEl.value.trim()));
-    searchEl.addEventListener('click',  () => doSearch(searchEl.value.trim()));
+    searchEl.addEventListener('click', () => doSearch(searchEl.value.trim()));
+
     searchEl.addEventListener('input', () => {
       clearTimeout(debT);
       const q = searchEl.value.trim();
@@ -1760,6 +2313,7 @@
 
     searchEl.addEventListener('keydown', (e) => {
       if (!resultsEl.classList.contains('open')) return;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         highlighted = Math.min(highlighted + 1, listItems.length - 1);
@@ -1777,37 +2331,55 @@
     });
 
     document.addEventListener('click', (e) => {
-      if (!resultsEl.contains(e.target) && e.target !== searchEl) clearResults();
+      if (!resultsEl.contains(e.target) && e.target !== searchEl) {
+        clearResults();
+      }
     });
 
-    function togglePickerDisabled(disabled){
-      [searchEl, addBtn].forEach(el => el && (el.disabled = !!disabled));
+    function togglePickerDisabled(disabled) {
+      [searchEl, addBtn].forEach(el => {
+        if (el) el.disabled = !!disabled;
+      });
+
       if (disabled) clearResults();
     }
 
-    function setInfo(html){
+    function setInfo(html) {
       if (!infoEl) return;
-      if (!html) { infoEl.style.display = 'none'; infoEl.innerHTML = ''; return; }
+
+      if (!html) {
+        infoEl.style.display = 'none';
+        infoEl.innerHTML = '';
+        return;
+      }
+
       infoEl.style.display = '';
       infoEl.innerHTML = html;
     }
 
-    async function smartSelectNewBranches(){
-      try{
+    async function smartSelectNewBranches() {
+      try {
         if (!allBranchesCb) return;
 
-        // lock while loading
         allBranchesCb.disabled = true;
         togglePickerDisabled(true);
         setInfo(`<span class="fp-note">Checking branches…</span>`);
 
-        const res = await fetch(API.newBranches, { credentials:'same-origin' });
-        const j = await res.json().catch(()=>({}));
+        const res = await fetch(API.newBranches, {
+          credentials: 'same-origin'
+        });
 
-        if (!res.ok || !j.ok) throw new Error(j.error || ('HTTP ' + res.status));
+        const j = await res.json().catch(() => ({}));
+
+        if (!res.ok || !j.ok) {
+          throw new Error(j.error || ('HTTP ' + res.status));
+        }
 
         const branches = (j.new_branches || [])
-          .map(x => ({ id: parseInt(x.id,10), name: x.name }))
+          .map(x => ({
+            id: parseInt(x.id, 10),
+            name: x.display_title || x.branch_title || x.name
+          }))
           .filter(x => Number.isFinite(x.id) && x.name);
 
         if (!branches.length) {
@@ -1819,34 +2391,40 @@
           return;
         }
 
-        // ✅ now names will show correctly
         window.FreeplateBranchPicker?.setSelected?.(branches);
 
         const ex = (j.existing_count ?? 0);
         const nw = (j.new_count ?? branches.length);
+
         setInfo(`<span class="fp-note">Selected ${nw} new branches. Skipped ${ex} (already has offers).</span>`);
 
         if (searchEl) searchEl.value = '';
 
-      }catch(e){
+      } catch (e) {
         console.warn(e);
-        if (allBranchesCb){
+
+        if (allBranchesCb) {
           allBranchesCb.checked = false;
           allBranchesCb.disabled = false;
         }
+
         togglePickerDisabled(false);
         setInfo('');
         alert("Could not load branch status. Try again.");
       }
     }
 
-    // ✅ auto-disable checkbox if no new branches exist
-    (async function initAllCheckboxState(){
-      try{
+    (async function initAllCheckboxState() {
+      try {
         if (!allBranchesCb) return;
-        const res = await fetch(API.newBranches, { credentials:'same-origin' });
-        const j = await res.json().catch(()=>({}));
-        if (res.ok && j && j.ok && (j.new_count === 0)){
+
+        const res = await fetch(API.newBranches, {
+          credentials: 'same-origin'
+        });
+
+        const j = await res.json().catch(() => ({}));
+
+        if (res.ok && j && j.ok && (j.new_count === 0)) {
           allBranchesCb.checked = false;
           allBranchesCb.disabled = true;
           setInfo(`<span class="fp-note">All branches already have offers.</span>`);
@@ -1854,148 +2432,186 @@
           allBranchesCb.disabled = false;
           setInfo('');
         }
-      }catch(e){
-        // keep enabled if API fails (safe UX)
+      } catch (e) {
         if (allBranchesCb) allBranchesCb.disabled = false;
         setInfo('');
       }
     })();
 
-    // ✅ when user checks "All branches" -> smart select only NEW branches
     allBranchesCb?.addEventListener('change', () => {
       if (allBranchesCb.checked) smartSelectNewBranches();
       else setInfo('');
     });
 
-    // --- Add Branch modal open ---
     addBtn?.addEventListener('click', () => {
       if (allBranchesCb?.checked) return;
+
       window.FreeplateModals?.setOpen('#branchAddModal', true);
+
       setTimeout(() => {
-        const { nameInput, emailInput, latInput, lonInput, editIdInput } = getAddFormEls();
-        if (editIdInput) editIdInput.value = '';
-        if (nameInput) {
-          nameInput.value = '';
-          nameInput.readOnly = false;
-          delete nameInput.dataset.locked;
-          nameInput.classList.remove('is-locked');
-        }
-        if (emailInput) emailInput.value = '';
-        if (latInput) latInput.value = '';
-        if (lonInput) lonInput.value = '';
-        nameInput?.focus();
+        clearAddBranchForm();
+        getAddFormEls().nameInput?.focus();
       }, 0);
     });
 
-    // --- Add Branch save ---
-    if (document.body.dataset.bpSubmitBound !== "1") {
-      document.body.dataset.bpSubmitBound = "1";
+    document.addEventListener('submit', async (e) => {
+      if (e.target?.id !== 'branchAddForm') return;
+      e.preventDefault();
 
-      document.addEventListener('submit', async (e) => {
-        if (e.target?.id !== 'branchAddForm') return;
-        e.preventDefault();
+      const {
+        addForm,
+        nameInput,
+        displayTitleInput,
+        emailInput,
+        locationTitleInput,
+        locationSubtitleInput,
+        latInput,
+        lonInput
+      } = getAddFormEls();
 
-        const { addForm, nameInput, emailInput, latInput, lonInput } = getAddFormEls();
-        if (!addForm || !nameInput) return;
+      if (!addForm || !nameInput) return;
 
-        const submitBtn = addForm.querySelector('#branchSaveBtn');
+      const submitBtn = addForm.querySelector('#branchSaveBtn');
+
+      if (submitBtn) {
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving…';
+      }
+
+      try {
+        if (!nameInput.checkValidity()) {
+          nameInput.reportValidity();
+          return;
+        }
+
+        const name = nameInput.value.trim();
+        const displayTitle = (displayTitleInput?.value || '').trim();
+        const email = (emailInput?.value || '').trim();
+        const locationTitle = (locationTitleInput?.value || '').trim();
+        const locationSubtitle = (locationSubtitleInput?.value || '').trim();
+
+        if (displayTitle.length > 120) {
+          alert('Branch display title must be 120 characters or less.');
+          displayTitleInput?.focus();
+          return;
+        }
+
+        if (locationTitle.length > 80) {
+          alert('Location title must be 80 characters or less.');
+          locationTitleInput?.focus();
+          return;
+        }
+
+        if (locationSubtitle.length > 160) {
+          alert('Location details must be 160 characters or less.');
+          locationSubtitleInput?.focus();
+          return;
+        }
+
+        const readCoord = (el, min, max, label) => {
+          if (!el || !el.value) return null;
+
+          const v = parseFloat(el.value);
+
+          if (Number.isNaN(v) || v < min || v > max) {
+            alert(`${label} must be between ${min} and ${max}`);
+            el.focus();
+            throw new Error('bad coord');
+          }
+
+          return Math.round(v * 1e6) / 1e6;
+        };
+
+        let latitude = null;
+        let longitude = null;
+
+        try {
+          latitude = readCoord(latInput, -90, 90, 'Latitude');
+          longitude = readCoord(lonInput, -180, 180, 'Longitude');
+        } catch (_) {
+          return;
+        }
+
+        const payload = { name };
+
+        const editId = document.getElementById('editBranchId')?.value;
+        if (editId) payload.branch_id = parseInt(editId, 10);
+
+        if (displayTitle) payload.display_title = displayTitle;
+        if (email) payload.email = email;
+        if (locationTitle) payload.location_title = locationTitle;
+        if (locationSubtitle) payload.location_subtitle = locationSubtitle;
+        if (latitude !== null) payload.latitude = latitude;
+        if (longitude !== null) payload.longitude = longitude;
+
+        const res = await fetch(API.create, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': (
+              addForm.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
+              getCSRF()
+            ),
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || ('HTTP ' + res.status));
+        }
+
+        const editIdVal = (document.getElementById('editBranchId')?.value || '').trim();
+
+        const newId =
+          data.id ||
+          data.branch_id ||
+          data.pk ||
+          data.branch?.id ||
+          data.branch?.pk ||
+          null;
+
+        const newName =
+          data.display_title ||
+          data.branch?.display_title ||
+          data.name ||
+          data.branch_name ||
+          data.branch?.name ||
+          displayTitle ||
+          name;
+
+        if (newId) {
+          if (editIdVal) {
+            window.FreeplateBranchPicker?.updateBranch?.(newId, newName);
+          } else {
+            window.FreeplateBranchPicker?.addBranch?.(newId, newName);
+          }
+        }
+
+        window.FreeplateModals?.setOpen('#branchAddModal', false);
+        window.resetBranchAddModalForm?.();
+
+        clearAddBranchForm();
+
+        searchEl.value = '';
+        searchEl.focus();
+        doSearch('');
+
+      } catch (err) {
+        alert('Could not add branch: ' + (err.message || err));
+      } finally {
         if (submitBtn) {
-          if (submitBtn.disabled) return;
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Saving…';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Save';
         }
+      }
+    });
 
-        try{
-          if (!nameInput.checkValidity()) { nameInput.reportValidity(); return; }
-
-          const name  = nameInput.value.trim();
-          const email = (emailInput?.value || '').trim();
-
-          const readCoord = (el, min, max, label) => {
-            if (!el || !el.value) return null;
-            const v = parseFloat(el.value);
-            if (Number.isNaN(v) || v < min || v > max) {
-              alert(`${label} must be between ${min} and ${max}`);
-              el.focus();
-              throw new Error('bad coord');
-            }
-            return Math.round(v * 1e6) / 1e6;
-          };
-
-          let latitude  = null;
-          let longitude = null;
-          try {
-            latitude  = readCoord(latInput, -90, 90,  'Latitude');
-            longitude = readCoord(lonInput, -180, 180,'Longitude');
-          } catch (_) { return; }
-
-          const payload = { name };
-
-          // ✅ EDIT MODE support
-          const editId = document.getElementById('editBranchId')?.value;
-          if (editId) payload.branch_id = parseInt(editId, 10);
-
-          if (email) payload.email = email;
-          if (latitude !== null)  payload.latitude  = latitude;
-          if (longitude !== null) payload.longitude = longitude;
-
-          const res = await fetch(API.create, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': (addForm.querySelector('input[name=csrfmiddlewaretoken]')?.value || getCSRF()),
-              'Accept': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(payload)
-          });
-
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
-
-          const editIdVal = (document.getElementById('editBranchId')?.value || '').trim();
-
-          const newId =
-            data.id || data.branch_id || data.pk ||
-            data.branch?.id || data.branch?.pk || null;
-
-          const newName =
-            data.name || data.branch_name ||
-            data.branch?.name || name;
-
-          if (newId) {
-            if (editIdVal) window.FreeplateBranchPicker?.updateBranch?.(newId, newName);
-            else window.FreeplateBranchPicker?.addBranch?.(newId, newName);
-          }
-
-          window.FreeplateModals?.setOpen('#branchAddModal', false);
-          window.resetBranchAddModalForm?.();
-
-          nameInput.value = '';
-          if (emailInput) emailInput.value = '';
-          if (latInput)   latInput.value   = '';
-          if (lonInput)   lonInput.value   = '';
-
-          searchEl.value = '';
-          searchEl.focus();
-          doSearch('');
-
-          const editIdInput = document.getElementById('editBranchId');
-          if (editIdInput) editIdInput.value = '';
-
-        } catch (err) {
-          alert('Could not add branch: ' + (err.message || err));
-        } finally {
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Save';
-          }
-        }
-      });
-    }
-
-    // ✅ expose picker
     window.FreeplateBranchPicker = {
       __inited: true,
 
@@ -2004,15 +2620,19 @@
         setIds();
         renderChips();
         clearResults();
+
         if (allBranchesCb) allBranchesCb.checked = false;
         if (searchEl) searchEl.value = '';
+
         togglePickerDisabled(false);
         setInfo('');
       },
 
       addBranch(id, name) {
-        console.log('[BranchPicker] addBranch', {id, name});
+        console.log('[BranchPicker] addBranch', { id, name });
+
         if (!id) return;
+
         const bid = parseInt(id, 10);
         if (!Number.isFinite(bid)) return;
 
@@ -2049,10 +2669,13 @@
         (items || []).forEach((it) => {
           const rawId = (typeof it === 'object' && it !== null) ? it.id : it;
           const id = parseInt(rawId, 10);
+
           if (!Number.isFinite(id)) return;
 
           const name =
-            (typeof it === 'object' && it !== null && it.name) ? it.name : ('Branch ' + id);
+            (typeof it === 'object' && it !== null && (it.display_title || it.branch_title || it.name))
+              ? (it.display_title || it.branch_title || it.name)
+              : ('Branch ' + id);
 
           selected.set(id, name);
         });
@@ -2069,20 +2692,20 @@
     return true;
   };
 
-  // ✅ init when page ready
   document.addEventListener('DOMContentLoaded', () => {
     window.initFreeplateBranchPicker();
   });
 
-  // ✅ init again when opening modal (important)
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-open="#freetreatModal"], [data-open="freetreatModal"]');
     if (!btn) return;
+
     setTimeout(() => window.initFreeplateBranchPicker(), 0);
   });
 
 })();
 </script>
+
 
 
 <!-- save button logic here -->
@@ -2108,7 +2731,7 @@
   saveBtn.addEventListener('click', async () => {
     if (saveBtn.disabled) return;
 
-    const url  = "{% url 'offers:complementary_offer_save' %}";
+    const url  = "{% url 'offers:create_offers_modal_save' %}";
     const data = new FormData(form);
 
     if (!data.get('start_at')) {

@@ -1,0 +1,23 @@
+          <div class="tile branch-box">
+            <strong>Branches</strong>
+            <small>
+              Total: {{ total_branches|default:"0" }}<br>
+              Logged in today: {{ branches_active_today|default:"0" }}
+            </small>
+
+            <h3 style="margin:14px 0 6px;font-size:14px;font-weight:600;opacity:.9;">
+              Branches (first 12)
+            </h3>
+
+            <div class="branch-grid">
+              {% for b in branches %}
+                <a
+                  class="branch-pill {% if b.offer_is_active %}branch-pill--active{% else %}branch-pill--inactive{% endif %}"
+                  href="{% url 'offers:branch_detail' b.id %}">
+                  {{ b.name }}
+                </a>
+              {% empty %}
+                <div>No branches yet.</div>
+              {% endfor %}
+            </div>
+          </div>

@@ -22,7 +22,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
-
+from offers.services.common.time_helpers import get_local_day_bounds
 from .models import Branch, ComplementaryOffer, LoginVisit, UserVisitEvent
 
 
@@ -163,9 +163,9 @@ def admin_home(request):
     all_branches_qs = Branch.objects.order_by(Lower("name"))
     branches = list(all_branches_qs[:LIMIT])
 
-    # 3) Today date (IST / project timezone)
-    today = timezone.localdate()
-
+    # 3) Today date from common local-day helper
+    day_start, _ = get_local_day_bounds()
+    today = day_start.date()
     # 4) Today login visits (LoginVisit lo per-user, per-day row untundi)
     login_qs = (
         LoginVisit.objects
@@ -208,9 +208,7 @@ def admin_home(request):
         "total_branches": total_branches,
         "branches_active_today": branches_active_today,
     }
-    return render(request, "homepage/home.html", ctx)
-
-
+    return render(request, "admin_home_page/admin_home_page.html", ctx)
 
 
 
@@ -230,7 +228,7 @@ def branch_detail_view(request, branch_id):
         "email": branch.email,
     }
 
-    return render(request, "homepage/branchdata_in_adminpanel.html", ctx)
+    return render(request, "admin_home_page/partials/branch_edits.html", ctx)
 
 
 
@@ -239,57 +237,93 @@ def branch_detail_view(request, branch_id):
 
 @login_required(login_url="offers:admin_login")
 @user_passes_test(_is_superuser, login_url="offers:admin_login")
-def complementary_offer_save(request):
+def create_offers_modal_save(request):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
     p = request.POST
 
     try:
-        FIXED_ISSUANCE_MODE   = "auto"
-        FIXED_REDEEM_METHODS  = "qr"
-        FIXED_FALLBACK_LEN    = 6
+        # Fixed values for current simplified offer flow
+        FIXED_ISSUANCE_MODE = "auto"
+        FIXED_REDEEM_METHODS = "qr"
+        FIXED_FALLBACK_LEN = 6
 
-        now = timezone.now()  # ✅ added
+        FIXED_COUNT_START = "campaign_start"
+        FIXED_BACKFILL = False
+        FIXED_DEDUPE_VALUE = 1
+        FIXED_DEDUPE_UNIT = "day"
+        FIXED_PER_USER_LIMIT = "per_multiple"
+        FIXED_CLAIM_EXPIRY_HOURS = 24
+        FIXED_TOTAL_CAP = 0
+        FIXED_DAILY_CAP = 0
 
-        # ✅ edit mode id (frontend hidden input should set this)
-        offer_id = parse_positive_int(p.get("offer_id") or p.get("id"), default=None, min_value=1)
+        now = timezone.now()
 
-        # ---------- Nth + numbers ----------
+        offer_title = (p.get("title") or "").strip()
+
+        if not offer_title:
+            return JsonResponse({
+                "ok": False,
+                "error": "Offer title required."
+            }, status=400)
+
+        # ✅ Required start date/time
+        start_at = _parse_dt_local(p.get("start_at"))
+
+        if not start_at:
+            return JsonResponse({
+                "ok": False,
+                "error": "Start date & time required."
+            }, status=400)
+
+        end_at = _parse_dt_local(p.get("end_at")) if p.get("end_at") else None
+
+        if end_at and end_at < start_at:
+            return JsonResponse({
+                "ok": False,
+                "error": "End date & time cannot be before start date & time."
+            }, status=400)
+
+        # ✅ edit mode id
+        offer_id = parse_positive_int(
+            p.get("offer_id") or p.get("id"),
+            default=None,
+            min_value=1
+        )
+
+        # ---------- Nth + extra milestones ----------
         nth_val = parse_positive_int(p.get("nth"), default=None, min_value=1)
 
-        dedupe_value       = parse_positive_int(p.get("dedupe_value"),       default=1,  min_value=1)
-        claim_expiry_hours = parse_positive_int(p.get("claim_expiry_hours"), default=24, min_value=1)
-        total_cap          = parse_positive_int(p.get("total_cap"),          default=0,  min_value=0)
-        daily_cap          = parse_positive_int(p.get("daily_cap"),          default=0,  min_value=0)
-
-        # ---------- extra milestones ----------
-        raw_extra  = p.getlist("extra_nths[]")
+        raw_extra = p.getlist("extra_nths[]")
         extra_nths = []
+
         for item in raw_extra:
             item = (item or "").strip()
             if not item:
                 continue
+
             n = parse_positive_int(item, default=None, min_value=1)
             if n is not None:
                 extra_nths.append(n)
+
         extra_nths = sorted(set(extra_nths))
 
-        # --- branches (need early for history check) ---
+        # ---------- branches ----------
         all_branches_val = (p.get("all_branches") or "").lower()
         all_branches = all_branches_val in ("on", "true", "1")
 
-        # parse branch_ids JSON
         try:
-            raw_ids    = p.get("branch_ids") or "[]"
-            parsed     = json.loads(raw_ids)
+            raw_ids = p.get("branch_ids") or "[]"
+            parsed = json.loads(raw_ids)
             branch_ids = [int(x) for x in parsed]
             branch_ids = list(dict.fromkeys(branch_ids))[:200]
         except Exception:
             branch_ids = []
+
         mode = (p.get("mode") or "").strip().lower()
 
-        if mode == "new_only" and (not all_branches) and branch_ids:
+        if mode == "new_only" and (not offer_id) and (not all_branches) and branch_ids:
             existing_ids = set(
                 ComplementaryOffer.objects
                 .filter(kind="complementary_offer", is_active=True, all_branches=False)
@@ -301,75 +335,73 @@ def complementary_offer_save(request):
             existing_ids.discard(None)
 
             bad = sorted(set(branch_ids) & existing_ids)
+
             if bad:
                 return JsonResponse({
                     "ok": False,
                     "error": "Selected branch already has an active offer. Only NEW branches allowed here."
                 }, status=400)
-    
 
-        # ✅ fallback source branch id (branch detail edit case)
+        # ✅ fallback source branch id
         source_branch_id = parse_positive_int(
             p.get("source_branch_id"),
             default=None,
             min_value=1
         )
+
         if mode != "new_only" and (not all_branches) and (not branch_ids) and source_branch_id:
             branch_ids = [source_branch_id]
-        # ---------- offer kwargs (common for create/update) ----------
+
+        # ---------- offer kwargs ----------
         offer_kwargs = dict(
             kind="complementary_offer",
-            title="Complementary Offer",
-            count_start=p.get("count_start", "user_registration"),
-            backfill=_b(p.get("backfill")),
+            title=offer_title,
+
+            # fixed for current product logic
+            count_start=FIXED_COUNT_START,
+            backfill=FIXED_BACKFILL,
+            dedupe_value=FIXED_DEDUPE_VALUE,
+            dedupe_unit=FIXED_DEDUPE_UNIT,
+            per_user_limit=FIXED_PER_USER_LIMIT,
+            claim_expiry_hours=FIXED_CLAIM_EXPIRY_HOURS,
+            total_cap=FIXED_TOTAL_CAP,
+            daily_cap=FIXED_DAILY_CAP,
+            active_from=None,
+            active_to=None,
+
+            # admin-selected fields
             nth=nth_val,
             repeat=_b(p.get("repeat")),
             visit_unit=p.get("visit_unit", "qr_pin"),
-            dedupe_value=dedupe_value,
-            dedupe_unit=p.get("dedupe_unit", "day"),
-            per_user_limit=p.get("per_user_limit", "per_multiple"),
-            claim_expiry_hours=claim_expiry_hours,
-            total_cap=total_cap,
-            daily_cap=daily_cap,
-            start_at=_parse_dt_local(p.get("start_at")),
-            end_at=_parse_dt_local(p.get("end_at")) if p.get("end_at") else None,
-            active_from=p.get("active_from") or None,
-            active_to=p.get("active_to") or None,
+            start_at=start_at,
+            end_at=end_at,
+            segment=p.get("segment", "all"),
+            exclude_admin=_b(p.get("exclude_admin")),
+            all_branches=all_branches,
+
+            # fixed redeem/issuance flow
             issuance_mode=FIXED_ISSUANCE_MODE,
             redeem_type="code",
             redeem_methods=FIXED_REDEEM_METHODS,
             fallback_code_length=FIXED_FALLBACK_LEN,
-            segment=p.get("segment", "all"),
-            exclude_admin=_b(p.get("exclude_admin")),
-            all_branches=all_branches,
         )
 
         if hasattr(ComplementaryOffer, "extra_nths"):
             offer_kwargs["extra_nths"] = extra_nths
 
         # ✅ custom segment fields
-        allow_key  = (p.get("allow_key") or "phone").strip()
+        allow_key = (p.get("allow_key") or "phone").strip()
         allow_list = (p.get("allow_users") or "").strip()
-
-        # --- time fields parse helper (applies to both create/update) ---
-        def _apply_time_fields(obj):
-            if isinstance(obj.active_from, str) and obj.active_from:
-                obj.active_from = datetime.strptime(obj.active_from, "%H:%M").time()
-            if isinstance(obj.active_to, str) and obj.active_to:
-                obj.active_to = datetime.strptime(obj.active_to, "%H:%M").time()
 
         with transaction.atomic():
             cloned = False
             replaced_offer_id = None
 
-            # ✅ HISTORY CHECK ONLY WHEN EDITING
             has_history = False
             is_expired = False
             lock_edit = False
 
             if offer_id:
-                # history means: any visit event exists for these branches (current selection)
-                # (as-is from your code; later we can improve to use OLD offer scope)
                 if all_branches:
                     has_history = UserVisitEvent.objects.exists()
                 else:
@@ -378,24 +410,24 @@ def complementary_offer_save(request):
                     else:
                         has_history = False
 
-                # fetch old offer row (lock it)
-                old = ComplementaryOffer.objects.select_for_update().filter(id=offer_id).first()
+                old = (
+                    ComplementaryOffer.objects
+                    .select_for_update()
+                    .filter(id=offer_id)
+                    .first()
+                )
+
                 if not old:
-                    # if invalid id, treat as new
                     offer_id = None
                 else:
                     replaced_offer_id = old.id
-
-                    # ✅ NEW: expired check (if expired => history ignored)
                     is_expired = bool(old.end_at and old.end_at < now)
-
-                    # ✅ NEW: lock only when NOT expired + has_history
                     lock_edit = bool(has_history and (not is_expired))
 
-            # ✅ DECIDE: update vs create-new
+            # ✅ update same row OR create new row
             if offer_id and (not lock_edit):
-                # ---- UPDATE SAME ROW ----
                 offer = ComplementaryOffer.objects.select_for_update().get(id=offer_id)
+
                 for k, v in offer_kwargs.items():
                     setattr(offer, k, v)
 
@@ -406,10 +438,7 @@ def complementary_offer_save(request):
                     offer.allow_key = ""
                     offer.allow_list = ""
 
-                _apply_time_fields(offer)
-
             else:
-                # ---- CREATE NEW ROW (new OR locked edit) ----
                 offer = ComplementaryOffer(**offer_kwargs)
 
                 if offer.segment == "custom":
@@ -418,8 +447,6 @@ def complementary_offer_save(request):
                 else:
                     offer.allow_key = ""
                     offer.allow_list = ""
-
-                _apply_time_fields(offer)
 
                 if offer_id and lock_edit:
                     cloned = True
@@ -444,19 +471,14 @@ def complementary_offer_save(request):
             "message": "Offer saved",
             "cloned": bool(cloned),
             "replaced_offer_id": replaced_offer_id,
-
-            # optional debug flags
             "has_history": bool(has_history),
             "is_expired": bool(is_expired),
             "locked": bool(lock_edit),
         })
 
     except Exception as e:
-        print("\n❌ complementary_offer_save ERROR:", repr(e))
+        print("\n❌ create_offers_modal_save ERROR:", repr(e))
         return JsonResponse({"ok": False, "error": str(e)}, status=400)
-
-_name_re = re.compile(r"^[a-z0-9]+$")
-
 
 
 
@@ -485,7 +507,7 @@ def branch_visit_started_json(request, branch_id: int):
     # ✅ expired check
     is_expired = bool(offer.end_at and offer.end_at < now)
 
-    # ✅ REAL VISIT CHECK (user visited after offer start)
+    # ✅ REAL VISIT CHECK
     started = UserVisitEvent.objects.filter(
         branch=branch,
         created_at__gte=offer.start_at
@@ -500,8 +522,6 @@ def branch_visit_started_json(request, branch_id: int):
         "is_expired": is_expired,
         "started": started,
     })
-
-
 
 
 
@@ -522,13 +542,14 @@ def offer_json_for_branch(request, branch_id):
 
     return JsonResponse({"ok": True, "offer": {
         "id": offer.id,
+        "title": offer.title or "",
         "start_at": fmt(offer.start_at),
         "end_at": fmt(offer.end_at),
         "nth": offer.nth or "",
         "repeat": bool(offer.repeat),
         "extra_nths": getattr(offer, "extra_nths", []) or [],
         "all_branches": bool(offer.all_branches),
-        "branches": list(offer.eligible_branches.values("id", "name")),
+        "branches": list(offer.eligible_branches.values("id", "name", "display_title")),
         "branch_ids": list(offer.eligible_branches.values_list("id", flat=True)),
     }})
 
@@ -536,6 +557,7 @@ def offer_json_for_branch(request, branch_id):
 
 
 
+_name_re = re.compile(r"^[a-z0-9]+$")
 
 def _sanitize_name(raw: str) -> str:
     # lowercase, remove spaces, drop non a-z0-9
@@ -552,10 +574,16 @@ def _sanitize_name(raw: str) -> str:
 def branches_create(request):
     """
     Create OR update Branch.
-    - If payload.branch_id present => update same row (rename allowed)
-    - Else => get_or_create by normalized name (old behavior)
-    - Validates: name (a-z0-9), optional email, optional lat/lon (both or none)
-    - Safe: case-insensitive uniqueness via Lower(), IntegrityError guard
+
+    - If payload.branch_id present => update same row
+    - Else => get_or_create by normalized name
+    - Validates:
+        name: a-z0-9 only
+        display_title: optional, max 120
+        email: optional valid email
+        location_title: optional, max 80
+        location_subtitle: optional, max 160
+        lat/lon: optional, both or none
     """
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
@@ -565,66 +593,110 @@ def branches_create(request):
     # ✅ edit id
     branch_id = parse_positive_int(payload.get("branch_id"), default=None, min_value=1)
 
+    # ✅ payload values
     input_name = (payload.get("name") or "").strip()
-    email      = (payload.get("email") or "").strip() or None
-    latitude   = payload.get("latitude", None)
-    longitude  = payload.get("longitude", None)
+
+    # these flags help us avoid accidentally clearing old data
+    has_display_title = "display_title" in payload
+    has_location_title = "location_title" in payload
+    has_location_subtitle = "location_subtitle" in payload
+    has_email = "email" in payload
+    has_latitude = "latitude" in payload
+    has_longitude = "longitude" in payload
+
+    display_title = (payload.get("display_title") or "").strip()
+    email = (payload.get("email") or "").strip() or None
+    location_title = (payload.get("location_title") or "").strip()
+    location_subtitle = (payload.get("location_subtitle") or "").strip()
+    latitude = payload.get("latitude", None)
+    longitude = payload.get("longitude", None)
+
+    # ✅ field length validation
+    if len(display_title) > 120:
+        return JsonResponse({
+            "ok": False,
+            "error": "Branch display title too long (max 120)."
+        }, status=400)
+
+    if len(location_title) > 80:
+        return JsonResponse({
+            "ok": False,
+            "error": "Location title too long (max 80)."
+        }, status=400)
+
+    if len(location_subtitle) > 160:
+        return JsonResponse({
+            "ok": False,
+            "error": "Location details too long (max 160)."
+        }, status=400)
 
     if not input_name:
         return JsonResponse({"ok": False, "error": "Name required"}, status=400)
 
-    # normalize and validate name
+    # ✅ normalize and validate internal branch name
     name = _sanitize_name(input_name)
-    if not name:
-        return JsonResponse(
-            {"ok": False, "error": "Use only lowercase letters and numbers (no spaces)."},
-            status=400,
-        )
-    if len(name) > 120:
-        return JsonResponse({"ok": False, "error": "Name too long (max 120)."}, status=400)
-    if not _name_re.fullmatch(name):
-        return JsonResponse(
-            {"ok": False, "error": "Only a–z and 0–9 allowed (no spaces/specials)."},
-            status=400,
-        )
 
-    # optional email validate
+    if not name:
+        return JsonResponse({
+            "ok": False,
+            "error": "Use only lowercase letters and numbers (no spaces)."
+        }, status=400)
+
+    if len(name) > 120:
+        return JsonResponse({
+            "ok": False,
+            "error": "Name too long (max 120)."
+        }, status=400)
+
+    if not _name_re.fullmatch(name):
+        return JsonResponse({
+            "ok": False,
+            "error": "Only a–z and 0–9 allowed (no spaces/specials)."
+        }, status=400)
+
+    # ✅ optional email validate
     if email:
         try:
             validate_email(email)
         except ValidationError:
             return JsonResponse({"ok": False, "error": "Invalid email"}, status=400)
 
-    # coords parse
+    # ✅ coords parse
     def _parse_coord(val, lo, hi, label):
         if val is None or str(val) == "":
             return None
+
         try:
             v = float(val)
         except Exception:
             raise ValidationError(f"{label} must be a number")
+
         if v < lo or v > hi:
             raise ValidationError(f"{label} out of range ({lo}..{hi})")
+
         return round(v, 6)
 
     try:
-        lat_parsed = _parse_coord(latitude,  -90,  90,  "Latitude")
+        lat_parsed = _parse_coord(latitude, -90, 90, "Latitude")
         lon_parsed = _parse_coord(longitude, -180, 180, "Longitude")
+
         # both-or-none rule
         if (lat_parsed is None) ^ (lon_parsed is None):
             raise ValidationError("Provide both latitude and longitude, or leave both empty")
+
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
     # =========================
-    # ✅ UPDATE MODE (same id)
+    # ✅ UPDATE MODE
     # =========================
     if branch_id:
         obj = Branch.objects.filter(id=branch_id).first()
+
         if not obj:
             return JsonResponse({"ok": False, "error": "Branch not found"}, status=404)
 
-        # ✅ case-insensitive unique clash check (matches your model constraint)
+        # ✅ case-insensitive unique clash check
         clash = (
             Branch.objects
             .exclude(id=obj.id)
@@ -632,8 +704,12 @@ def branches_create(request):
             .filter(n=name)
             .exists()
         )
+
         if clash:
-            return JsonResponse({"ok": False, "error": "Branch name already exists"}, status=400)
+            return JsonResponse({
+                "ok": False,
+                "error": "Branch name already exists"
+            }, status=400)
 
         created = False
         dirty = []
@@ -642,19 +718,31 @@ def branches_create(request):
             obj.name = name
             dirty.append("name")
 
-        # if email key provided (even empty), update it
-        if getattr(obj, "email", None) != email:
+        if has_display_title and getattr(obj, "display_title", "") != display_title:
+            obj.display_title = display_title
+            dirty.append("display_title")
+
+        if has_email and getattr(obj, "email", None) != email:
             obj.email = email
             dirty.append("email")
 
-        # ✅ allow clearing coords if empty sent (lat_parsed/lon_parsed None)
-        if getattr(obj, "latitude", None) != lat_parsed:
-            obj.latitude = lat_parsed
-            dirty.append("latitude")
+        if has_location_title and getattr(obj, "location_title", "") != location_title:
+            obj.location_title = location_title
+            dirty.append("location_title")
 
-        if getattr(obj, "longitude", None) != lon_parsed:
-            obj.longitude = lon_parsed
-            dirty.append("longitude")
+        if has_location_subtitle and getattr(obj, "location_subtitle", "") != location_subtitle:
+            obj.location_subtitle = location_subtitle
+            dirty.append("location_subtitle")
+
+        # coords: only update if either coord key came in
+        if has_latitude or has_longitude:
+            if getattr(obj, "latitude", None) != lat_parsed:
+                obj.latitude = lat_parsed
+                dirty.append("latitude")
+
+            if getattr(obj, "longitude", None) != lon_parsed:
+                obj.longitude = lon_parsed
+                dirty.append("longitude")
 
         if dirty:
             obj.save(update_fields=dirty)
@@ -663,37 +751,51 @@ def branches_create(request):
             "ok": True,
             "id": obj.id,
             "name": obj.name,
+            "display_title": obj.display_title or "",
             "email": obj.email or "",
+            "location_title": obj.location_title or "",
+            "location_subtitle": obj.location_subtitle or "",
             "latitude": obj.latitude,
             "longitude": obj.longitude,
             "created": created,
         }, status=200)
 
     # =========================
-    # ✅ CREATE MODE (old behavior)
+    # ✅ CREATE MODE
     # =========================
     try:
         with transaction.atomic():
             obj, created = Branch.objects.get_or_create(name=name)
     except IntegrityError:
-        # race-safe fallback
         obj = Branch.objects.get(name=name)
         created = False
 
     dirty = []
 
-    # set optional fields (also allow clearing if empty/null)
-    if getattr(obj, "email", None) != email:
+    if has_display_title and getattr(obj, "display_title", "") != display_title:
+        obj.display_title = display_title
+        dirty.append("display_title")
+
+    if has_email and getattr(obj, "email", None) != email:
         obj.email = email
         dirty.append("email")
 
-    if getattr(obj, "latitude", None) != lat_parsed:
-        obj.latitude = lat_parsed
-        dirty.append("latitude")
+    if has_location_title and getattr(obj, "location_title", "") != location_title:
+        obj.location_title = location_title
+        dirty.append("location_title")
 
-    if getattr(obj, "longitude", None) != lon_parsed:
-        obj.longitude = lon_parsed
-        dirty.append("longitude")
+    if has_location_subtitle and getattr(obj, "location_subtitle", "") != location_subtitle:
+        obj.location_subtitle = location_subtitle
+        dirty.append("location_subtitle")
+
+    if has_latitude or has_longitude:
+        if getattr(obj, "latitude", None) != lat_parsed:
+            obj.latitude = lat_parsed
+            dirty.append("latitude")
+
+        if getattr(obj, "longitude", None) != lon_parsed:
+            obj.longitude = lon_parsed
+            dirty.append("longitude")
 
     if dirty:
         obj.save(update_fields=dirty)
@@ -702,11 +804,15 @@ def branches_create(request):
         "ok": True,
         "id": obj.id,
         "name": obj.name,
+        "display_title": obj.display_title or "",
         "email": obj.email or "",
+        "location_title": obj.location_title or "",
+        "location_subtitle": obj.location_subtitle or "",
         "latitude": obj.latitude,
         "longitude": obj.longitude,
         "created": created,
     }, status=(201 if created else 200))
+
 
 
 
@@ -717,14 +823,17 @@ def branch_json(request, branch_id):
     b = Branch.objects.filter(id=branch_id).first()
     if not b:
         return JsonResponse({"ok": False, "error": "Not found"}, status=404)
+
     return JsonResponse({"ok": True, "branch": {
         "id": b.id,
         "name": b.name,
+        "display_title": b.display_title or "",
         "email": b.email or "",
+        "location_title": b.location_title or "",
+        "location_subtitle": b.location_subtitle or "",
         "latitude": b.latitude,
         "longitude": b.longitude,
     }})
-
 
 
 
@@ -767,8 +876,13 @@ def branches_search(request):
     only_new = (request.GET.get("only_new") or "").lower() in ("1", "true", "on", "yes")
 
     qs = Branch.objects.all()
+
     if q:
-        qs = qs.filter(name__icontains=q)
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(display_title__icontains=q) |
+            Q(location_title__icontains=q)
+        )
 
     if only_new:
         now = timezone.now()
@@ -783,9 +897,17 @@ def branches_search(request):
         existing_ids.discard(None)
         qs = qs.exclude(id__in=existing_ids)
 
-    data = [{"id": b.id, "name": b.name} for b in qs.order_by("name")[:20]]
-    return JsonResponse(data, safe=False)
+    data = [
+        {
+            "id": b.id,
+            "name": b.name,
+            "display_title": b.display_title or "",
+            "location_title": b.location_title or "",
+        }
+        for b in qs.order_by("display_title", "name")[:20]
+    ]
 
+    return JsonResponse(data, safe=False)
 
 
 
@@ -810,8 +932,8 @@ def branches_without_branch_offer_json(request):
 
     new_branches = list(
         Branch.objects.filter(id__in=new_ids)
-        .values("id", "name")
-        .order_by("name")
+        .values("id", "name", "display_title", "location_title")
+        .order_by("display_title", "name")
     )
 
     return JsonResponse({

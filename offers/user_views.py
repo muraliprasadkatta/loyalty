@@ -337,7 +337,7 @@ def user_home_page(request):
 
     return render(
         request,
-        "user_interface/user_homepage.html",
+        "user_interface/user_homepage/user_homepage.html",
         {
             "need_name": need_name,
             "display_name": disp,
@@ -1184,7 +1184,7 @@ def confirm_branch_visit(request):
 # =============================================
 
 
-def branch_offers_in_userinterface(request, branch_id):
+def offer_progress(request, branch_id):
     branch = get_object_or_404(Branch, id=branch_id)
 
     # force context for pin page / eligibility
@@ -1288,7 +1288,7 @@ def branch_offers_in_userinterface(request, branch_id):
 
     return render(
         request,
-        "user_interface/branch_offers_in_userinterface/branch_offers_in_userinterface.html",
+        "user_interface/offer_progress/offer_progress.html",
         context,
     )
 
@@ -1979,3 +1979,24 @@ def user_verify_visit_pin(request):
         "claim_issued": bool(claim_result.get("claim_issued")),
         "claim_ids": list(claim_result.get("claim_ids") or []),
     })
+
+
+
+
+# user_views.py
+@login_required
+def user_all_branches_view(request):
+    branches = (
+        Branch.objects
+        .all()
+        .order_by(Lower("name"))
+    )
+
+    return render(
+        request,
+        "user_interface/user_homepage/partials/branch_all_list.html",
+        {
+            "branches": branches,
+            "branch_count": branches.count(),
+        },
+    )

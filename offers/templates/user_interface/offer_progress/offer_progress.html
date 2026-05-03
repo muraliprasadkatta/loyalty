@@ -114,11 +114,12 @@
 
 <body>
 
-  {% include "partials/user_header.html" %}
-
+    {% include "user_interface/user_homepage/partials/user_header.html" %}
   <main class="wrap">
-    {% include "user_interface/branch_offers_in_userinterface/branch_hero_card.html" %}
-    {% include "user_interface/offers_progress_modal/offers_progress_modal.html" %}
+    {% include "user_interface/offer_progress/partials/track_progress_card.html" %}
+
+    {% include "user_interface/offer_progress/partials/track_progress_bar.html" %}
+
   </main>
 
   <footer class="nav">

@@ -332,6 +332,7 @@
 window.OZQR = {
   MODAL_ID: 'qrcodeModal',
   START_URL: '/qrg/start',
+  LOGIN_URL: "{% url 'offers:branch_login' %}",
   flags: { SHOW_DEBUG: true },
   state: { countdown:180, tickTimer:null, payload:'', pin:'', branch:'—', desk:'—', tag:'----', uid:'', seed:'', staffName: '', staffCode: '' }
 };
@@ -341,6 +342,26 @@ window.OZQR = {
 /* DOM helpers + renderers */
 (() => {
   const OZ = window.OZQR, S = OZ.state;
+
+  OZ.makeAuthError = (message) => {
+    const err = new Error(message || 'AUTH_EXPIRED');
+    err.authExpired = true;
+    return err;
+  };
+
+  OZ.redirectToLogin = () => {
+    try {
+      OZ.clearOpenState?.();
+    } catch (_) {}
+
+    OZ.stopTimer?.();
+    OZ.clearQR?.();
+    OZ.setOpen?.(false);
+
+    const loginUrl = OZ.LOGIN_URL || '/branch/login/';
+    window.location.href = loginUrl + '?staff_inactive=1';
+  };
+
   OZ.$ = (s)=>document.querySelector(s);
   OZ.setText=(s,t)=>{const e=OZ.$(s); if(e) e.textContent=t;};
 
@@ -517,10 +538,26 @@ window.OZQR = {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
     });
+
+    if (res.status === 401 || res.status === 403 || res.redirected) {
+      throw OZ.makeAuthError('AUTH_EXPIRED');
+    }
+
     const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('application/json')) throw new Error('Non-JSON');
+
+    if (!ct.includes('application/json')) {
+      throw OZ.makeAuthError('AUTH_EXPIRED');
+    }
+
     const data = await res.json();
-    if (!res.ok || data.ok === false) throw new Error(data.error || ('HTTP ' + res.status));
+
+    if (!res.ok || data.ok === false) {
+      if (res.status === 401 || res.status === 403) {
+        throw OZ.makeAuthError(data.error || 'AUTH_EXPIRED');
+      }
+
+      throw new Error(data.error || ('HTTP ' + res.status));
+    }
 
     S.payload = data.payload || '';
     S.pin     = data.pin || '';
@@ -558,6 +595,10 @@ window.OZQR = {
       await OZ.mintFromServer(S.seed);
       OZ.startTimer();
     } catch (e) {
+      if (e && e.authExpired) {
+        OZ.redirectToLogin();
+        throw e;
+      }
       console.warn('[QR] mint failed:', e);
       S.payload = '';
       S.pin = '';
@@ -666,9 +707,9 @@ window.OZQR = {
         showBlocker();
         window.OZInlineLoading?.start(openEl);
 
+      await OZ.build(seed);
       OZ.saveOpenState(seed);
       OZ.setOpen(true);
-      await OZ.build(seed);
       } catch (err) {
         console.error("[QR] open failed:", err);
         OZ.clearOpenState();
@@ -716,8 +757,8 @@ window.OZQR = {
       showBlocker();
       if (btn) window.OZInlineLoading?.start(btn);
 
-      OZ.setOpen(true);
-      await OZ.build(seed);
+    await OZ.build(seed);
+    OZ.setOpen(true);
     } catch (err) {
       console.error("[QR] auto-open failed:", err);
       OZ.clearOpenState();
