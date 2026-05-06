@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 import csv
-
+from django.utils.html import format_html
 from .models import (
     Branch, BranchOTP, BranchStaff, BranchStaffEmailOTP, BranchStaffActivityLog,
     ComplementaryOffer,
@@ -89,16 +89,45 @@ class ComplementaryOfferAdmin(admin.ModelAdmin):
     form = ComplementaryOfferAdminForm
 
     list_display = (
-        "id", "title", "kind", "visit_unit", "segment", "issuance_mode",
-        "redeem_type", "is_active", "all_branches", "start_at", "end_at"
+        "id",
+        "offer_image_thumb",
+        "title",
+        "kind",
+        "visit_unit",
+        "segment",
+        "issuance_mode",
+        "redeem_type",
+        "is_active",
+        "all_branches",
+        "start_at",
+        "end_at",
     )
+
     list_display_links = ("id", "title")
+
     list_filter = (
-        "kind","visit_unit","segment","issuance_mode","redeem_type",
-        "is_active","all_branches","start_at",
+        "kind",
+        "visit_unit",
+        "segment",
+        "issuance_mode",
+        "redeem_type",
+        "is_active",
+        "all_branches",
+        "start_at",
     )
-    search_fields = ("title", "allow_list", "eligible_branches__name")
-    readonly_fields = ("created_at", "updated_at")
+
+    search_fields = (
+        "title",
+        "allow_list",
+        "eligible_branches__name",
+    )
+
+    readonly_fields = (
+        "offer_image_preview",
+        "created_at",
+        "updated_at",
+    )
+
     ordering = ("-created_at",)
     date_hierarchy = "start_at"
     list_per_page = 50
@@ -114,7 +143,59 @@ class ComplementaryOfferAdmin(admin.ModelAdmin):
         if offer.all_branches:
             offer.eligible_branches.clear()
 
+    def offer_image_thumb(self, obj):
+        if obj and obj.offer_image:
+            return format_html(
+                """
+                <img
+                  src="{}"
+                  style="
+                    width:42px;
+                    height:42px;
+                    object-fit:contain;
+                    border-radius:10px;
+                    background:#fff;
+                    border:1px solid #ddd;
+                    padding:4px;
+                  "
+                />
+                """,
+                obj.offer_image.url,
+            )
+        return "-"
 
+    offer_image_thumb.short_description = "Image"
+
+    def offer_image_preview(self, obj):
+        if obj and obj.offer_image:
+            return format_html(
+                """
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <img
+                    src="{}"
+                    style="
+                      width:120px;
+                      height:120px;
+                      object-fit:contain;
+                      border-radius:16px;
+                      background:#fff;
+                      border:1px solid #ddd;
+                      padding:8px;
+                    "
+                  />
+                  <a href="{}" target="_blank" style="font-weight:700;">
+                    Open image
+                  </a>
+                </div>
+                """,
+                obj.offer_image.url,
+                obj.offer_image.url,
+            )
+        return "No image uploaded"
+
+    offer_image_preview.short_description = "Offer image preview"
+
+    
 # =========================
 # UserLocationPing (CSV export)
 # =========================

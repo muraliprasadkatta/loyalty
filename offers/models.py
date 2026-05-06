@@ -2,7 +2,6 @@
 
 from decimal import Decimal, ROUND_HALF_UP
 import secrets
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -481,12 +480,13 @@ class ComplementaryOffer(models.Model):
     KIND_CHOICES = [
         ("complementary_offer", "Complementary Offer"),
     ]
+
     COUNT_START_CHOICES = [
         ("user_registration", "User registration date"),
         ("campaign_start", "Campaign start date"),
     ]
 
-    # 🔥 New visit unit choices – ONLY qr modes
+    # Only QR modes
     VISIT_UNIT_CHOICES = [
         ("qr_code", "QR code"),
         ("qr_pin", "QR scan + PIN at outlet"),
@@ -497,42 +497,59 @@ class ComplementaryOffer(models.Model):
         ("hour", "hour"),
         ("minute", "minute"),
     ]
+
     PER_USER_LIMIT_CHOICES = [
         ("per_multiple", "Once per eligible multiple"),
         ("once", "Once only (lifetime)"),
     ]
+
     ISSUANCE_MODE_CHOICES = [
         ("auto", "Auto-issue on eligibility"),
         ("claim", "Require Claim click"),
     ]
+
     REDEEM_TYPE_CHOICES = [
         ("code", "Unique code / QR"),
         ("manual", "Manual verify (staff PIN)"),
     ]
+
     SEGMENT_CHOICES = [
         ("all", "All users"),
         ("new_30", "New users (≤ 30 days)"),
         ("custom", "Custom"),
     ]
 
-    # Basic
+    # =========================
+    # BASIC
+    # =========================
     kind = models.CharField(
         max_length=32,
         choices=KIND_CHOICES,
-        default="complementary_offer",  # IMPORTANT: ee value
+        default="complementary_offer",
     )
+
     title = models.CharField(
         max_length=120,
         default="Complementary Offer",
     )
+
+    offer_image = models.ImageField(
+        upload_to="offer_images/",
+        blank=True,
+        null=True,
+    )
+
     is_active = models.BooleanField(default=True)
 
-    # Eligibility · Visits
+    # =========================
+    # ELIGIBILITY · VISITS
+    # =========================
     count_start = models.CharField(
         max_length=32,
         choices=COUNT_START_CHOICES,
         default="user_registration",
     )
+
     backfill = models.BooleanField(default=False)
 
     nth = models.PositiveIntegerField(
@@ -541,11 +558,14 @@ class ComplementaryOffer(models.Model):
         default=None,
         help_text="Free on every Nth visit (optional).",
     )
+
     repeat = models.BooleanField(default=True)
 
-    extra_nths = models.JSONField(default=list, blank=True)
+    extra_nths = models.JSONField(
+        default=list,
+        blank=True,
+    )
 
-    # 🚨 Important: default ni kotha value ki marcham
     visit_unit = models.CharField(
         max_length=16,
         choices=VISIT_UNIT_CHOICES,
@@ -553,75 +573,129 @@ class ComplementaryOffer(models.Model):
     )
 
     dedupe_value = models.PositiveIntegerField(default=1)
+
     dedupe_unit = models.CharField(
         max_length=16,
         choices=DEDUPE_UNIT_CHOICES,
         default="day",
     )
 
-    # (rest anni same unchavachu…)
+    # =========================
+    # LIMITS
+    # =========================
     per_user_limit = models.CharField(
         max_length=16,
         choices=PER_USER_LIMIT_CHOICES,
         default="per_multiple",
     )
+
     claim_expiry_hours = models.PositiveIntegerField(default=24)
 
     total_cap = models.PositiveIntegerField(default=0)
+
     daily_cap = models.PositiveIntegerField(default=0)
 
+    # =========================
+    # SCHEDULE
+    # =========================
     start_at = models.DateTimeField()
-    end_at = models.DateTimeField(null=True, blank=True)
 
-    active_from = models.TimeField(null=True, blank=True)
-    active_to   = models.TimeField(null=True, blank=True)
+    end_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
 
+    active_from = models.TimeField(
+        null=True,
+        blank=True,
+    )
+
+    active_to = models.TimeField(
+        null=True,
+        blank=True,
+    )
+
+    # =========================
+    # BRANCH TARGETING
+    # =========================
     all_branches = models.BooleanField(default=False)
+
     eligible_branches = models.ManyToManyField(
         "Branch",
         blank=True,
         related_name="offers",
     )
 
+    # =========================
+    # ISSUANCE / REDEMPTION
+    # =========================
     issuance_mode = models.CharField(
         max_length=16,
         choices=ISSUANCE_MODE_CHOICES,
         default="auto",
     )
-    redeem_type   = models.CharField(
+
+    redeem_type = models.CharField(
         max_length=16,
         choices=REDEEM_TYPE_CHOICES,
         default="code",
     )
+
     redeem_methods = models.CharField(
         max_length=64,
         blank=True,
         default="qr",
     )
+
     fallback_code_length = models.PositiveSmallIntegerField(default=6)
 
+    # =========================
+    # TARGETING
+    # =========================
     segment = models.CharField(
         max_length=16,
         choices=SEGMENT_CHOICES,
         default="all",
     )
+
     exclude_admin = models.BooleanField(default=True)
 
-    allow_key  = models.CharField(
+    allow_key = models.CharField(
         max_length=16,
         blank=True,
         default="",
     )
+
     allow_list = models.TextField(
         blank=True,
         default="",
     )
 
+    # =========================
+    # TIMESTAMPS
+    # =========================
     created_at = models.DateTimeField(auto_now_add=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
-    # clean() and __str__ same unchavachu…
+    # =========================
+    # IMAGE HELPERS
+    # =========================
+    @property
+    def offer_image_url(self):
+        if self.offer_image:
+            return self.offer_image.url
+        return ""
 
+    @property
+    def has_offer_image(self):
+        return bool(self.offer_image)
+
+    # =========================
+    # DISPLAY
+    # =========================
+    def __str__(self):
+        return self.title or "Complementary Offer"
 # ----------------------------------------------------
 
 # ------------------------------------------------------

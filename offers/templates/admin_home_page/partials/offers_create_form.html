@@ -3,7 +3,7 @@
 
 <div class="freeplate-modal__card freeplate-modal__card--fullscreen" role="document">
 <div class="freeplate-modal__head freeplate-sticky--top">
-  <strong>Create Offer · Complementary Offer</strong>
+  <strong>Create Offers</strong>
 
   <span id="visitStartedBadge" class="fp-badge fp-badge--no">
     Already visit start: <b id="visitStartedVal">No</b>
@@ -13,7 +13,13 @@
 </div>
 
 
-<form class="freeplate-form" action="#" method="post" onsubmit="return false;">
+<form
+  class="freeplate-form"
+  action="#"
+  method="post"
+  enctype="multipart/form-data"
+  onsubmit="return false;"
+>
   {% csrf_token %}
 
   <input type="hidden" name="offer_id" id="offerId" value="">
@@ -24,10 +30,12 @@
   <input type="hidden" name="source_branch_name" value="{{ branch.name }}">
 
   <!-- ===== OFFER DETAILS ===== -->
-  <fieldset class="freeplate-group freeplate-group--offer-details">
-    <legend>Offer Details</legend>
+<!-- ===== OFFER DETAILS ===== -->
+<fieldset class="freeplate-group freeplate-group--offer-details">
+  <legend>Offer Details</legend>
 
-    <div class="freeplate-grid freeplate-grid--offer">
+  <div class="freeplate-grid freeplate-grid--offer">
+
     <label class="freeplate-field">
       <span>Offer title</span>
       <input
@@ -39,10 +47,29 @@
       >
       <small class="freeplate-hint">Users will see this as the main offer title.</small>
     </label>
-    </div>
 
-    
-  </fieldset>
+
+    <label class="freeplate-field freeplate-field--image">
+      <span>Offer image</span>
+
+      <input
+        type="file"
+        name="offer_image"
+        id="offerImageInput"
+        accept="image/webp,image/png,image/jpeg"
+      >
+
+      <small class="freeplate-hint">
+        Upload WebP, PNG, or JPG. Recommended square image under 2MB.
+      </small>
+
+      <div class="offer-image-preview" id="offerImagePreview" hidden>
+        <img src="" alt="Offer image preview">
+      </div>
+    </label>
+
+  </div>
+</fieldset>
 
   <!-- ===== ELIGIBILITY (VISITS) ===== -->
   <fieldset class="freeplate-group freeplate-group--eligibility">
@@ -714,6 +741,7 @@
 .freeplate-form input[type="email"],
 .freeplate-form input[type="datetime-local"],
 .freeplate-form input[type="time"],
+.freeplate-form input[type="file"],
 .freeplate-form select{
   width:100%;
   min-width:0;
@@ -741,6 +769,46 @@
   line-height:1.45;
 }
 
+.freeplate-form input[type="file"] {
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+.freeplate-form input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 11px;
+  background: #eaf0ff;
+  color: #0b5cff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.freeplate-form input[type="file"]::file-selector-button:hover {
+  background: #dfe7ff;
+}
+
+.offer-image-preview {
+  margin-top: 10px;
+  width: 86px;
+  height: 86px;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.offer-image-preview img {
+  width: auto;
+  height: 78%;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
 /* -------------------------
    CHECKBOX CARD
    ------------------------- */
@@ -1598,6 +1666,27 @@
     el.value = (v ?? '');
   }
 
+
+  function setOfferImagePreview(url) {
+    const input = document.getElementById('offerImageInput');
+    const preview = document.getElementById('offerImagePreview');
+    const img = preview?.querySelector('img');
+
+    if (!preview || !img) return;
+
+    // Browser file input lo old file path set cheyyalem.
+    // So edit mode lo file input empty ga untundi, preview matrame chupistam.
+    if (input) input.value = '';
+
+    if (!url) {
+      preview.hidden = true;
+      img.src = '';
+      return;
+    }
+
+    img.src = url;
+    preview.hidden = false;
+  }
   function setChecked(id, v) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -1676,6 +1765,7 @@
       rows.slice(1).forEach(r => r.remove());
     }
 
+    setOfferImagePreview('');
     window.FreeplateDatePolicy?.apply?.();
     window.FreeplateBranchPicker?.reset?.(); // optional
   }
@@ -1720,7 +1810,9 @@
       const o = j.offer;
 
       setVal('offer_id', o.id || '');
-      setVal('title', o.title || '');   // ✅ add this line
+      setVal('title', o.title || '');
+      setOfferImagePreview(o.offer_image_url || '');
+
       window.FreeplateDatePolicy?.apply?.();
 
       setVal('count_start', o.count_start || 'user_registration');
@@ -2775,6 +2867,49 @@
         // already restored in catch
       }
     }
+  });
+})();
+</script>
+
+<script>
+(() => {
+  const input = document.getElementById('offerImageInput');
+  const preview = document.getElementById('offerImagePreview');
+  const img = preview?.querySelector('img');
+
+  if (!input || !preview || !img) return;
+
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+
+    if (!file) {
+      preview.hidden = true;
+      img.src = '';
+      return;
+    }
+
+    const allowed = ['image/webp', 'image/png', 'image/jpeg'];
+
+    if (!allowed.includes(file.type)) {
+      alert('Only WebP, PNG, or JPG images are allowed.');
+      input.value = '';
+      preview.hidden = true;
+      img.src = '';
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      alert('Offer image must be under 2MB.');
+      input.value = '';
+      preview.hidden = true;
+      img.src = '';
+      return;
+    }
+
+    img.src = URL.createObjectURL(file);
+    preview.hidden = false;
   });
 })();
 </script>

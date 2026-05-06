@@ -268,6 +268,26 @@ def create_offers_modal_save(request):
                 "error": "Offer title required."
             }, status=400)
 
+
+        offer_image = request.FILES.get("offer_image")
+
+        if offer_image:
+            allowed_types = {"image/webp", "image/png", "image/jpeg"}
+            max_size = 2 * 1024 * 1024  # 2MB
+
+            if offer_image.content_type not in allowed_types:
+                return JsonResponse({
+                    "ok": False,
+                    "error": "Only WebP, PNG, or JPG images are allowed."
+                }, status=400)
+
+            if offer_image.size > max_size:
+                return JsonResponse({
+                    "ok": False,
+                    "error": "Offer image must be under 2MB."
+                }, status=400)
+            
+
         # ✅ Required start date/time
         start_at = _parse_dt_local(p.get("start_at"))
 
@@ -452,6 +472,13 @@ def create_offers_modal_save(request):
                     cloned = True
 
             # ✅ validate + save
+            # ✅ image upload
+            # If new image uploaded, save/replace it.
+            # If no image uploaded during edit, keep existing image unchanged.
+            if offer_image:
+                offer.offer_image = offer_image
+
+            # ✅ validate + save
             offer.full_clean()
             offer.save()
 
@@ -537,22 +564,45 @@ def offer_json_for_branch(request, branch_id):
         return JsonResponse({"ok": True, "offer": None})
 
     def fmt(dt):
-        if not dt: return ""
+        if not dt:
+            return ""
         return timezone.localtime(dt).strftime("%Y-%m-%dT%H:%M")
 
-    return JsonResponse({"ok": True, "offer": {
-        "id": offer.id,
-        "title": offer.title or "",
-        "start_at": fmt(offer.start_at),
-        "end_at": fmt(offer.end_at),
-        "nth": offer.nth or "",
-        "repeat": bool(offer.repeat),
-        "extra_nths": getattr(offer, "extra_nths", []) or [],
-        "all_branches": bool(offer.all_branches),
-        "branches": list(offer.eligible_branches.values("id", "name", "display_title")),
-        "branch_ids": list(offer.eligible_branches.values_list("id", flat=True)),
-    }})
+    offer_image_url = ""
+    if getattr(offer, "offer_image", None):
+        try:
+            offer_image_url = request.build_absolute_uri(offer.offer_image.url)
+        except Exception:
+            offer_image_url = ""
 
+    return JsonResponse({
+        "ok": True,
+        "offer": {
+            "id": offer.id,
+            "title": offer.title or "",
+            "offer_image_url": offer_image_url,
+
+            "start_at": fmt(offer.start_at),
+            "end_at": fmt(offer.end_at),
+
+            "nth": offer.nth or "",
+            "repeat": bool(offer.repeat),
+            "extra_nths": getattr(offer, "extra_nths", []) or [],
+            "visit_unit": offer.visit_unit or "qr_pin",
+
+            "all_branches": bool(offer.all_branches),
+            "branches": list(
+                offer.eligible_branches.values(
+                    "id",
+                    "name",
+                    "display_title",
+                )
+            ),
+            "branch_ids": list(
+                offer.eligible_branches.values_list("id", flat=True)
+            ),
+        }
+    })
 
 
 

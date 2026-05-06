@@ -459,7 +459,7 @@
               <div class="br-body">
                 <div class="br-row">
                   <span class="badge">Branch ID: {{ b.branch_id }}</span>
-                  <a class="btn outline small" href="{% url 'offers:branch_offers_in_userinterface' b.branch_id %}">Open offers</a>
+                  <a class="btn outline small" href="{% url 'offers:offer_progress' b.branch_id %}">Open offers</a>
                 </div>
               </div>
             </details>
@@ -509,7 +509,7 @@
 
                     <div class="tl-right">
                       {% if e.branch_id %}
-                        <a class="btn outline small" href="{% url 'offers:branch_offers_in_userinterface' e.branch_id %}">Branch</a>
+                        <a class="btn outline small" href="{% url 'offers:offer_progress' e.branch_id %}">Branch</a>
                       {% endif %}
                     </div>
                   </div>

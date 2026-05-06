@@ -7,7 +7,7 @@ import re
 import urllib.parse
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
-
+from django.db import models
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
@@ -30,6 +30,8 @@ from offers.services.offer_claim.claim_issue_service import issue_offer_claim_if
 from offers.services.qr.qr_token_utils import parse_qr_token as verify_qr_token
 from offers.services.offer_eligibility.offer_eligibility_service import build_offer_eligibility_context
 import offers.services.offer_eligibility.offers_progress_modal_helper as progress_helper
+from django.template.loader import render_to_string
+import math
 from .models import UserOfferClaim
 from .models import (
     QRToken,
@@ -223,6 +225,7 @@ def user_home_page(request):
 
     now_ts = timezone.now()
     day_start, next_day_start = get_local_day_bounds(now_ts)
+
     # defaults for guest users
     already_claimed_today = False
     disp = ""
@@ -253,87 +256,8 @@ def user_home_page(request):
         disp = (prof.display_name or "").strip()
         need_name = (disp == "")
 
-    # Branches for “Branches” card
-    LIMIT = 12
-    all_branches_qs = Branch.objects.order_by(Lower("name"))
-    branch_count = all_branches_qs.count()
-
-    # We still take first LIMIT for now (then reorder within these)
-    branches = list(all_branches_qs[:LIMIT])
-
-    # =====================================================
-    # PER-BRANCH active offer start/end (for each tile)
-    # =====================================================
-    branch_ids = [b.id for b in branches]
-    offers_by_branch = {}
-
-    if branch_ids:
-        active_offer_qs = (
-            ComplementaryOffer.objects
-            .filter(
-                kind="complementary_offer",
-                is_active=True,
-                start_at__lte=now_ts,
-            )
-            .filter(models.Q(end_at__isnull=True) | models.Q(end_at__gte=now_ts))
-            .filter(
-                models.Q(all_branches=True) |
-                models.Q(eligible_branches__id__in=branch_ids)
-            )
-            .distinct()
-            .order_by("-start_at", "-id")
-            .only("id", "start_at", "end_at", "all_branches")
-        )
-
-        # latest global offer applies to all branches
-        global_offer = (
-            active_offer_qs
-            .filter(all_branches=True)
-            .order_by("-start_at", "-id")
-            .first()
-        )
-        if global_offer:
-            for bid in branch_ids:
-                offers_by_branch[bid] = {
-                    "start": global_offer.start_at,
-                    "end": global_offer.end_at,
-                }
-
-        # latest branch-specific offer overrides global
-        specific_qs = (
-            ComplementaryOffer.objects
-            .filter(
-                kind="complementary_offer",
-                is_active=True,
-                start_at__lte=now_ts,
-            )
-            .filter(models.Q(end_at__isnull=True) | models.Q(end_at__gte=now_ts))
-            .filter(all_branches=False, eligible_branches__id__in=branch_ids)
-            .values("eligible_branches__id", "start_at", "end_at", "id")
-            .order_by("eligible_branches__id", "-start_at", "-id")
-        )
-
-        seen = set()
-        for row in specific_qs:
-            bid = row["eligible_branches__id"]
-            if bid in seen:
-                continue
-            offers_by_branch[bid] = {
-                "start": row["start_at"],
-                "end": row["end_at"],
-            }
-            seen.add(bid)
-
-    # attach offer info to branch objects
-    for b in branches:
-        info = offers_by_branch.get(b.id) or {}
-        b.offer_start = info.get("start")
-        b.offer_end = info.get("end")
-
-    # active first, inactive last
-    active_branches = [b for b in branches if b.offer_start]
-    inactive_branches = [b for b in branches if not b.offer_start]
-    branches = active_branches + inactive_branches
+    # Branch card data only
+    branch_card_data = get_home_branch_list_card_data(limit=12)
 
     return render(
         request,
@@ -341,13 +265,338 @@ def user_home_page(request):
         {
             "need_name": need_name,
             "display_name": disp,
-            "branch_count": branch_count,
-            "branches": branches,
-            "branches_has_more": branch_count > LIMIT,
+
+            "branch_count": branch_card_data["branch_count"],
+            "branches": branch_card_data["branches"],
+            "branches_has_more": branch_card_data["branches_has_more"],
+
             "client_ip": client_ip,
             "oz_already_claimed_today": already_claimed_today,
         },
     )
+
+
+
+NEARBY_RADIUS_KM = 50
+
+
+def get_bounding_box(lat, lon, radius_km):
+    """
+    Rough lat/lon bounding box before exact distance calculation.
+    This reduces branches before Python distance calculation.
+    """
+    lat = float(lat)
+    lon = float(lon)
+
+    lat_delta = radius_km / 111.0
+    lon_delta = radius_km / (111.0 * max(math.cos(math.radians(lat)), 0.01))
+
+    return {
+        "min_lat": lat - lat_delta,
+        "max_lat": lat + lat_delta,
+        "min_lon": lon - lon_delta,
+        "max_lon": lon + lon_delta,
+    }
+
+
+def calculate_distance_km(lat1, lon1, lat2, lon2):
+    radius_km = 6371
+
+    lat1 = math.radians(float(lat1))
+    lon1 = math.radians(float(lon1))
+    lat2 = math.radians(float(lat2))
+    lon2 = math.radians(float(lon2))
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    )
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return round(radius_km * c, 1)
+
+
+def get_latest_user_location(user):
+    if not user or not user.is_authenticated:
+        return None
+
+    ping = (
+        UserLocationPing.objects
+        .filter(user=user)
+        .only("latitude", "longitude", "created_at")
+        .order_by("-created_at")
+        .first()
+    )
+
+    if not ping:
+        return None
+
+    if ping.latitude is None or ping.longitude is None:
+        return None
+
+    return float(ping.latitude), float(ping.longitude)
+
+
+
+def get_home_branch_list_card_data(limit=12, offset=0, q="", location="", user=None):
+    now_ts = timezone.now()
+
+    q = (q or "").strip()
+    location = (location or "").strip()
+
+    try:
+        offset = int(offset or 0)
+    except (TypeError, ValueError):
+        offset = 0
+    offset = max(0, offset)
+
+    if limit is not None:
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            limit = 12
+        limit = max(1, limit)
+
+    user_coords = get_latest_user_location(user)
+
+    branches_qs = Branch.objects.all()
+
+    # Nearby mode optimization:
+    # First reduce DB rows using rough lat/lon box, then exact 50km filter later.
+    if location == "nearby" and not q and user_coords:
+        user_lat, user_lon = user_coords
+        box = get_bounding_box(user_lat, user_lon, NEARBY_RADIUS_KM)
+
+        branches_qs = branches_qs.filter(
+            latitude__isnull=False,
+            longitude__isnull=False,
+            latitude__gte=box["min_lat"],
+            latitude__lte=box["max_lat"],
+            longitude__gte=box["min_lon"],
+            longitude__lte=box["max_lon"],
+        )
+
+    if q:
+        branches_qs = branches_qs.filter(
+            Q(name__icontains=q)
+            | Q(display_title__icontains=q)
+            | Q(location_title__icontains=q)
+        )
+
+    # Important:
+    # Do NOT DB-slice here, because offer attach / distance / active-first sorting happens below.
+    branches = list(branches_qs.order_by(Lower("name")))
+
+    branch_ids = [b.id for b in branches]
+    branch_ids_set = set(branch_ids)
+    offers_by_branch = {}
+
+    if branch_ids:
+        global_offer = (
+            ComplementaryOffer.objects
+            .filter(
+                kind="complementary_offer",
+                is_active=True,
+                all_branches=True,
+                start_at__lte=now_ts,
+            )
+            .filter(models.Q(end_at__isnull=True) | models.Q(end_at__gte=now_ts))
+            .only("id", "title", "offer_image", "start_at", "end_at", "all_branches")
+            .order_by("-start_at", "-id")
+            .first()
+        )
+
+        if global_offer:
+            for bid in branch_ids:
+                offers_by_branch[bid] = global_offer
+
+        specific_offers = (
+            ComplementaryOffer.objects
+            .filter(
+                kind="complementary_offer",
+                is_active=True,
+                all_branches=False,
+                start_at__lte=now_ts,
+                eligible_branches__id__in=branch_ids,
+            )
+            .filter(models.Q(end_at__isnull=True) | models.Q(end_at__gte=now_ts))
+            .only("id", "title", "offer_image", "start_at", "end_at", "all_branches")
+            .prefetch_related("eligible_branches")
+            .distinct()
+            .order_by("-start_at", "-id")
+        )
+
+        seen_specific = set()
+
+        for offer in specific_offers:
+            for eb in offer.eligible_branches.all():
+                bid = eb.id
+
+                if bid not in branch_ids_set:
+                    continue
+
+                if bid in seen_specific:
+                    continue
+
+                offers_by_branch[bid] = offer
+                seen_specific.add(bid)
+
+    for b in branches:
+        offer = offers_by_branch.get(b.id)
+
+        if offer:
+            b.offer_title = offer.title or ""
+            b.offer_start = offer.start_at
+            b.offer_end = offer.end_at
+            b.offer_image_url = offer.offer_image.url if offer.offer_image else ""
+        else:
+            b.offer_title = ""
+            b.offer_start = None
+            b.offer_end = None
+            b.offer_image_url = ""
+
+        b.distance_km = None
+
+        if user_coords and b.latitude is not None and b.longitude is not None:
+            user_lat, user_lon = user_coords
+            b.distance_km = calculate_distance_km(
+                user_lat,
+                user_lon,
+                b.latitude,
+                b.longitude,
+            )
+
+    # Active offers filter
+    if location == "active":
+        branches = [b for b in branches if b.offer_start]
+
+    # Nearby exact filter
+    is_nearby_mode = False
+    nearby_error = ""
+
+    if location == "nearby" and not q:
+        if user_coords:
+            branches = [
+                b for b in branches
+                if b.distance_km is not None and b.distance_km <= NEARBY_RADIUS_KM
+            ]
+            is_nearby_mode = True
+        else:
+            nearby_error = "Location not saved yet. Use current location first."
+
+    # Ordering
+    is_default_all_mode = (not q) and (location in ("", "all"))
+
+    if is_nearby_mode:
+        branches.sort(
+            key=lambda b: (
+                not bool(getattr(b, "offer_start", None)),
+                b.distance_km if b.distance_km is not None else 999999,
+                b.name.lower(),
+            )
+        )
+
+    elif is_default_all_mode and user_coords:
+        branches.sort(
+            key=lambda b: (
+                not bool(getattr(b, "offer_start", None)),
+                b.distance_km if b.distance_km is not None else 999999,
+                b.name.lower(),
+            )
+        )
+
+    else:
+        active_branches = [b for b in branches if b.offer_start]
+        inactive_branches = [b for b in branches if not b.offer_start]
+        branches = active_branches + inactive_branches
+
+    branch_count = len(branches)
+
+    if limit is not None:
+        branches = branches[offset:offset + limit]
+
+    return {
+        "branch_count": branch_count,
+        "branches": branches,
+        "branches_has_more": (offset + len(branches)) < branch_count if limit is not None else False,
+        "offset": offset,
+        "limit": limit,
+        "q": q,
+        "location": location,
+        "is_nearby_mode": is_nearby_mode,
+        "nearby_radius_km": NEARBY_RADIUS_KM,
+        "nearby_error": nearby_error,
+    }
+
+
+@login_required
+def user_all_branches_view(request):
+    q = (request.GET.get("q") or "").strip()
+    location = (request.GET.get("location") or "").strip()
+
+    LOAD_STEP = 12
+
+    try:
+        offset = int(request.GET.get("offset") or 0)
+    except (TypeError, ValueError):
+        offset = 0
+
+    offset = max(0, offset)
+
+    branch_card_data = get_home_branch_list_card_data(
+        limit=LOAD_STEP,
+        offset=offset,
+        q=q,
+        location=location,
+        user=request.user,
+    )
+
+    branch_count = branch_card_data["branch_count"]
+    branches = branch_card_data["branches"]
+
+    loaded_count = offset + len(branches)
+    has_more = loaded_count < branch_count
+    next_offset = loaded_count
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        html = render_to_string(
+            "user_interface/user_homepage/partials/all_branch_card_append.html",
+            {"branches": branches},
+            request=request,
+        )
+
+        return JsonResponse({
+            "ok": True,
+            "html": html,
+            "loaded_count": loaded_count,
+            "branch_count": branch_count,
+            "has_more": has_more,
+            "next_offset": next_offset,
+        })
+
+    return render(
+        request,
+        "user_interface/user_homepage/partials/branch_all_list.html",
+        {
+            "branches": branches,
+            "branch_count": branch_count,
+            "loaded_count": loaded_count,
+            "has_more": has_more,
+            "offset": offset,
+            "next_offset": next_offset,
+
+            "q": branch_card_data["q"],
+            "location": branch_card_data["location"],
+            "is_nearby_mode": branch_card_data["is_nearby_mode"],
+            "nearby_radius_km": branch_card_data["nearby_radius_km"],
+            "nearby_error": branch_card_data["nearby_error"],
+        },
+    )
+
+
 
 
 @login_required
@@ -1980,23 +2229,3 @@ def user_verify_visit_pin(request):
         "claim_ids": list(claim_result.get("claim_ids") or []),
     })
 
-
-
-
-# user_views.py
-@login_required
-def user_all_branches_view(request):
-    branches = (
-        Branch.objects
-        .all()
-        .order_by(Lower("name"))
-    )
-
-    return render(
-        request,
-        "user_interface/user_homepage/partials/branch_all_list.html",
-        {
-            "branches": branches,
-            "branch_count": branches.count(),
-        },
-    )

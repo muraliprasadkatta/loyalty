@@ -6,572 +6,730 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>All Branches • OfferZone</title>
 
-  <style>
-    :root{
-      --bg1:#eef4ff;
-      --bg2:#f6f8ff;
-      --bg3:#ffffff;
+<style>
+  /* =========================
+     PAGE BASE + HEADER WIDTH FIX
+  ========================= */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-      --text:#0f172a;
-      --muted:#475569;
-      --prim:#4c74ff;
+  html,
+  body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+  }
 
-      --card:rgba(255,255,255,0.86);
-      --card2:rgba(255,255,255,0.70);
-      --border:rgba(15,23,42,0.12);
+  body {
+    overflow-x: hidden;
+    background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+    color: var(--lightText, #0f172a);
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+  }
 
-      --shadow:0 22px 60px rgba(15,23,42,0.12);
-      --shadow2:0 14px 34px rgba(15,23,42,0.10);
-      --shadow3:0 10px 22px rgba(15,23,42,0.08);
+  /* included user header full width force */
+  body > .user-header,
+  .user-header {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
 
-      --hlTop:rgba(76,116,255,0.18);
+  /* page content only centered */
+  .all-branches-page {
+    width: min(1180px, calc(100% - 24px));
+    margin: 16px auto 28px;
+  }
 
-      --lightCard:#ffffff;
-      --lightCard2:#fbfcff;
-      --lightBorder:rgba(15,23,42,0.10);
-      --lightText:#0f172a;
-      --lightMuted:#475569;
 
-      --ok:rgba(34,197,94,0.60);
-      --bad:rgba(239,68,68,0.45);
+  @media (max-width: 640px) {
+    .all-branches-page {
+      width: min(100% - 18px, 1180px);
+      margin-top: 12px;
+      margin-bottom: 22px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .all-branches-page {
+      width: min(100% - 14px, 1180px);
+      margin-top: 10px;
+    }
+  }
+
+  /* =========================
+     USER HOME - BRANCH OFFER CARDS
+     1100px → 3 cols to 2 cols
+     767px  → mobile layout, keep 2 cols
+     640px  → compact mobile UI
+     480px  → small phone polish
+  ========================= */
+
+  /* Branch section header */
+  .br-head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .br-head strong {
+    color: var(--lightText, #0f172a);
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .view-all {
+    color: var(--prim, #4c74ff);
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  /* Outer card */
+  .card.card-branches {
+    position: relative;
+    width: 100%;
+    padding: 18px;
+    border-radius: 22px;
+    background: linear-gradient(
+      180deg,
+      var(--lightCard, #ffffff) 0%,
+      var(--lightCard2, #fbfcff) 100%
+    );
+    border: 1px solid var(--lightBorder, rgba(15, 23, 42, 0.10));
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+  }
+
+  .card.card-branches::before {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 12px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      rgba(34, 197, 94, 0),
+      rgba(76, 116, 255, 0.22),
+      rgba(239, 68, 68, 0)
+    );
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  /* Grid */
+  .br-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  /* Empty message */
+  .card.card-branches .msg {
+    position: relative;
+    z-index: 1;
+    padding: 10px 12px;
+    border-radius: 14px;
+    color: var(--lightMuted, #475569);
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Main branch tile */
+  .card-branches .branch-tile,
+  .card-branches .branch-offer-card {
+    position: relative;
+    min-height: 118px;
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid var(--lightBorder, rgba(15, 23, 42, 0.10));
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    text-decoration: none;
+    overflow: hidden;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .card-branches .branch-tile::after,
+  .card-branches .branch-offer-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(closest-side at 18% 20%, rgba(76, 116, 255, 0.08), transparent 70%),
+      radial-gradient(closest-side at 90% 38%, rgba(34, 197, 94, 0.10), transparent 72%);
+    opacity: 0.8;
+    pointer-events: none;
+  }
+
+  .card-branches .branch-tile:hover,
+  .card-branches .branch-offer-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  }
+
+  .card-branches .branch-tile--active {
+    border: 2px solid var(--ok, rgba(34, 197, 94, 0.60));
+    box-shadow:
+      0 18px 40px rgba(34, 197, 94, 0.12),
+      0 12px 28px rgba(15, 23, 42, 0.08);
+  }
+
+  .card-branches .branch-tile--inactive {
+    border: 2px solid var(--bad, rgba(239, 68, 68, 0.45));
+    box-shadow:
+      0 18px 40px rgba(239, 68, 68, 0.08),
+      0 12px 28px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Top row */
+  .branch-offer-card .br-toprow {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .br-location-title {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--lightText, #0f172a);
+  }
+
+  .br-location-title span {
+    flex: 0 0 auto;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .br-location-title strong {
+    min-width: 0;
+    color: var(--lightText, #0f172a);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Status pill */
+  .br-pill {
+    flex: 0 0 auto;
+    max-width: 108px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+    font-size: 10px;
+    font-weight: 850;
+    line-height: 1;
+    letter-spacing: 0.12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .br-pill.ok {
+    color: #14532d;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.28);
+  }
+
+  .br-pill.bad {
+    color: #7f1d1d;
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.26);
+  }
+
+  /* Body */
+  .br-card-body {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .br-offer-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+    align-self: flex-start;
+    padding-top: 2px;
+  }
+
+  .br-offer-title {
+    min-width: 0;
+    color: var(--lightText, #0f172a);
+    font-size: 16px;
+    font-weight: 850;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .br-offer-date {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    color: var(--lightMuted, #475569);
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.25;
+  }
+
+  .br-offer-date span:first-child {
+    flex: 0 0 auto;
+  }
+
+  .br-offer-date span:last-child {
+    min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .br-offer-box {
+    flex: 0 1 clamp(54px, 18vw, 100px);
+    width: clamp(54px, 18vw, 100px);
+    height: clamp(50px, 15vw, 90px);
+    border-radius: clamp(10px, 3vw, 18px);
+    border: 1px solid rgba(34, 197, 94, 0.22);
+    background: rgba(248, 250, 252, 0.75);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(22, 163, 74, 0.07);
+  }
+
+  .br-offer-thumb {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .br-offer-thumb--real {
+    padding: 6px;
+  }
+
+  .br-offer-thumb--placeholder {
+    width: 78%;
+    height: 78%;
+    padding: 0;
+    opacity: 0.82;
+  }
+
+.br-distance {
+  position: relative;
+  z-index: 1;
+  margin-top: 6px;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.branch-result-meta {
+  position: relative;
+  z-index: 1;
+  margin: 8px 0 12px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.branch-result-meta span {
+  color: #2563eb;
+}
+
+.branch-result-warning {
+  position: relative;
+  z-index: 1;
+  margin: 8px 0 12px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  color: #7f1d1d;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.20);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.branch-load-more-wrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.branch-load-more-btn {
+  min-height: 42px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #2563eb;
+  font-size: 13px;
+  font-weight: 950;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+}
+
+.branch-load-more-btn:active {
+  transform: translateY(1px);
+}
+
+
+/* =========================
+   SEARCH + LOCATION FILTER
+========================= */
+.branch-tools {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 138px;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 8px;
+}
+
+.branch-search-box {
+  position: relative;
+  min-width: 0;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.branch-search-icon {
+  flex: 0 0 auto;
+  width: 36px;
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.branch-search-input {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 0 10px 0 0;
+}
+
+.branch-search-input::placeholder {
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.branch-search-box:focus-within {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.10),
+    0 10px 22px rgba(37, 99, 235, 0.08);
+}
+
+.branch-location-box {
+  position: relative;
+  min-width: 0;
+  height: 38px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.branch-location-filter {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 850;
+  padding: 0 28px 0 11px;
+  cursor: pointer;
+}
+
+.branch-location-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-54%);
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.branch-location-box:focus-within {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.10),
+    0 10px 22px rgba(37, 99, 235, 0.08);
+}
+
+@media (max-width: 640px) {
+  .branch-tools {
+    grid-template-columns: minmax(0, 1fr) 126px;
+    gap: 6px;
+    margin: 7px 0 8px;
+  }
+
+  .branch-search-box,
+  .branch-location-box {
+    height: 34px;
+    border-radius: 11px;
+  }
+
+  .branch-search-icon {
+    width: 30px;
+    font-size: 13px;
+  }
+
+  .branch-search-input {
+    font-size: 11px;
+    font-weight: 750;
+    padding-right: 6px;
+  }
+
+  .branch-location-filter {
+    font-size: 11px;
+    padding-left: 8px;
+    padding-right: 22px;
+  }
+
+  .branch-location-arrow {
+    right: 8px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 380px) {
+  .branch-tools {
+    grid-template-columns: minmax(0, 1fr) 112px;
+  }
+
+  .branch-search-input {
+    font-size: 10.5px;
+  }
+
+  .branch-location-filter {
+    font-size: 10.5px;
+  }
+}
+
+
+
+  /* =========================
+     1100px
+  ========================= */
+  @media (max-width: 1100px) {
+    .br-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* =========================
+     767px
+  ========================= */
+  @media (max-width: 767px) {
+    .card.card-branches {
+      padding: 14px;
     }
 
-    *{
-      box-sizing:border-box;
+    .br-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
 
-    html,
-    body{
-      margin:0;
-      padding:0;
+    .card-branches .branch-tile,
+    .card-branches .branch-offer-card {
+      min-height: 108px;
+      padding: 10px 11px 11px;
+      gap: 7px;
+      border-radius: 18px;
+    }
+  }
+
+  /* =========================
+     640px
+  ========================= */
+  @media (max-width: 640px) {
+    .card.card-branches {
+      padding: 14px;
+      border-radius: 20px;
     }
 
-    body{
-      font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-
-      background:
-        radial-gradient(900px 520px at 18% 8%, rgba(76,116,255,0.14), transparent 55%),
-        radial-gradient(900px 520px at 82% 18%, rgba(99,102,241,0.12), transparent 60%),
-        radial-gradient(900px 520px at 50% 92%, rgba(34,197,94,0.10), transparent 60%),
-        linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%);
-      min-height:100vh;
+    .br-head {
+      margin-bottom: 9px;
     }
 
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255,255,255,0.45), transparent 45%),
-        radial-gradient(circle at 80% 30%, rgba(255,255,255,0.35), transparent 55%);
-      opacity:.35;
+    .br-head strong {
+      font-size: 15px;
     }
 
-    a{
-      color:var(--prim);
-      text-decoration:none;
+    .view-all {
+      font-size: 11px;
     }
 
-    a:hover{
-      opacity:.92;
+    .br-grid {
+      gap: 9px;
     }
 
-    .wrap{
-      position:relative;
-      z-index:1;
-      width:100%;
-      max-width:none;
-      margin:24px 0 72px;
-      padding:0 24px;
+    .branch-offer-card .br-toprow {
+      min-height: 20px;
+      gap: 6px;
     }
 
-    /* =========================
-       BASE CARD
-    ========================= */
-
-    .card{
-      position:relative;
-      background:linear-gradient(180deg, var(--card) 0%, var(--card2) 100%);
-      border:1px solid rgba(15,23,42,0.12);
-      border-radius:20px;
-      padding:18px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);
-      overflow:hidden;
+    .br-location-title {
+      gap: 3px;
     }
 
-    .card::before{
-      content:"";
-      position:absolute;
-      left:14px;
-      right:14px;
-      top:10px;
-      height:4px;
-      border-radius:999px;
-      background:linear-gradient(90deg, rgba(76,116,255,0.00), var(--hlTop), rgba(76,116,255,0.00));
-      opacity:.9;
-      pointer-events:none;
+    .br-location-title span {
+      font-size: 12px;
     }
 
-    .card::after{
-      content:"";
-      position:absolute;
-      inset:-40px -40px auto -40px;
-      height:140px;
-      background:radial-gradient(closest-side at 35% 40%, rgba(76,116,255,0.12), transparent 70%);
-      pointer-events:none;
+    .br-location-title strong {
+      font-size: 10px;
+      font-weight: 700;
     }
 
-    .msg{
-      position:relative;
-      z-index:1;
-      background:rgba(255,255,255,0.78);
-      border:1px solid rgba(15,23,42,0.12);
-      padding:10px 12px;
-      border-radius:14px;
-      margin-bottom:12px;
-      box-shadow:var(--shadow3);
-      color:var(--muted);
-      font-weight:700;
+    .br-pill {
+      max-width: 72px;
+      padding: 4px 7px;
+      font-size: 7px;
+      font-weight: 900;
     }
 
-    /* =========================
-       SEARCH + LOCATION FILTER
-    ========================= */
-
-    .branch-tools{
-      position:relative;
-      z-index:2;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      width:100%;
-      margin-bottom:18px;
-      padding:8px;
-      border-radius:24px;
-      background:rgba(255,255,255,0.86);
-      border:1px solid rgba(76,116,255,0.16);
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.60),
-        0 14px 34px rgba(76,116,255,0.10);
+    .br-card-body {
+      align-items: flex-start;
+      gap: 7px;
     }
 
-    .branch-search{
-      flex:1 1 auto;
-      min-width:0;
-      height:52px;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:0 16px;
-      border-radius:18px;
-      color:#64748b;
+    .br-offer-copy {
+      align-self: flex-start;
+      padding-top: 1px;
     }
 
-    .branch-search__icon{
-      width:24px;
-      height:24px;
-      flex:0 0 auto;
-      color:#475569;
+    .br-offer-title {
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.14;
     }
 
-    .branch-search__icon svg{
-      width:100%;
-      height:100%;
-      display:block;
+    .br-offer-date {
+      gap: 5px;
+      font-size: 9px;
+      font-weight: 750;
+      line-height: 1.25;
     }
 
-    .branch-search input{
-      width:100%;
-      min-width:0;
-      border:0;
-      outline:0;
-      background:transparent;
-      color:#0f172a;
-      font-size:16px;
-      font-weight:700;
+    .br-offer-thumb {
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  /* =========================
+     480px
+  ========================= */
+  @media (max-width: 480px) {
+    .card.card-branches {
+      padding: 12px;
     }
 
-    .branch-search input::placeholder{
-      color:#8b95a7;
-      font-weight:700;
+    .card-branches .branch-tile,
+    .card-branches .branch-offer-card {
+      min-height: 128px;
     }
 
-    .branch-location-select{
-      position:relative;
-      flex:0 0 auto;
-      min-width:220px;
-      height:56px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:0 46px 0 18px;
-      border-radius:18px;
-      background:rgba(255,255,255,0.94);
-      border:1px solid rgba(15,23,42,0.12);
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.70),
-        0 10px 24px rgba(15,23,42,0.08);
-      color:#27324a;
+    .br-card-body {
+      gap: 5px;
     }
 
-    .branch-location-select__icon{
-      width:24px;
-      height:24px;
-      flex:0 0 auto;
-      color:#334155;
+    .br-offer-date {
+      font-size: 8.5px;
     }
 
-    .branch-location-select__icon svg{
-      width:100%;
-      height:100%;
-      display:block;
+    .br-offer-thumb {
+      height: 100%;
+      max-width: 100%;
     }
+  }
+</style>
 
-    .branch-location-select select{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      opacity:0;
-      cursor:pointer;
-    }
 
-    .branch-location-select::after{
-      content:attr(data-label);
-      font-size:16px;
-      font-weight:900;
-      color:#27324a;
-      white-space:nowrap;
-      pointer-events:none;
-    }
-
-    .branch-location-select__chev{
-      position:absolute;
-      right:18px;
-      top:50%;
-      transform:translateY(-54%);
-      font-size:24px;
-      line-height:1;
-      color:#334155;
-      pointer-events:none;
-    }
-
-    .branch-no-results{
-      margin:12px 0 0;
-      text-align:center;
-    }
-
-    /* =========================
-       BRANCH SECTION
-    ========================= */
-
-    .br-head{
-      position:relative;
-      z-index:1;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:10px;
-    }
-
-    .br-head strong{
-      font-size:16px;
-      color:var(--lightText);
-    }
-
-    .br-grid{
-      position:relative;
-      z-index:1;
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:12px;
-    }
-
-    @media (min-width:768px){
-      .br-grid{
-        grid-template-columns:repeat(3, minmax(0, 1fr));
-      }
-    }
-
-    @media (min-width:1200px){
-      .br-grid{
-        grid-template-columns:repeat(4, minmax(0, 1fr));
-      }
-    }
-
-    @media (min-width:1500px){
-      .br-grid{
-        grid-template-columns:repeat(5, minmax(0, 1fr));
-      }
-    }
-
-    .card.card-branches{
-      position:relative;
-      background:linear-gradient(180deg, var(--lightCard) 0%, var(--lightCard2) 100%);
-      border:1px solid var(--lightBorder);
-      border-radius:22px;
-      box-shadow:0 22px 60px rgba(15,23,42,0.12);
-      overflow:hidden;
-    }
-
-    .card.card-branches::before{
-      content:"";
-      position:absolute;
-      left:16px;
-      right:16px;
-      top:12px;
-      height:4px;
-      border-radius:999px;
-      background:linear-gradient(90deg, rgba(34,197,94,0), rgba(76,116,255,0.22), rgba(239,68,68,0));
-      opacity:.9;
-      pointer-events:none;
-    }
-
-    .card-branches .branch-tile{
-      position:relative;
-      background:#fff;
-      border-radius:18px;
-      padding:12px 14px 14px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      border:1px solid var(--lightBorder);
-      box-shadow:0 12px 28px rgba(15,23,42,0.08);
-      text-decoration:none;
-      overflow:hidden;
-      transition:
-        transform .18s ease,
-        box-shadow .18s ease,
-        border-color .18s ease;
-      min-width:0;
-    }
-
-    .card-branches .branch-tile::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:radial-gradient(closest-side at 20% 20%, rgba(76,116,255,0.10), transparent 70%);
-      opacity:.7;
-      pointer-events:none;
-    }
-
-    .card-branches .branch-tile:hover{
-      transform:translateY(-3px);
-      box-shadow:0 18px 40px rgba(15,23,42,0.12);
-    }
-
-    .br-toprow{
-      position:relative;
-      z-index:1;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:2px;
-      min-width:0;
-    }
-
-    .br-line{
-      width:84px;
-      height:7px;
-      border-radius:999px;
-      opacity:.95;
-      flex:0 0 auto;
-    }
-
-    .br-line.ok{
-      background:linear-gradient(90deg, rgba(34,197,94,0.18), rgba(34,197,94,0.75));
-    }
-
-    .br-line.bad{
-      background:linear-gradient(90deg, rgba(239,68,68,0.16), rgba(239,68,68,0.72));
-    }
-
-    .br-pill{
-      position:relative;
-      z-index:1;
-      flex:0 0 auto;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:.15px;
-      border:1px solid rgba(15,23,42,0.10);
-      background:rgba(255,255,255,0.92);
-      box-shadow:0 10px 22px rgba(15,23,42,0.06);
-      white-space:nowrap;
-      line-height:1;
-    }
-
-    .br-pill.ok{
-      border-color:rgba(34,197,94,0.28);
-      background:rgba(34,197,94,0.12);
-      color:#14532d;
-    }
-
-    .br-pill.bad{
-      border-color:rgba(239,68,68,0.26);
-      background:rgba(239,68,68,0.10);
-      color:#7f1d1d;
-    }
-
-    .card-branches .branch-name{
-      position:relative;
-      z-index:1;
-      color:var(--lightText);
-      font-size:16px;
-      font-weight:700;
-      line-height:1.15;
-      max-width:100%;
-      overflow-wrap:anywhere;
-      word-break:break-word;
-    }
-
-    .card-branches .branch-meta{
-      position:relative;
-      z-index:1;
-      color:var(--lightMuted);
-      font-size:12px;
-      line-height:1.25;
-      max-width:100%;
-      overflow-wrap:anywhere;
-      word-break:break-word;
-    }
-
-    .card-branches .branch-tile--active{
-      border:2px solid var(--ok);
-      box-shadow:
-        0 18px 40px rgba(34,197,94,0.12),
-        0 12px 28px rgba(15,23,42,0.08);
-    }
-
-    .card-branches .branch-tile--inactive{
-      border:2px solid var(--bad);
-      box-shadow:
-        0 18px 40px rgba(239,68,68,0.08),
-        0 12px 28px rgba(15,23,42,0.08);
-    }
-
-    /* =========================
-       MOBILE / TOUCH UI
-    ========================= */
-
-    @media (hover:none) and (pointer:coarse){
-      .wrap{
-        margin-top:12px;
-        padding-left:10px;
-        padding-right:10px;
-      }
-
-      .card.card-branches{
-        padding:14px;
-      }
-
-      .branch-tools{
-        gap:8px;
-        padding:6px;
-        margin-bottom:14px;
-        border-radius:18px;
-      }
-
-      .branch-search{
-        height:46px;
-        gap:9px;
-        padding:0 11px;
-      }
-
-      .branch-search__icon{
-        width:20px;
-        height:20px;
-      }
-
-      .branch-search input{
-        font-size:13px;
-        font-weight:700;
-      }
-
-      .branch-location-select{
-        min-width:136px;
-        height:46px;
-        border-radius:14px;
-        padding:0 32px 0 10px;
-        gap:7px;
-      }
-
-      .branch-location-select__icon{
-        width:18px;
-        height:18px;
-      }
-
-      .branch-location-select::after{
-        font-size:12px;
-        font-weight:900;
-      }
-
-      .branch-location-select__chev{
-        right:10px;
-        font-size:18px;
-      }
-
-      .br-grid{
-        grid-template-columns:repeat(2, minmax(0, 1fr));
-        gap:10px;
-      }
-
-      .card-branches .branch-tile{
-        padding:10px 12px 12px;
-        gap:7px;
-      }
-
-      .br-pill{
-        margin-left:auto;
-        max-width:70%;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        box-shadow:0 6px 14px rgba(15,23,42,0.05);
-        font-size:10px;
-        padding:4px 7px;
-        font-weight:700;
-      }
-
-      .br-line{
-        width:46px;
-        height:5px;
-        opacity:.55;
-      }
-
-      .card-branches .branch-name{
-        font-size:14px;
-        font-weight:650;
-      }
-
-      .card-branches .branch-meta{
-        font-size:11px;
-      }
-    }
-
-    @media (max-width:480px){
-      .branch-tools{
-        align-items:stretch;
-      }
-
-      .branch-location-select{
-        min-width:120px;
-      }
-
-      .branch-location-select::after{
-        max-width:82px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-    }
-  </style>
 </head>
 
 <body>
@@ -579,187 +737,309 @@
 
   <div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
 
-  <main class="wrap">
+  <main class="all-branches-page">
+    <!-- Branches -->
     <div class="card card-branches">
+<div class="br-head">
+  <strong>Branches ({{ branch_count }})</strong>
+</div>
 
-      <div class="branch-tools">
-        <label class="branch-search">
-          <span class="branch-search__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M10.7 18.4a7.7 7.7 0 1 1 0-15.4 7.7 7.7 0 0 1 0 15.4Zm6.1-1.6 4.2 4.2"
-                stroke="currentColor"
-                stroke-width="2.4"
-                stroke-linecap="round"
-              />
-            </svg>
-          </span>
+<form class="branch-tools" method="get" action="">
+  <input type="hidden" name="offset" value="0">
 
-          <input
-            type="search"
-            id="branchSearchInput"
-            placeholder="Search branch name..."
-            autocomplete="off"
-          >
-        </label>
+  <label class="branch-search-box" aria-label="Search branches">
+    <span class="branch-search-icon">🔎</span>
 
-        <label class="branch-location-select" data-label="All Locations">
-          <span class="branch-location-select__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 21s7-5.1 7-11a7 7 0 1 0-14 0c0 5.9 7 11 7 11Z"
-                stroke="currentColor"
-                stroke-width="2.3"
-                stroke-linejoin="round"
-              />
-              <circle cx="12" cy="10" r="2.4" fill="currentColor"/>
-            </svg>
-          </span>
+    <input
+      type="search"
+      id="branchSearchInput"
+      name="q"
+      class="branch-search-input"
+      placeholder="Search branch, area, city..."
+      value="{{ q|default:'' }}"
+      autocomplete="off"
+    >
+  </label>
 
-          <select id="branchLocationFilter" aria-label="Filter branches by location">
-            <option value="all">All Locations</option>
-            <option value="set">Location set</option>
-            <option value="not-set">Location not set</option>
-          </select>
+  <div class="branch-location-box">
+    <select
+      id="branchLocationFilter"
+      name="location"
+      class="branch-location-filter"
+      aria-label="Location filter"
+    >
+      <option value="">Location</option>
+      <option value="nearby" {% if location == "nearby" %}selected{% endif %}>Near me</option>
+      <option value="active" {% if location == "active" %}selected{% endif %}>Active offers</option>
+      <option value="all" {% if location == "all" %}selected{% endif %}>All branches</option>
+    </select>
 
-          <span class="branch-location-select__chev" aria-hidden="true">⌄</span>
-        </label>
-      </div>
+    <span class="branch-location-arrow">⌄</span>
+  </div>
+</form>
 
-      <div class="br-head">
-        <strong>All Branches ({{ branch_count }})</strong>
-      </div>
 
-      {% if branch_count %}
-        <div class="br-grid">
-          {% for b in branches %}
-            <a
-              class="branch-tile {% if b.offer_start %}branch-tile--active{% else %}branch-tile--inactive{% endif %}"
-              href="{% url 'offers:offer_progress' b.id %}"
-              data-requires-network="1"
-              data-branch-name="{{ b.name|default:''|lower }}"
-              data-branch-location="{% if b.latitude and b.longitude %}set{% else %}not-set{% endif %}"
-            >
-              <div class="br-toprow">
-                <span class="br-line {% if b.offer_start %}ok{% else %}bad{% endif %}"></span>
+<div class="branch-result-meta">
+  Showing {{ loaded_count }} of {{ branch_count }} branches
 
-                <span class="br-pill {% if b.offer_start %}ok{% else %}bad{% endif %}">
-                  {% if b.offer_start %}ACTIVE 🎁{% else %}NO OFFER{% endif %}
-                </span>
-              </div>
+  {% if is_nearby_mode %}
+    <span>• Within {{ nearby_radius_km }} km</span>
+  {% endif %}
 
-              <div class="branch-name">{{ b.name }}</div>
+  {% if q %}
+    <span>• Search: “{{ q }}”</span>
+  {% endif %}
+</div>
+{% if nearby_error %}
+  <div class="branch-result-warning">
+    {{ nearby_error }}
+  </div>
+{% endif %}
 
-              {% if b.latitude and b.longitude %}
-                <div class="branch-meta">📍 {{ b.latitude }}, {{ b.longitude }}</div>
-              {% else %}
-                <div class="branch-meta">— location not set</div>
-              {% endif %}
+<div id="branchGrid" class="br-grid">
+  {% if branch_count %}
+    {% include "user_interface/user_homepage/partials/all_branch_card_append.html" with branches=branches %}
+  {% endif %}
+</div>
 
-              {% if b.offer_start %}
-                <div class="branch-meta">
-                  🗓 {{ b.offer_start|date:"d M Y" }}
-                  {% if b.offer_end %}
-                    – {{ b.offer_end|date:"d M Y" }}
-                  {% else %}
-                    – onwards
-                  {% endif %}
-                </div>
-              {% endif %}
-            </a>
-          {% endfor %}
-        </div>
+<div id="branchEmptyMsg" class="msg" {% if branch_count %}hidden{% endif %}>
+  No branches yet.
+</div>
 
-        <div id="branchNoResults" class="msg branch-no-results" hidden>
-          No branches found for your search.
-        </div>
-      {% else %}
-        <div class="msg">No branches yet.</div>
-      {% endif %}
-    </div>
-  </main>
+<div class="branch-load-more-wrap" {% if not has_more %}style="display:none"{% endif %}>
+  <button
+    type="button"
+    id="branchLoadMoreBtn"
+    class="branch-load-more-btn"
+    data-next-offset="{{ next_offset }}"
+    data-q="{{ q|default:'' }}"
+    data-location="{{ location|default:'' }}"
+  >
+    Load more
+  </button>
+</div>
 
-  {% include "ui_states/spinners/page_loader.html" %}
+</div>
+</main>
 
-  <script>
-    (function () {
-      const searchInput = document.getElementById("branchSearchInput");
-      const locationFilter = document.getElementById("branchLocationFilter");
-      const locationShell = document.querySelector(".branch-location-select");
-      const noResults = document.getElementById("branchNoResults");
-      const branchCards = Array.from(document.querySelectorAll(".branch-tile"));
+{% include "ui_states/spinners/page_loader.html" %}
 
-      if (!searchInput || !locationFilter || !branchCards.length) return;
+<script>
+  (function () {
+    const form = document.querySelector(".branch-tools");
+    const searchInput = document.getElementById("branchSearchInput");
+    const locationFilter = document.getElementById("branchLocationFilter");
+    const offsetInput = form ? form.querySelector('input[name="offset"]') : null;
 
-      function updateLocationLabel() {
-        const selected = locationFilter.options[locationFilter.selectedIndex];
-        locationShell?.setAttribute(
-          "data-label",
-          selected ? selected.textContent : "All Locations"
-        );
+    if (!form || !locationFilter) return;
+
+    locationFilter.addEventListener("change", function () {
+      if (searchInput) {
+        searchInput.value = "";
       }
 
-      function applyBranchFilters() {
-        const query = searchInput.value.trim().toLowerCase();
-        const locationValue = locationFilter.value;
-        let visibleCount = 0;
+      if (offsetInput) {
+        offsetInput.value = "0";
+      }
 
-        branchCards.forEach((card) => {
-          const name = (card.dataset.branchName || "").toLowerCase();
-          const locationState = card.dataset.branchLocation || "not-set";
+      form.submit();
+    });
+  })();
+</script>
 
-          const matchesSearch = !query || name.includes(query);
-          const matchesLocation =
-            locationValue === "all" || locationState === locationValue;
+<script>
+  (function () {
+    const input = document.getElementById("branchSearchInput");
+    const grid = document.getElementById("branchGrid");
+    const meta = document.querySelector(".branch-result-meta");
+    const loadWrap = document.querySelector(".branch-load-more-wrap");
+    const emptyMsg = document.getElementById("branchEmptyMsg");
 
-          const shouldShow = matchesSearch && matchesLocation;
+    if (!input || !grid) return;
 
-          card.hidden = !shouldShow;
+    let resetTimer = null;
 
-          if (shouldShow) visibleCount += 1;
+    async function resetToAllBranches() {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("q");
+      url.searchParams.delete("visible");
+      url.searchParams.set("offset", "0");
+
+      try {
+        const res = await fetch(url.toString(), {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          }
         });
 
-        if (noResults) {
-          noResults.hidden = visibleCount !== 0;
+        const data = await res.json();
+        if (!data.ok) return;
+
+        grid.innerHTML = data.html;
+
+        if (meta) {
+          meta.innerHTML =
+            "Showing " + data.loaded_count + " of " + data.branch_count + " branches";
         }
+
+        if (emptyMsg) {
+          emptyMsg.hidden = data.branch_count > 0;
+        }
+
+        let btn = document.getElementById("branchLoadMoreBtn");
+
+        if (data.has_more) {
+          if (!btn && loadWrap) {
+            loadWrap.innerHTML = `
+              <button
+                type="button"
+                id="branchLoadMoreBtn"
+                class="branch-load-more-btn"
+                data-next-offset="${data.next_offset}"
+                data-q=""
+                data-location=""
+              >
+                Load more
+              </button>
+            `;
+            btn = document.getElementById("branchLoadMoreBtn");
+          }
+
+          if (btn) {
+            btn.dataset.nextOffset = data.next_offset;
+            btn.dataset.q = "";
+            btn.disabled = false;
+            btn.textContent = "Load more";
+          }
+
+          if (loadWrap) {
+            loadWrap.style.display = "flex";
+          }
+        } else if (loadWrap) {
+          loadWrap.style.display = "none";
+        }
+
+        window.history.replaceState({}, "", url.pathname + "?" + url.searchParams.toString());
+      } catch (err) {
+        console.debug("Search reset failed:", err);
       }
+    }
 
-      updateLocationLabel();
+    function scheduleResetIfEmpty() {
+      if (input.value.trim() !== "") return;
 
-      searchInput.addEventListener("input", applyBranchFilters);
+      window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(resetToAllBranches, 250);
+    }
 
-      locationFilter.addEventListener("change", function () {
-        updateLocationLabel();
-        applyBranchFilters();
-      });
-    })();
-  </script>
+    input.addEventListener("input", scheduleResetIfEmpty);
+    input.addEventListener("search", scheduleResetIfEmpty);
+  })();
+</script>
 
-  <script>
-    (function () {
-      function shouldHandleNav(el) {
-        if (!el) return false;
+<script>
+  (function () {
+    const grid = document.getElementById("branchGrid");
+    const meta = document.querySelector(".branch-result-meta");
+    const emptyMsg = document.getElementById("branchEmptyMsg");
 
-        const href = el.getAttribute("href");
+    if (!grid) return;
 
-        if (!href) return false;
-        if (href === "#" || href.startsWith("#")) return false;
-        if (el.hasAttribute("download")) return false;
-        if (el.target && el.target !== "_self") return false;
+    document.addEventListener("click", async function (event) {
+      const btn = event.target.closest("#branchLoadMoreBtn");
+      if (!btn) return;
 
-        return true;
+      const nextOffset = btn.dataset.nextOffset || "12";
+      const q = btn.dataset.q || "";
+      const locationValue = btn.dataset.location || "";
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("visible");
+      url.searchParams.set("offset", nextOffset);
+      url.searchParams.set("q", q);
+      url.searchParams.set("location", locationValue);
+
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+
+      try {
+        const res = await fetch(url.toString(), {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          btn.disabled = false;
+          btn.textContent = "Load more";
+          return;
+        }
+
+        grid.insertAdjacentHTML("beforeend", data.html);
+
+        if (emptyMsg) {
+          emptyMsg.hidden = true;
+        }
+
+        if (meta) {
+          meta.firstChild.textContent =
+            "Showing " + data.loaded_count + " of " + data.branch_count + " branches ";
+        }
+
+        if (data.has_more) {
+          btn.dataset.nextOffset = data.next_offset;
+          btn.disabled = false;
+          btn.textContent = "Load more";
+        } else {
+          const wrap = btn.closest(".branch-load-more-wrap");
+          if (wrap) wrap.style.display = "none";
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "Try again";
       }
+    });
+  })();
+</script>
 
-      document.addEventListener("click", function (e) {
-        const link = e.target.closest("a");
+<script>
+  (function () {
+    const navEntry = performance.getEntriesByType("navigation")[0];
+    const isReload = navEntry && navEntry.type === "reload";
 
-        if (!shouldHandleNav(link)) return;
-        if (!navigator.onLine) return;
+    if (isReload && window.location.search) {
+      window.location.replace(window.location.pathname);
+    }
+  })();
+</script>
 
-        window.OZInteractionBlocker?.show();
-        window.OZPageLoader?.show("Loading...");
-      }, true);
-    })();
-  </script>
+<script>
+  (function () {
+    function shouldHandleNav(el) {
+      if (!el) return false;
+
+      const href = el.getAttribute("href");
+
+      if (!href) return false;
+      if (href === "#" || href.startsWith("#")) return false;
+      if (el.hasAttribute("download")) return false;
+      if (el.target && el.target !== "_self") return false;
+
+      return true;
+    }
+
+    document.addEventListener("click", function (e) {
+      const link = e.target.closest("a");
+
+      if (!shouldHandleNav(link)) return;
+      if (!navigator.onLine) return;
+
+      window.OZInteractionBlocker?.show();
+      window.OZPageLoader?.show("Loading...");
+    }, true);
+  })();
+</script>
 </body>
 </html>

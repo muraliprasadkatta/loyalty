@@ -166,13 +166,21 @@ USE_TZ = True
 
 
 # -------------------------------------------------------------------
+# -------------------------------------------------------------------
 # STATIC FILES
 # -------------------------------------------------------------------
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# -------------------------------------------------------------------
+# MEDIA FILES / USER UPLOADS
+# -------------------------------------------------------------------
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # -------------------------------------------------------------------
 # LOGIN / REDIRECTS

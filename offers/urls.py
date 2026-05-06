@@ -9,7 +9,8 @@ from .services.qr import qr_pin_service
 from offers.services.offer_pin.offer_pin_service import user_generate_offer_pin
 from offers.services.offer_pin.offer_pin_verify_service import branch_verify_offer_pin
 from offers.services.offer_pin import offer_pin_status_service as opst
-
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 
@@ -86,3 +87,6 @@ urlpatterns = [
     path("branch/staff/<int:staff_id>/edit/verify/",bviews.branch_staff_edit_verify_otp_view,name="branch_staff_edit_verify_otp",),
 
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -370,3 +370,18 @@ ________________________________________________________
 D:\restarent_application66\offers\templates\branch\branch_all_claims
 e folder lo ok common file ni use chesamu adi enti ante ( D:\restarent_application66\offers\services\branch_api\branch_today_metrics_service.py )
 count lakosam andidi maingause chesina place vachesi all visit count  and all claimscount and branch all vistlo use chesam 
+
+_______________________________________________
+
+
+Done ✅
+- Load More smooth offset flow
+- Near me bounding box
+
+Pending ⚠️
+- Full DB-level pagination
+- Search/index optimization
+- DB-level nearest ordering / cursor pagination later
+
+
+skeltion loading
