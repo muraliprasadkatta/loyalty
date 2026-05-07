@@ -15,7 +15,7 @@ from django.contrib.auth.hashers import check_password
 from django.core import signing
 from django.core.mail import send_mail
 from django.db import transaction, models
-from django.db.models import Q, Count, Max
+from django.db.models import Q, Case, When, Value, IntegerField,Max
 from django.db.models.functions import Lower
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
@@ -31,6 +31,11 @@ from offers.services.qr.qr_token_utils import parse_qr_token as verify_qr_token
 from offers.services.offer_eligibility.offer_eligibility_service import build_offer_eligibility_context
 import offers.services.offer_eligibility.offers_progress_modal_helper as progress_helper
 from django.template.loader import render_to_string
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from django.views.decorators.cache import never_cache
+from django.db.models import Case, When, Value, IntegerField
+from django.db.models.functions import Lower
 import math
 from .models import UserOfferClaim
 from .models import (
@@ -2229,3 +2234,134 @@ def user_verify_visit_pin(request):
         "claim_ids": list(claim_result.get("claim_ids") or []),
     })
 
+
+@never_cache
+@require_GET
+def user_branch_search_suggestions(request):
+    q = (request.GET.get("q") or "").strip()
+
+    if len(q) < 1:
+        return JsonResponse({
+            "ok": True,
+            "suggestions": [],
+        })
+
+    suggestions = []
+    seen = set()
+
+    # 1) FIRST priority: city / location_title suggestions only
+    location_rows = (
+        Branch.objects
+        .filter(location_title__icontains=q)
+        .exclude(location_title="")
+        .order_by(Lower("location_title"))
+        .values("location_title")
+        .distinct()[:8]
+    )
+
+    for row in location_rows:
+        location_title = (row.get("location_title") or "").strip()
+        if not location_title:
+            continue
+
+        key = location_title.lower()
+        if key in seen:
+            continue
+
+        seen.add(key)
+        suggestions.append({
+            "type": "location",
+            "label": location_title,
+            "value": location_title,
+            "location": "",
+        })
+
+    # If city/location matched, stop here.
+    # City search ki branch titles dropdown lo chupinchakudadhu.
+    if suggestions:
+        return JsonResponse({
+            "ok": True,
+            "suggestions": suggestions,
+        })
+
+    # 2) SECOND priority: subtitle / landmark / area suggestions
+    subtitle_rows = (
+        Branch.objects
+        .filter(location_subtitle__icontains=q)
+        .exclude(location_subtitle="")
+        .order_by(Lower("location_title"), Lower("location_subtitle"))
+        .values("location_title", "location_subtitle")
+        .distinct()[:8]
+    )
+
+    for row in subtitle_rows:
+        location_title = (row.get("location_title") or "").strip()
+        location_subtitle = (row.get("location_subtitle") or "").strip()
+
+        label = location_title or location_subtitle
+        extra = location_subtitle if location_title else ""
+
+        if not label:
+            continue
+
+        key = (label + "|" + extra).lower()
+        if key in seen:
+            continue
+
+        seen.add(key)
+        suggestions.append({
+            "type": "location",
+            "label": label,
+            "value": label,
+            "location": extra,
+        })
+
+    if suggestions:
+        return JsonResponse({
+            "ok": True,
+            "suggestions": suggestions,
+        })
+
+    # 3) LAST priority: branch name/title suggestions
+    branches = (
+        Branch.objects
+        .filter(
+            Q(name__icontains=q) |
+            Q(display_title__icontains=q)
+        )
+        .annotate(
+            match_rank=Case(
+                When(display_title__istartswith=q, then=Value(0)),
+                When(name__istartswith=q, then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("match_rank", Lower("name"))
+        .values("id", "name", "display_title", "location_title")[:8]
+    )
+
+    for branch in branches:
+        label = (branch.get("display_title") or branch.get("name") or "").strip()
+        value = label
+        location_title = branch.get("location_title") or ""
+
+        if not label:
+            continue
+
+        key = label.lower()
+        if key in seen:
+            continue
+
+        seen.add(key)
+        suggestions.append({
+            "type": "branch",
+            "label": label,
+            "value": value,
+            "location": location_title,
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "suggestions": suggestions,
+    })

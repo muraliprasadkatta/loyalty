@@ -38,6 +38,7 @@ urlpatterns = [
     path("offers/offer-pin/generate/", user_generate_offer_pin, name="user_generate_offer_pin"),
     path("offer-pin/status/<int:offer_pin_id>/", opst.user_offer_pin_status, name="user_offer_pin_status"),
     path("user/branches/",uviews.user_all_branches_view,name="user_all_branches",),
+    path("user/branches/search-suggestions/",uviews.user_branch_search_suggestions,name="user_branch_search_suggestions",),
 
 
 

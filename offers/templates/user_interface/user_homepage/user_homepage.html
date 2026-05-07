@@ -217,34 +217,37 @@
     border: 1px solid rgba(239, 68, 68, 0.26);
   }
 
-  /* Body */
 .br-card-body {
   position: relative;
   z-index: 1;
   min-width: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   flex: 1;
 }
 
-  /* NEW: offer copy wrapper */
 .br-offer-copy {
   min-width: 0;
   flex: 1 1 auto;
-  align-self: flex-start;
-  padding-top: 2px;
+  align-self: center;
+  padding-top: 0;
 }
 
-  /* NEW: offer title */
 .br-offer-title {
   min-width: 0;
   color: var(--lightText, #0f172a);
-  font-size: 16px;
+
+  /* font-size: clamp(minimum, middle-auto-formula, maximum); */
+  /* Auto responsive text size */
+  /* font-size: clamp(13px, 1.35vw, 18px); */
+  font-size: clamp(13px, calc(8.8px + 0.28vw), 18px);
+
   font-weight: 850;
-  line-height: 1.15;
+  line-height: 1.14;
   letter-spacing: -0.02em;
+
   overflow-wrap: anywhere;
   word-break: break-word;
 
@@ -281,15 +284,22 @@
   text-overflow: clip;
 }
 
+
 .br-offer-box {
-  flex: 0 1 clamp(54px, 18vw, 100px);
-  width: clamp(54px, 18vw, 100px);
-  height: clamp(50px, 15vw, 90px);
+  --offer-box-size: clamp(50px, 14vw, 92px);
+
+  flex: 0 0 var(--offer-box-size);
+  width: var(--offer-box-size);
+  height: var(--offer-box-size);
+
   border-radius: clamp(10px, 3vw, 18px);
   border: 1px solid rgba(34, 197, 94, 0.22);
   background: rgba(248, 250, 252, 0.75);
+
   display: grid;
   place-items: center;
+  align-self: center;
+
   overflow: hidden;
   box-shadow: 0 8px 18px rgba(22, 163, 74, 0.07);
 }
@@ -299,15 +309,14 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center;
 }
 
-.br-offer-thumb--real {
-  padding: 6px;
-}
+
 
 .br-offer-thumb--placeholder {
-  width: 78%;
-  height: 78%;
+  width: 100%;
+  height: 100%;
   padding: 0;
   opacity: 0.82;
 }
@@ -394,14 +403,17 @@
     }
 
     .br-card-body {
-      align-items: flex-start;
+      align-items: center;
       gap: 7px;
     }
 
-    .br-offer-copy {
-      align-self: flex-start;
-      padding-top: 1px;
-    }
+  .br-offer-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+    align-self: flex-start;
+    padding-top: 2px;
+  }
+
     .br-offer-title {
       font-size: 15px;
       font-weight: 800;
@@ -416,10 +428,7 @@
   }
 
 
-    .br-offer-thumb {
-      height: 100%;
-      width: 100%;
-    }
+
   }
 
   /* =========================
@@ -443,10 +452,7 @@
     font-size: 8.5px;
   }
 
-    .br-offer-thumb {
-      height: 100%;
-      max-width: 100%;
-    }
+
   }
 </style>
 

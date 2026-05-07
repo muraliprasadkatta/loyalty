@@ -12,74 +12,7 @@
 
   {% if branch_count %}
     <div class="br-grid">
-      {% for b in branches %}
-        <a
-          class="branch-tile {% if b.offer_start %}branch-tile--active{% else %}branch-tile--inactive{% endif %} branch-offer-card"
-          href="{% url 'offers:offer_progress' b.id %}"
-          data-requires-network="1"
-        >
-          <div class="br-toprow">
-            <div class="br-location-title">
-              <span>📍</span>
-              <strong>
-                {% firstof b.location_title b.display_title b.name "Branch" %}
-              </strong>
-            </div>
-
-            <span class="br-pill {% if b.offer_start %}ok{% else %}bad{% endif %}">
-              {% if b.offer_start %}
-                ACTIVE 🎁
-              {% else %}
-                NO OFFER
-              {% endif %}
-            </span>
-          </div>
-
-          <div class="br-card-body">
-            <div class="br-offer-copy">
-              <div class="br-offer-title">
-                {% if b.offer_start %}
-                  {% firstof b.offer_title "Active Offer" %}
-                {% else %}
-                  No active offer
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="br-offer-box">
-              {% if b.offer_image_url %}
-                <img
-                  src="{{ b.offer_image_url }}"
-                  alt="{% firstof b.offer_title 'Offer image' %}"
-                  class="br-offer-thumb br-offer-thumb--real"
-                  loading="lazy"
-                  decoding="async"
-                >
-              {% else %}
-                <img
-                  src="{% static 'offers/user_homepage/all_branches/no_image_transparent.webp' %}"
-                  alt="No offer image available"
-                  class="br-offer-thumb br-offer-thumb--placeholder"
-                  loading="lazy"
-                  decoding="async"
-                >
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="br-offer-date">
-            <span>🗓</span>
-
-            {% if b.offer_start and b.offer_end %}
-              <span>{{ b.offer_start|date:"d M Y" }} – {{ b.offer_end|date:"d M Y" }}</span>
-            {% elif b.offer_start %}
-              <span>From {{ b.offer_start|date:"d M Y" }}</span>
-            {% else %}
-              <span>Offer not available</span>
-            {% endif %}
-          </div>
-        </a>
-      {% endfor %}
+      {% include "user_interface/user_homepage/partials/branch_all_list.html" with branches=branches %}
     </div>
   {% else %}
     <div class="msg">No branches yet.</div>
