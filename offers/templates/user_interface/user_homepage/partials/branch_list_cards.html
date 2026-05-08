@@ -12,7 +12,7 @@
 
   {% if branch_count %}
     <div class="br-grid">
-      {% include "user_interface/user_homepage/partials/branch_all_list.html" with branches=branches %}
+      {% include "user_interface/user_homepage/partials/all_branch_card_append.html" with branches=branches %}
     </div>
   {% else %}
     <div class="msg">No branches yet.</div>

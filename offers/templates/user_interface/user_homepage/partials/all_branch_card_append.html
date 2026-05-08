@@ -33,11 +33,15 @@
           {% endif %}
         </div>
 
-        {% if b.distance_km %}
-          <div class="br-distance">
-            📍 {{ b.distance_km }} km away
-          </div>
-        {% endif %}
+{% if b.distance_km is not None %}
+  <div class="br-distance">
+    🧭 {{ b.distance_km }} km away
+  </div>
+{% elif request.user.is_authenticated and not has_user_location %}
+  <div class="br-distance br-distance--muted">
+    🧭 Turn on location
+  </div>
+{% endif %}
       </div>
 
       <div class="br-offer-box">

@@ -15,7 +15,7 @@ from django.contrib.auth.hashers import check_password
 from django.core import signing
 from django.core.mail import send_mail
 from django.db import transaction, models
-from django.db.models import Q, Case, When, Value, IntegerField,Max
+from django.db.models import Q, Case, When, Value, IntegerField, Max, Count
 from django.db.models.functions import Lower
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
@@ -262,8 +262,10 @@ def user_home_page(request):
         need_name = (disp == "")
 
     # Branch card data only
-    branch_card_data = get_home_branch_list_card_data(limit=12)
-
+    branch_card_data = get_home_branch_list_card_data(
+        limit=12,
+        user=request.user if request.user.is_authenticated else None,
+    )
     return render(
         request,
         "user_interface/user_homepage/user_homepage.html",

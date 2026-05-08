@@ -5,11 +5,13 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>All Branches • OfferZone</title>
+  <link rel="stylesheet" href="{% static 'offers/user_homepage/css/branch_cards.css' %}">
 
 <style>
   /* =========================
-     PAGE BASE + HEADER WIDTH FIX
+     ALL BRANCHES PAGE BASE + HEADER WIDTH FIX
   ========================= */
+
   *,
   *::before,
   *::after {
@@ -36,6 +38,7 @@
       sans-serif;
   }
 
+
   /* included user header full width force */
   body > .user-header,
   .user-header {
@@ -51,10 +54,14 @@
     margin: 16px auto 28px;
   }
 
-.branch-suggest-block[hidden],
-.branch-no-recent[hidden] {
-  display: none !important;
-}
+  .branch-suggest-block[hidden],
+  .branch-no-recent[hidden] {
+    display: none !important;
+  }
+
+  .card.card-branches::after {
+    display: none;
+  }
 
   @media (max-width: 640px) {
     .all-branches-page {
@@ -72,782 +79,336 @@
   }
 
   /* =========================
-     USER HOME - BRANCH OFFER CARDS
-     1100px → 3 cols to 2 cols
-     767px  → mobile layout, keep 2 cols
-     640px  → compact mobile UI
-     480px  → small phone polish
+     RESULT META + WARNING
   ========================= */
 
-  /* Branch section header */
-  .br-head {
+  .branch-result-meta {
     position: relative;
     z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-
-  .br-head strong {
-    color: var(--lightText, #0f172a);
-    font-size: 16px;
-    font-weight: 800;
-  }
-
-  .view-all {
-    color: var(--prim, #4c74ff);
+    margin: 8px 0 12px;
+    color: #64748b;
     font-size: 12px;
-    font-weight: 800;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  /* Outer card */
-  .card.card-branches {
-    position: relative;
-    width: 100%;
-    padding: 18px;
-    border-radius: 22px;
-    background: linear-gradient(
-      180deg,
-      var(--lightCard, #ffffff) 0%,
-      var(--lightCard2, #fbfcff) 100%
-    );
-    border: 1px solid var(--lightBorder, rgba(15, 23, 42, 0.10));
-    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
-    overflow: hidden;
-  }
-
-  .card.card-branches::before {
-    content: "";
-    position: absolute;
-    left: 16px;
-    right: 16px;
-    top: 12px;
-    height: 4px;
-    border-radius: 999px;
-    background: linear-gradient(
-      90deg,
-      rgba(34, 197, 94, 0),
-      rgba(76, 116, 255, 0.22),
-      rgba(239, 68, 68, 0)
-    );
-    opacity: 0.9;
-    pointer-events: none;
-  }
-
-  /* Grid */
-  .br-grid {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  /* Empty message */
-  .card.card-branches .msg {
-    position: relative;
-    z-index: 1;
-    padding: 10px 12px;
-    border-radius: 14px;
-    color: var(--lightMuted, #475569);
-    background: rgba(255, 255, 255, 0.78);
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-  }
-
-  /* Main branch tile */
-  .card-branches .branch-tile,
-  .card-branches .branch-offer-card {
-    position: relative;
-    min-height: 118px;
-    padding: 12px 14px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    border-radius: 18px;
-    background: #ffffff;
-    border: 1px solid var(--lightBorder, rgba(15, 23, 42, 0.10));
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-    text-decoration: none;
-    overflow: hidden;
-    transition:
-      transform 0.18s ease,
-      box-shadow 0.18s ease,
-      border-color 0.18s ease;
-  }
-
-  .card-branches .branch-tile::after,
-  .card-branches .branch-offer-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(closest-side at 18% 20%, rgba(76, 116, 255, 0.08), transparent 70%),
-      radial-gradient(closest-side at 90% 38%, rgba(34, 197, 94, 0.10), transparent 72%);
-    opacity: 0.8;
-    pointer-events: none;
-  }
-
-  .card-branches .branch-tile:hover,
-  .card-branches .branch-offer-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
-  }
-
-  .card-branches .branch-tile--active {
-    border: 2px solid var(--ok, rgba(34, 197, 94, 0.60));
-    box-shadow:
-      0 18px 40px rgba(34, 197, 94, 0.12),
-      0 12px 28px rgba(15, 23, 42, 0.08);
-  }
-
-  .card-branches .branch-tile--inactive {
-    border: 2px solid var(--bad, rgba(239, 68, 68, 0.45));
-    box-shadow:
-      0 18px 40px rgba(239, 68, 68, 0.08),
-      0 12px 28px rgba(15, 23, 42, 0.08);
-  }
-
-  /* Top row */
-  .branch-offer-card .br-toprow {
-    position: relative;
-    z-index: 1;
-    min-width: 0;
-    min-height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin: 0;
-  }
-
-  .br-location-title {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--lightText, #0f172a);
-  }
-
-  .br-location-title span {
-    flex: 0 0 auto;
-    font-size: 13px;
-    line-height: 1;
-  }
-
-  .br-location-title strong {
-    min-width: 0;
-    color: var(--lightText, #0f172a);
-    font-size: 14px;
-    font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Status pill */
-  .br-pill {
-    flex: 0 0 auto;
-    max-width: 108px;
-    padding: 5px 9px;
-    border-radius: 999px;
-    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
-    font-size: 10px;
     font-weight: 850;
-    line-height: 1;
-    letter-spacing: 0.12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
-  .br-pill.ok {
-    color: #14532d;
-    background: rgba(34, 197, 94, 0.12);
-    border: 1px solid rgba(34, 197, 94, 0.28);
+  .branch-result-meta span {
+    color: #2563eb;
   }
 
-  .br-pill.bad {
+  .branch-result-warning {
+    position: relative;
+    z-index: 1;
+    margin: 8px 0 12px;
+    padding: 9px 11px;
+    border-radius: 14px;
     color: #7f1d1d;
-    background: rgba(239, 68, 68, 0.10);
-    border: 1px solid rgba(239, 68, 68, 0.26);
-  }
-
-  /* Body */
-  .br-card-body {
-    position: relative;
-    z-index: 1;
-    min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-    flex: 1;
-  }
-
-  .br-offer-copy {
-    min-width: 0;
-    flex: 1 1 auto;
-    align-self: flex-start;
-    padding-top: 2px;
-  }
-
-.br-offer-title {
-  min-width: 0;
-  color: var(--lightText, #0f172a);
-
-  /* font-size: clamp(minimum, middle-auto-formula, maximum); */
-  /* Auto responsive text size */
-  /* font-size: clamp(13px, 1.35vw, 18px); */
-  font-size: clamp(13px, calc(8.8px + 0.28vw), 18px);
-
-  font-weight: 850;
-  line-height: 1.14;
-  letter-spacing: -0.02em;
-
-  overflow-wrap: anywhere;
-  word-break: break-word;
-
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-  .br-offer-date {
-    position: relative;
-    z-index: 1;
-    min-width: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 2px;
-    color: var(--lightMuted, #475569);
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.20);
     font-size: 12px;
-    font-weight: 750;
-    line-height: 1.25;
+    font-weight: 850;
   }
 
-  .br-offer-date span:first-child {
-    flex: 0 0 auto;
+  /* =========================
+     LOAD MORE
+  ========================= */
+
+  .branch-load-more-wrap {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
   }
 
-  .br-offer-date span:last-child {
-    min-width: 0;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+  .branch-load-more-btn {
+    min-height: 42px;
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    background: #2563eb;
+    font-size: 13px;
+    font-weight: 950;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
   }
 
-.br-offer-box {
-  --offer-box-size: clamp(50px, 14vw, 92px);
+  .branch-load-more-btn:active {
+    transform: translateY(1px);
+  }
 
-  flex: 0 0 var(--offer-box-size);
-  width: var(--offer-box-size);
-  height: var(--offer-box-size);
+  /* =========================
+     SEARCH + LOCATION FILTER
+  ========================= */
 
-  border-radius: clamp(10px, 3vw, 18px);
-  border: 1px solid rgba(34, 197, 94, 0.22);
-  background: rgba(248, 250, 252, 0.75);
-
-  display: grid;
-  place-items: center;
-  align-self: center;
-
-  overflow: hidden;
-  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.07);
-}
-
-.br-offer-thumb {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-}
-
-
-.br-offer-thumb--real {
-  padding: 0;
-}
-
-
-
-.br-offer-thumb--placeholder {
-  inline-size: 78%;
-  block-size: 78%;
-  max-inline-size: 78%;
-  max-block-size: 78%;
-  padding: 0;
-  opacity: 0.82;
-}
-
-.br-distance {
-  position: relative;
-  z-index: 1;
-  margin-top: 6px;
-  color: #2563eb;
-
-  /* Auto responsive distance text */
-  font-size: clamp(8px, 0.95vw, 12px);
-  font-weight: 900;
-  line-height: 1.2;
-}
-
-.branch-result-meta {
-  position: relative;
-  z-index: 1;
-  margin: 8px 0 12px;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.branch-result-meta span {
-  color: #2563eb;
-}
-
-.branch-result-warning {
-  position: relative;
-  z-index: 1;
-  margin: 8px 0 12px;
-  padding: 9px 11px;
-  border-radius: 14px;
-  color: #7f1d1d;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.20);
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.branch-load-more-wrap {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-}
-
-.branch-load-more-btn {
-  min-height: 42px;
-  padding: 11px 18px;
-  border: 0;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  background: #2563eb;
-  font-size: 13px;
-  font-weight: 950;
-  text-decoration: none;
-  cursor: pointer;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
-}
-
-.branch-load-more-btn:active {
-  transform: translateY(1px);
-}
-
-
-/* =========================
-   SEARCH + LOCATION FILTER
-========================= */
-.branch-tools {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 138px;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 0 8px;
-}
-
-.branch-search-box {
-  position: relative;
-  min-width: 0;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-  overflow: hidden;
-}
-
-.branch-search-icon {
-  flex: 0 0 auto;
-  width: 36px;
-  display: grid;
-  place-items: center;
-  color: #2563eb;
-  font-size: 15px;
-  line-height: 1;
-}
-
-.branch-search-input {
-  min-width: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 750;
-  padding: 0 10px 0 0;
-}
-
-.branch-search-input::placeholder {
-  color: #94a3b8;
-  font-weight: 700;
-}
-
-.branch-search-box:focus-within {
-  border-color: rgba(37, 99, 235, 0.45);
-  box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.10),
-    0 10px 22px rgba(37, 99, 235, 0.08);
-}
-
-.branch-location-box {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-  height: 38px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-  overflow: hidden;
-}
-
-.branch-location-filter {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  outline: 0;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  color: #0f172a;
-  font-size: 12px;
-  font-weight: 850;
-  padding: 0 28px 0 11px;
-  cursor: pointer;
-}
-
-.branch-location-arrow {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-54%);
-  color: #64748b;
-  font-size: 15px;
-  font-weight: 900;
-  pointer-events: none;
-}
-
-.branch-location-box:focus-within {
-  border-color: rgba(37, 99, 235, 0.45);
-  box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.10),
-    0 10px 22px rgba(37, 99, 235, 0.08);
-}
-
-@media (max-width: 640px) {
   .branch-tools {
-    grid-template-columns: 1fr;
-    gap: 7px;
-    margin: 7px 0 8px;
-    align-items: stretch;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 138px;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 8px;
   }
 
   .branch-search-wrap {
-    width: 100%;
+    position: relative;
     min-width: 0;
+    z-index: 3;
   }
 
   .branch-search-box {
-    width: 100%;
-  }
-
-  .branch-location-box {
-    width: 126px;
-    justify-self: end;
-  }
-  
-
-  .branch-search-box,
-  .branch-location-box {
-    height: 34px;
-    border-radius: 11px;
+    position: relative;
+    min-width: 0;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
   }
 
   .branch-search-icon {
-    width: 30px;
-    font-size: 13px;
+    flex: 0 0 auto;
+    width: 36px;
+    display: grid;
+    place-items: center;
+    color: #2563eb;
+    font-size: 15px;
+    line-height: 1;
   }
 
-
   .branch-search-input {
-    font-size: 11px;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #0f172a;
+    font-size: 13px;
     font-weight: 750;
-    padding-right: 6px;
+    padding: 0 10px 0 0;
+  }
+
+  .branch-search-input::placeholder {
+    color: #94a3b8;
+    font-weight: 700;
+  }
+
+  .branch-search-box:focus-within {
+    border-color: rgba(37, 99, 235, 0.45);
+    box-shadow:
+      0 0 0 3px rgba(37, 99, 235, 0.10),
+      0 10px 22px rgba(37, 99, 235, 0.08);
+  }
+
+  .branch-location-box {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    height: 38px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
   }
 
   .branch-location-filter {
-    font-size: 11px;
-    padding-left: 8px;
-    padding-right: 22px;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 850;
+    padding: 0 28px 0 11px;
+    cursor: pointer;
   }
-
 
   .branch-location-arrow {
-    right: 8px;
-    font-size: 13px;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-54%);
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 900;
+    pointer-events: none;
   }
-}
 
-@media (max-width: 380px) {
-  .branch-location-box {
-    width: 112px;
-    justify-self: end;
+  .branch-location-box:focus-within {
+    border-color: rgba(37, 99, 235, 0.45);
+    box-shadow:
+      0 0 0 3px rgba(37, 99, 235, 0.10),
+      0 10px 22px rgba(37, 99, 235, 0.08);
   }
 
-  .branch-search-input {
+  /* =========================
+     SEARCH DROPDOWN
+  ========================= */
+
+  .branch-search-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    padding: 6px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+  }
+
+  .branch-search-dropdown[hidden] {
+    display: none !important;
+  }
+
+  .branch-suggestion {
+    width: 100%;
+    min-height: 34px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .branch-suggestion:hover {
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  .branch-suggest-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 6px 6px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  .branch-suggest-head button {
+    border: 0;
+    background: transparent;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .branch-no-recent {
+    padding: 10px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .branch-suggestion span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .branch-suggestion strong {
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .branch-suggestion small {
+    color: #64748b;
     font-size: 10.5px;
-  }
-
-  .branch-location-filter {
-    font-size: 10.5px;
-  }
-}
-
-
-.branch-search-wrap {
-  position: relative;
-  min-width: 0;
-  z-index: 3;
-}
-
-.branch-search-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 20;
-  padding: 6px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
-}
-
-.branch-suggestion {
-  width: 100%;
-  min-height: 34px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #0f172a;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: left;
-  cursor: pointer;
-}
-
-.branch-suggestion:hover {
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.branch-search-dropdown[hidden] {
-  display: none !important;
-}
-
-.branch-suggest-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 4px 6px 6px;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.branch-suggest-head button {
-  border: 0;
-  background: transparent;
-  color: #2563eb;
-  font-size: 11px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.branch-no-recent {
-  padding: 10px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.branch-suggestion span {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.branch-suggestion strong {
-  color: #0f172a;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.branch-suggestion small {
-  color: #64748b;
-  font-size: 10.5px;
-  font-weight: 800;
-}
-
-
-  /* =========================
-     1100px
-  ========================= */
-  @media (max-width: 1100px) {
-    .br-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    font-weight: 800;
   }
 
   /* =========================
-     767px
+     SEARCH RESPONSIVE
   ========================= */
-  @media (max-width: 767px) {
-    .card.card-branches {
-      padding: 14px;
-    }
 
-    .br-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .card-branches .branch-tile,
-    .card-branches .branch-offer-card {
-      min-height: 108px;
-      padding: 10px 11px 11px;
-      gap: 7px;
-      border-radius: 18px;
-    }
-  }
-
-  /* =========================
-     640px
-  ========================= */
   @media (max-width: 640px) {
-    .card.card-branches {
-      padding: 14px;
-      border-radius: 20px;
-    }
-
-    .br-head {
-      margin-bottom: 9px;
-    }
-
-    .br-head strong {
-      font-size: 15px;
-    }
-
-    .view-all {
-      font-size: 11px;
-    }
-
-    .br-grid {
-      gap: 9px;
-    }
-
-    .branch-offer-card .br-toprow {
-      min-height: 20px;
-      gap: 6px;
-    }
-
-    .br-location-title {
-      gap: 3px;
-    }
-
-    .br-location-title span {
-      font-size: 12px;
-    }
-
-    .br-location-title strong {
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .br-pill {
-      max-width: 72px;
-      padding: 4px 7px;
-      font-size: 7px;
-      font-weight: 900;
-    }
-
-    .br-card-body {
-      align-items: flex-start;
+    .branch-tools {
+      grid-template-columns: 1fr;
       gap: 7px;
+      margin: 7px 0 8px;
+      align-items: stretch;
     }
 
-    .br-offer-copy {
-      align-self: flex-start;
-      padding-top: 1px;
+    .branch-search-wrap {
+      width: 100%;
+      min-width: 0;
     }
 
+    .branch-search-box {
+      width: 100%;
+    }
 
-    .br-offer-date {
-      gap: 5px;
-      font-size: 9px;
+    .branch-location-box {
+      width: 126px;
+      justify-self: end;
+    }
+
+    .branch-search-box,
+    .branch-location-box {
+      height: 34px;
+      border-radius: 11px;
+    }
+
+    .branch-search-icon {
+      width: 30px;
+      font-size: 13px;
+    }
+
+    .branch-search-input {
+      font-size: 11px;
       font-weight: 750;
-      line-height: 1.25;
+      padding-right: 6px;
     }
 
+    .branch-location-filter {
+      font-size: 11px;
+      padding-left: 8px;
+      padding-right: 22px;
+    }
+
+    .branch-location-arrow {
+      right: 8px;
+      font-size: 13px;
+    }
   }
 
-  /* =========================
-     480px
-  ========================= */
-  @media (max-width: 480px) {
-    .card.card-branches {
-      padding: 12px;
+  @media (max-width: 380px) {
+    .branch-location-box {
+      width: 112px;
+      justify-self: end;
     }
 
-    .card-branches .branch-tile,
-    .card-branches .branch-offer-card {
-      min-height: 128px;
+    .branch-search-input {
+      font-size: 10.5px;
     }
 
-    .br-card-body {
-      gap: 5px;
+    .branch-location-filter {
+      font-size: 10.5px;
     }
-
-    .br-offer-date {
-      font-size: 8.5px;
-    }
-
-    
   }
 </style>
-
-
 </head>
 
 <body>
@@ -856,635 +417,610 @@
   <div id="ozInteractionBlocker" hidden aria-hidden="true"></div>
 
   <main class="all-branches-page">
-    <!-- Branches -->
     <div class="card card-branches">
-<div class="br-head">
-  <strong>Branches ({{ branch_count }})</strong>
-</div>
+      <div class="br-head">
+        <strong>Branches ({{ branch_count }})</strong>
+      </div>
 
-<form class="branch-tools" method="get" action="">
-  <input type="hidden" name="offset" value="0">
+      <form class="branch-tools" method="get" action="">
+        <input type="hidden" name="offset" value="0">
 
-<div class="branch-search-wrap">
-  <label class="branch-search-box" aria-label="Search branches">
-    <span class="branch-search-icon">🔎</span>
-    <input
-      type="search"
-      id="branchSearchInput"
-      name="q"
-      class="branch-search-input"
-      placeholder="Search branch, area, city..."
-      value="{{ q|default:'' }}"
-      autocomplete="off"
-      data-suggest-url="{% url 'offers:user_branch_search_suggestions' %}"
+        <div class="branch-search-wrap">
+          <label class="branch-search-box" aria-label="Search branches">
+            <span class="branch-search-icon">🔎</span>
 
-    >
-  </label>
+            <input
+              type="search"
+              id="branchSearchInput"
+              name="q"
+              class="branch-search-input"
+              placeholder="Search branch, area, city..."
+              value="{{ q|default:'' }}"
+              autocomplete="off"
+              data-suggest-url="{% url 'offers:user_branch_search_suggestions' %}"
+            >
+          </label>
 
-<div id="branchSearchDropdown" class="branch-search-dropdown" hidden>
-  <div id="branchLiveBlock" class="branch-suggest-block" hidden>
-    <div class="branch-suggest-head">
-      <span>Suggestions</span>
+          <div id="branchSearchDropdown" class="branch-search-dropdown" hidden>
+            <div id="branchLiveBlock" class="branch-suggest-block" hidden>
+              <div class="branch-suggest-head">
+                <span>Suggestions</span>
+              </div>
+
+              <div id="branchLiveList"></div>
+
+              <div id="branchNoMatch" class="branch-no-recent" hidden>
+                No matching branches
+              </div>
+            </div>
+
+            <div id="branchRecentBlock" class="branch-suggest-block">
+              <div class="branch-suggest-head">
+                <span>Recent searches</span>
+                <button type="button" id="branchClearRecentBtn">Clear</button>
+              </div>
+
+              <div id="branchRecentList"></div>
+
+              <div id="branchNoRecent" class="branch-no-recent">
+                No recent searches yet
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="branch-location-box">
+          <select
+            id="branchLocationFilter"
+            name="location"
+            class="branch-location-filter"
+            aria-label="Location filter"
+          >
+            <option value="" {% if not location or location == "all" %}selected{% endif %}>
+              All branches
+            </option>
+
+            <option value="nearby" {% if location == "nearby" %}selected{% endif %}>
+              Near me
+            </option>
+
+            <option value="active" {% if location == "active" %}selected{% endif %}>
+              Active offers
+            </option>
+          </select>
+
+          <span class="branch-location-arrow">⌄</span>
+        </div>
+      </form>
+
+      <div class="branch-result-meta">
+        Showing {{ loaded_count }} of {{ branch_count }} branches
+
+        {% if is_nearby_mode %}
+          <span>• Within {{ nearby_radius_km }} km</span>
+        {% endif %}
+
+        {% if q %}
+          <span>• Search: “{{ q }}”</span>
+        {% endif %}
+      </div>
+
+      {% if nearby_error %}
+        <div class="branch-result-warning">
+          {{ nearby_error }}
+        </div>
+      {% endif %}
+
+      <div id="branchGrid" class="br-grid">
+        {% if branch_count %}
+          {% include "user_interface/user_homepage/partials/all_branch_card_append.html" with branches=branches %}
+        {% endif %}
+      </div>
+
+      <div id="branchEmptyMsg" class="msg" {% if branch_count %}hidden{% endif %}>
+        No branches yet.
+      </div>
+
+      <div class="branch-load-more-wrap" {% if not has_more %}style="display:none"{% endif %}>
+        <button
+          type="button"
+          id="branchLoadMoreBtn"
+          class="branch-load-more-btn"
+          data-next-offset="{{ next_offset }}"
+          data-q="{{ q|default:'' }}"
+          data-location="{{ location|default:'' }}"
+        >
+          Load more
+        </button>
+      </div>
     </div>
+  </main>
 
-    <div id="branchLiveList"></div>
+  {% include "ui_states/spinners/page_loader.html" %}
 
-    <div id="branchNoMatch" class="branch-no-recent" hidden>
-      No matching branches
-    </div>
-  </div>
+  <script>
+    (function () {
+      const RECENT_KEY = "oz_recent_branch_searches";
+      const MAX_RECENTS = 6;
+      const MAX_SUGGESTIONS = 8;
 
-  <div id="branchRecentBlock" class="branch-suggest-block">
-    <div class="branch-suggest-head">
-      <span>Recent searches</span>
-      <button type="button" id="branchClearRecentBtn">Clear</button>
-    </div>
+      const form = document.querySelector(".branch-tools");
+      const input = document.getElementById("branchSearchInput");
+      const dropdown = document.getElementById("branchSearchDropdown");
 
-    <div id="branchRecentList"></div>
+      const liveBlock = document.getElementById("branchLiveBlock");
+      const liveList = document.getElementById("branchLiveList");
+      const noMatch = document.getElementById("branchNoMatch");
 
-    <div id="branchNoRecent" class="branch-no-recent">
-      No recent searches yet
-    </div>
-  </div>
-</div>
+      const recentBlock = document.getElementById("branchRecentBlock");
+      const recentList = document.getElementById("branchRecentList");
+      const noRecent = document.getElementById("branchNoRecent");
+      const clearBtn = document.getElementById("branchClearRecentBtn");
 
+      const offsetInput = form ? form.querySelector('input[name="offset"]') : null;
+      const suggestUrl = input ? input.dataset.suggestUrl : "";
 
-</div>
+      if (!form || !input || !dropdown || !liveBlock || !liveList || !recentBlock || !recentList) return;
 
-  <div class="branch-location-box">
-    <select
-      id="branchLocationFilter"
-      name="location"
-      class="branch-location-filter"
-      aria-label="Location filter"
-    >
-    <option value="" {% if not location or location == "all" %}selected{% endif %}>
-      All branches
-    </option>
-    <option value="nearby" {% if location == "nearby" %}selected{% endif %}>
-      Near me
-    </option>
-    <option value="active" {% if location == "active" %}selected{% endif %}>
-      Active offers
-    </option>
-    </select>
+      let suggestTimer = null;
+      let activeController = null;
+      let latestQuery = "";
 
-    <span class="branch-location-arrow">⌄</span>
-  </div>
-</form>
-
-
-<div class="branch-result-meta">
-  Showing {{ loaded_count }} of {{ branch_count }} branches
-
-  {% if is_nearby_mode %}
-    <span>• Within {{ nearby_radius_km }} km</span>
-  {% endif %}
-
-  {% if q %}
-    <span>• Search: “{{ q }}”</span>
-  {% endif %}
-</div>
-{% if nearby_error %}
-  <div class="branch-result-warning">
-    {{ nearby_error }}
-  </div>
-{% endif %}
-
-<div id="branchGrid" class="br-grid">
-  {% if branch_count %}
-    {% include "user_interface/user_homepage/partials/all_branch_card_append.html" with branches=branches %}
-  {% endif %}
-</div>
-
-<div id="branchEmptyMsg" class="msg" {% if branch_count %}hidden{% endif %}>
-  No branches yet.
-</div>
-
-<div class="branch-load-more-wrap" {% if not has_more %}style="display:none"{% endif %}>
-  <button
-    type="button"
-    id="branchLoadMoreBtn"
-    class="branch-load-more-btn"
-    data-next-offset="{{ next_offset }}"
-    data-q="{{ q|default:'' }}"
-    data-location="{{ location|default:'' }}"
-  >
-    Load more
-  </button>
-</div>
-
-</div>
-</main>
-
-{% include "ui_states/spinners/page_loader.html" %}
-
-
-
-<script>
-  (function () {
-    const RECENT_KEY = "oz_recent_branch_searches";
-    const MAX_RECENTS = 6;
-    const MAX_SUGGESTIONS = 8;
-
-    const form = document.querySelector(".branch-tools");
-    const input = document.getElementById("branchSearchInput");
-    const dropdown = document.getElementById("branchSearchDropdown");
-
-    const liveBlock = document.getElementById("branchLiveBlock");
-    const liveList = document.getElementById("branchLiveList");
-    const noMatch = document.getElementById("branchNoMatch");
-
-    const recentBlock = document.getElementById("branchRecentBlock");
-    const recentList = document.getElementById("branchRecentList");
-    const noRecent = document.getElementById("branchNoRecent");
-    const clearBtn = document.getElementById("branchClearRecentBtn");
-
-    const offsetInput = form ? form.querySelector('input[name="offset"]') : null;
-    const suggestUrl = input ? input.dataset.suggestUrl : "";
-
-    if (!form || !input || !dropdown || !liveBlock || !liveList || !recentBlock || !recentList) return;
-
-    let suggestTimer = null;
-    let activeController = null;
-    let latestQuery = "";
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function getRecents() {
-      try {
-        const data = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
-        return Array.isArray(data) ? data : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function setRecents(items) {
-      localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
-    }
-
-    function saveRecent(value) {
-      const q = (value || "").trim();
-      if (!q) return;
-
-      const oldItems = getRecents();
-      const filtered = oldItems.filter(item => item.toLowerCase() !== q.toLowerCase());
-
-      setRecents([q, ...filtered]);
-    }
-
-    function showDropdown() {
-      dropdown.hidden = false;
-    }
-
-    function hideDropdown() {
-      dropdown.hidden = true;
-    }
-
-    function renderRecents() {
-      const items = getRecents();
-      recentList.innerHTML = "";
-
-      if (!items.length) {
-        if (noRecent) noRecent.hidden = false;
-        return;
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
       }
 
-      if (noRecent) noRecent.hidden = true;
-
-      items.forEach(function (item) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "branch-suggestion";
-        btn.dataset.value = item;
-        btn.innerHTML = "<span>🕘 " + escapeHtml(item) + "</span>";
-        recentList.appendChild(btn);
-      });
-    }
-
-    function showRecentMode() {
-      window.clearTimeout(suggestTimer);
-
-      if (activeController) {
-        activeController.abort();
-        activeController = null;
-      }
-
-      liveBlock.hidden = true;
-      recentBlock.hidden = false;
-
-      renderRecents();
-      showDropdown();
-    }
-
-    function renderSuggestions(items) {
-      liveList.innerHTML = "";
-
-      if (!items.length) {
-        if (noMatch) {
-          noMatch.hidden = false;
-          noMatch.textContent = "No matching branches";
-        }
-        return;
-      }
-
-      if (noMatch) noMatch.hidden = true;
-
-      items.slice(0, MAX_SUGGESTIONS).forEach(function (item) {
-        const value = item.value || item.label || "";
-        const label = item.label || value;
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "branch-suggestion";
-        btn.dataset.value = value;
-        const locationText = item.location || "";
-        const icon = item.type === "location" ? "📍" : "🏪";
-
-        btn.innerHTML =
-          "<span>" +
-            "<strong>" + icon + " " + escapeHtml(label) + "</strong>" +
-            (locationText ? "<small>📍 " + escapeHtml(locationText) + "</small>" : "") +
-          "</span>";
-
-        liveList.appendChild(btn);
-      });
-    }
-
-    function showSuggestLoading() {
-      recentBlock.hidden = true;
-      liveBlock.hidden = false;
-
-      // Existing suggestions clear cheyyakudadhu.
-      // Clear chesthe every letter ki flicker/open-close laga kanipisthundhi.
-      if (!liveList.children.length && noMatch) {
-        noMatch.hidden = false;
-        noMatch.textContent = "Searching...";
-      }
-
-      showDropdown();
-    }
-
-
-
-    async function fetchSuggestions(q) {
-      if (!suggestUrl) return;
-
-      if (activeController) {
-        activeController.abort();
-      }
-
-      activeController = new AbortController();
-
-      const url = new URL(suggestUrl, window.location.origin);
-      url.searchParams.set("q", q);
-
-      try {
-        const res = await fetch(url.toString(), {
-          signal: activeController.signal,
-          headers: {
-            "X-Requested-With": "XMLHttpRequest"
-          }
-        });
-
-        const data = await res.json();
-
-        if (q !== latestQuery) return;
-        if (!data.ok) return;
-
-        renderSuggestions(data.suggestions || []);
-
-
-      } catch (err) {
-        if (err.name === "AbortError") return;
-
-        if (noMatch) {
-          noMatch.hidden = false;
-          noMatch.textContent = "Unable to load suggestions";
+      function getRecents() {
+        try {
+          const data = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+          return Array.isArray(data) ? data : [];
+        } catch (e) {
+          return [];
         }
       }
-    }
 
-    function scheduleSuggestions() {
-      const q = input.value.trim();
-      latestQuery = q;
-
-      if (!q) {
-        liveList.innerHTML = "";
-        showRecentMode();
-        return;
+      function setRecents(items) {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, MAX_RECENTS)));
       }
 
-      recentBlock.hidden = true;
-      liveBlock.hidden = false;
-      showDropdown();
+      function saveRecent(value) {
+        const q = (value || "").trim();
+        if (!q) return;
 
-      // First time matrame "Searching..." chupinchu.
-      // Already suggestions visible unte same dropdown stable ga undali.
-      if (!liveList.children.length && noMatch) {
-        noMatch.hidden = false;
-        noMatch.textContent = "Searching...";
+        const oldItems = getRecents();
+        const filtered = oldItems.filter(item => item.toLowerCase() !== q.toLowerCase());
+
+        setRecents([q, ...filtered]);
       }
 
-      window.clearTimeout(suggestTimer);
-      suggestTimer = window.setTimeout(function () {
-        fetchSuggestions(q);
-      }, 400);
-    }
-
-
-    function submitSearchValue(value) {
-      const q = (value || "").trim();
-      if (!q) return;
-
-      input.value = q;
-
-      if (offsetInput) {
-        offsetInput.value = "0";
+      function showDropdown() {
+        dropdown.hidden = false;
       }
 
-      saveRecent(q);
-      hideDropdown();
-      form.submit();
-    }
-
-    input.addEventListener("focus", function () {
-      if (input.value.trim()) {
-        scheduleSuggestions();
-      } else {
-        showRecentMode();
-      }
-    });
-
-    input.addEventListener("input", scheduleSuggestions);
-
-    form.addEventListener("submit", function () {
-      saveRecent(input.value);
-
-      if (offsetInput) {
-        offsetInput.value = "0";
-      }
-    });
-
-    liveList.addEventListener("click", function (event) {
-      const btn = event.target.closest(".branch-suggestion");
-      if (!btn) return;
-
-      submitSearchValue(btn.dataset.value || "");
-    });
-
-    recentList.addEventListener("click", function (event) {
-      const btn = event.target.closest(".branch-suggestion");
-      if (!btn) return;
-
-      submitSearchValue(btn.dataset.value || "");
-    });
-
-    if (clearBtn) {
-      clearBtn.addEventListener("click", function () {
-        localStorage.removeItem(RECENT_KEY);
-        renderRecents();
-        input.focus();
-      });
-    }
-
-    document.addEventListener("click", function (event) {
-      if (!event.target.closest(".branch-search-wrap")) {
-        hideDropdown();
-      }
-    });
-
-    if (input.value.trim()) {
-      saveRecent(input.value);
-    }
-  })();
-</script>
-
-
-<script>
-  (function () {
-    const form = document.querySelector(".branch-tools");
-    const searchInput = document.getElementById("branchSearchInput");
-    const locationFilter = document.getElementById("branchLocationFilter");
-    const offsetInput = form ? form.querySelector('input[name="offset"]') : null;
-
-    if (!form || !locationFilter) return;
-
-    locationFilter.addEventListener("change", function () {
-      if (searchInput) {
-        searchInput.value = "";
+      function hideDropdown() {
+        dropdown.hidden = true;
       }
 
-      if (offsetInput) {
-        offsetInput.value = "0";
-      }
+      function renderRecents() {
+        const items = getRecents();
+        recentList.innerHTML = "";
 
-      form.submit();
-    });
-  })();
-</script>
-
-<script>
-  (function () {
-    const input = document.getElementById("branchSearchInput");
-    const grid = document.getElementById("branchGrid");
-    const meta = document.querySelector(".branch-result-meta");
-    const loadWrap = document.querySelector(".branch-load-more-wrap");
-    const emptyMsg = document.getElementById("branchEmptyMsg");
-
-    if (!input || !grid) return;
-
-    let resetTimer = null;
-
-    async function resetToAllBranches() {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("q");
-      url.searchParams.delete("visible");
-      url.searchParams.set("offset", "0");
-
-      try {
-        const res = await fetch(url.toString(), {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest"
-          }
-        });
-
-        const data = await res.json();
-        if (!data.ok) return;
-
-        grid.innerHTML = data.html;
-
-        if (meta) {
-          meta.innerHTML =
-            "Showing " + data.loaded_count + " of " + data.branch_count + " branches";
-        }
-
-        if (emptyMsg) {
-          emptyMsg.hidden = data.branch_count > 0;
-        }
-
-        let btn = document.getElementById("branchLoadMoreBtn");
-
-        if (data.has_more) {
-          if (!btn && loadWrap) {
-            loadWrap.innerHTML = `
-              <button
-                type="button"
-                id="branchLoadMoreBtn"
-                class="branch-load-more-btn"
-                data-next-offset="${data.next_offset}"
-                data-q=""
-                data-location=""
-              >
-                Load more
-              </button>
-            `;
-            btn = document.getElementById("branchLoadMoreBtn");
-          }
-
-          if (btn) {
-            btn.dataset.nextOffset = data.next_offset;
-            btn.dataset.q = "";
-            btn.disabled = false;
-            btn.textContent = "Load more";
-          }
-
-          if (loadWrap) {
-            loadWrap.style.display = "flex";
-          }
-        } else if (loadWrap) {
-          loadWrap.style.display = "none";
-        }
-
-        window.history.replaceState({}, "", url.pathname + "?" + url.searchParams.toString());
-      } catch (err) {
-        console.debug("Search reset failed:", err);
-      }
-    }
-
-    function scheduleResetIfEmpty() {
-      if (input.value.trim() !== "") return;
-
-      window.clearTimeout(resetTimer);
-      resetTimer = window.setTimeout(resetToAllBranches, 250);
-    }
-
-    input.addEventListener("input", scheduleResetIfEmpty);
-    input.addEventListener("search", scheduleResetIfEmpty);
-  })();
-</script>
-
-<script>
-  (function () {
-    const grid = document.getElementById("branchGrid");
-    const meta = document.querySelector(".branch-result-meta");
-    const emptyMsg = document.getElementById("branchEmptyMsg");
-
-    if (!grid) return;
-
-    document.addEventListener("click", async function (event) {
-      const btn = event.target.closest("#branchLoadMoreBtn");
-      if (!btn) return;
-
-      const nextOffset = btn.dataset.nextOffset || "12";
-      const q = btn.dataset.q || "";
-      const locationValue = btn.dataset.location || "";
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("visible");
-      url.searchParams.set("offset", nextOffset);
-      url.searchParams.set("q", q);
-      url.searchParams.set("location", locationValue);
-
-      btn.disabled = true;
-      btn.textContent = "Loading...";
-
-      try {
-        const res = await fetch(url.toString(), {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest"
-          }
-        });
-
-        const data = await res.json();
-
-        if (!data.ok) {
-          btn.disabled = false;
-          btn.textContent = "Load more";
+        if (!items.length) {
+          if (noRecent) noRecent.hidden = false;
           return;
         }
 
-        grid.insertAdjacentHTML("beforeend", data.html);
+        if (noRecent) noRecent.hidden = true;
 
-        if (emptyMsg) {
-          emptyMsg.hidden = true;
-        }
-
-        if (meta) {
-          meta.firstChild.textContent =
-            "Showing " + data.loaded_count + " of " + data.branch_count + " branches ";
-        }
-
-        if (data.has_more) {
-          btn.dataset.nextOffset = data.next_offset;
-          btn.disabled = false;
-          btn.textContent = "Load more";
-        } else {
-          const wrap = btn.closest(".branch-load-more-wrap");
-          if (wrap) wrap.style.display = "none";
-        }
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = "Try again";
+        items.forEach(function (item) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "branch-suggestion";
+          btn.dataset.value = item;
+          btn.innerHTML = "<span>🕘 " + escapeHtml(item) + "</span>";
+          recentList.appendChild(btn);
+        });
       }
-    });
-  })();
-</script>
 
-<script>
-  (function () {
-    const navEntry = performance.getEntriesByType("navigation")[0];
-    const isReload = navEntry && navEntry.type === "reload";
+      function showRecentMode() {
+        window.clearTimeout(suggestTimer);
 
-    if (isReload && window.location.search) {
-      window.location.replace(window.location.pathname);
-    }
-  })();
-</script>
+        if (activeController) {
+          activeController.abort();
+          activeController = null;
+        }
 
-<script>
-  (function () {
-    function shouldHandleNav(el) {
-      if (!el) return false;
+        liveBlock.hidden = true;
+        recentBlock.hidden = false;
 
-      const href = el.getAttribute("href");
+        renderRecents();
+        showDropdown();
+      }
 
-      if (!href) return false;
-      if (href === "#" || href.startsWith("#")) return false;
-      if (el.hasAttribute("download")) return false;
-      if (el.target && el.target !== "_self") return false;
+      function renderSuggestions(items) {
+        liveList.innerHTML = "";
 
-      return true;
-    }
+        if (!items.length) {
+          if (noMatch) {
+            noMatch.hidden = false;
+            noMatch.textContent = "No matching branches";
+          }
+          return;
+        }
 
-    document.addEventListener("click", function (e) {
-      const link = e.target.closest("a");
+        if (noMatch) noMatch.hidden = true;
 
-      if (!shouldHandleNav(link)) return;
-      if (!navigator.onLine) return;
+        items.slice(0, MAX_SUGGESTIONS).forEach(function (item) {
+          const value = item.value || item.label || "";
+          const label = item.label || value;
+          const locationText = item.location || "";
+          const icon = item.type === "location" ? "📍" : "🏪";
 
-      window.OZInteractionBlocker?.show();
-      window.OZPageLoader?.show("Loading...");
-    }, true);
-  })();
-</script>
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "branch-suggestion";
+          btn.dataset.value = value;
+
+          btn.innerHTML =
+            "<span>" +
+              "<strong>" + icon + " " + escapeHtml(label) + "</strong>" +
+              (locationText ? "<small>📍 " + escapeHtml(locationText) + "</small>" : "") +
+            "</span>";
+
+          liveList.appendChild(btn);
+        });
+      }
+
+      async function fetchSuggestions(q) {
+        if (!suggestUrl) return;
+
+        if (activeController) {
+          activeController.abort();
+        }
+
+        activeController = new AbortController();
+
+        const url = new URL(suggestUrl, window.location.origin);
+        url.searchParams.set("q", q);
+
+        try {
+          const res = await fetch(url.toString(), {
+            signal: activeController.signal,
+            headers: {
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          });
+
+          const data = await res.json();
+
+          if (q !== latestQuery) return;
+          if (!data.ok) return;
+
+          renderSuggestions(data.suggestions || []);
+        } catch (err) {
+          if (err.name === "AbortError") return;
+
+          if (noMatch) {
+            noMatch.hidden = false;
+            noMatch.textContent = "Unable to load suggestions";
+          }
+        }
+      }
+
+      function scheduleSuggestions() {
+        const q = input.value.trim();
+        latestQuery = q;
+
+        if (!q) {
+          liveList.innerHTML = "";
+          showRecentMode();
+          return;
+        }
+
+        recentBlock.hidden = true;
+        liveBlock.hidden = false;
+        showDropdown();
+
+        if (!liveList.children.length && noMatch) {
+          noMatch.hidden = false;
+          noMatch.textContent = "Searching...";
+        }
+
+        window.clearTimeout(suggestTimer);
+        suggestTimer = window.setTimeout(function () {
+          fetchSuggestions(q);
+        }, 400);
+      }
+
+      function submitSearchValue(value) {
+        const q = (value || "").trim();
+        if (!q) return;
+
+        input.value = q;
+
+        if (offsetInput) {
+          offsetInput.value = "0";
+        }
+
+        saveRecent(q);
+        hideDropdown();
+        form.submit();
+      }
+
+      input.addEventListener("focus", function () {
+        if (input.value.trim()) {
+          scheduleSuggestions();
+        } else {
+          showRecentMode();
+        }
+      });
+
+      input.addEventListener("input", scheduleSuggestions);
+
+      form.addEventListener("submit", function () {
+        saveRecent(input.value);
+
+        if (offsetInput) {
+          offsetInput.value = "0";
+        }
+      });
+
+      liveList.addEventListener("click", function (event) {
+        const btn = event.target.closest(".branch-suggestion");
+        if (!btn) return;
+
+        submitSearchValue(btn.dataset.value || "");
+      });
+
+      recentList.addEventListener("click", function (event) {
+        const btn = event.target.closest(".branch-suggestion");
+        if (!btn) return;
+
+        submitSearchValue(btn.dataset.value || "");
+      });
+
+      if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+          localStorage.removeItem(RECENT_KEY);
+          renderRecents();
+          input.focus();
+        });
+      }
+
+      document.addEventListener("click", function (event) {
+        if (!event.target.closest(".branch-search-wrap")) {
+          hideDropdown();
+        }
+      });
+
+      if (input.value.trim()) {
+        saveRecent(input.value);
+      }
+    })();
+  </script>
+
+  <script>
+    (function () {
+      const form = document.querySelector(".branch-tools");
+      const searchInput = document.getElementById("branchSearchInput");
+      const locationFilter = document.getElementById("branchLocationFilter");
+      const offsetInput = form ? form.querySelector('input[name="offset"]') : null;
+
+      if (!form || !locationFilter) return;
+
+      locationFilter.addEventListener("change", function () {
+        if (searchInput) {
+          searchInput.value = "";
+        }
+
+        if (offsetInput) {
+          offsetInput.value = "0";
+        }
+
+        form.submit();
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      const input = document.getElementById("branchSearchInput");
+      const grid = document.getElementById("branchGrid");
+      const meta = document.querySelector(".branch-result-meta");
+      const loadWrap = document.querySelector(".branch-load-more-wrap");
+      const emptyMsg = document.getElementById("branchEmptyMsg");
+
+      if (!input || !grid) return;
+
+      let resetTimer = null;
+
+      async function resetToAllBranches() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("q");
+        url.searchParams.delete("visible");
+        url.searchParams.set("offset", "0");
+
+        try {
+          const res = await fetch(url.toString(), {
+            headers: {
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          });
+
+          const data = await res.json();
+          if (!data.ok) return;
+
+          grid.innerHTML = data.html;
+
+          if (meta) {
+            meta.innerHTML =
+              "Showing " + data.loaded_count + " of " + data.branch_count + " branches";
+          }
+
+          if (emptyMsg) {
+            emptyMsg.hidden = data.branch_count > 0;
+          }
+
+          let btn = document.getElementById("branchLoadMoreBtn");
+
+          if (data.has_more) {
+            if (!btn && loadWrap) {
+              loadWrap.innerHTML = `
+                <button
+                  type="button"
+                  id="branchLoadMoreBtn"
+                  class="branch-load-more-btn"
+                  data-next-offset="${data.next_offset}"
+                  data-q=""
+                  data-location=""
+                >
+                  Load more
+                </button>
+              `;
+
+              btn = document.getElementById("branchLoadMoreBtn");
+            }
+
+            if (btn) {
+              btn.dataset.nextOffset = data.next_offset;
+              btn.dataset.q = "";
+              btn.disabled = false;
+              btn.textContent = "Load more";
+            }
+
+            if (loadWrap) {
+              loadWrap.style.display = "flex";
+            }
+          } else if (loadWrap) {
+            loadWrap.style.display = "none";
+          }
+
+          window.history.replaceState({}, "", url.pathname + "?" + url.searchParams.toString());
+        } catch (err) {
+          console.debug("Search reset failed:", err);
+        }
+      }
+
+      function scheduleResetIfEmpty() {
+        if (input.value.trim() !== "") return;
+
+        window.clearTimeout(resetTimer);
+        resetTimer = window.setTimeout(resetToAllBranches, 250);
+      }
+
+      input.addEventListener("input", scheduleResetIfEmpty);
+      input.addEventListener("search", scheduleResetIfEmpty);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      const grid = document.getElementById("branchGrid");
+      const meta = document.querySelector(".branch-result-meta");
+      const emptyMsg = document.getElementById("branchEmptyMsg");
+
+      if (!grid) return;
+
+      document.addEventListener("click", async function (event) {
+        const btn = event.target.closest("#branchLoadMoreBtn");
+        if (!btn) return;
+
+        const nextOffset = btn.dataset.nextOffset || "12";
+        const q = btn.dataset.q || "";
+        const locationValue = btn.dataset.location || "";
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete("visible");
+        url.searchParams.set("offset", nextOffset);
+        url.searchParams.set("q", q);
+        url.searchParams.set("location", locationValue);
+
+        btn.disabled = true;
+        btn.textContent = "Loading...";
+
+        try {
+          const res = await fetch(url.toString(), {
+            headers: {
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          });
+
+          const data = await res.json();
+
+          if (!data.ok) {
+            btn.disabled = false;
+            btn.textContent = "Load more";
+            return;
+          }
+
+          grid.insertAdjacentHTML("beforeend", data.html);
+
+          if (emptyMsg) {
+            emptyMsg.hidden = true;
+          }
+
+          if (meta) {
+            meta.firstChild.textContent =
+              "Showing " + data.loaded_count + " of " + data.branch_count + " branches ";
+          }
+
+          if (data.has_more) {
+            btn.dataset.nextOffset = data.next_offset;
+            btn.disabled = false;
+            btn.textContent = "Load more";
+          } else {
+            const wrap = btn.closest(".branch-load-more-wrap");
+            if (wrap) wrap.style.display = "none";
+          }
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = "Try again";
+        }
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      const navEntry = performance.getEntriesByType("navigation")[0];
+      const isReload = navEntry && navEntry.type === "reload";
+
+      if (isReload && window.location.search) {
+        window.location.replace(window.location.pathname);
+      }
+    })();
+  </script>
+
+  <script>
+    (function () {
+      function shouldHandleNav(el) {
+        if (!el) return false;
+
+        const href = el.getAttribute("href");
+
+        if (!href) return false;
+        if (href === "#" || href.startsWith("#")) return false;
+        if (el.hasAttribute("download")) return false;
+        if (el.target && el.target !== "_self") return false;
+
+        return true;
+      }
+
+      document.addEventListener("click", function (e) {
+        const link = e.target.closest("a");
+
+        if (!shouldHandleNav(link)) return;
+        if (!navigator.onLine) return;
+
+        window.OZInteractionBlocker?.show();
+        window.OZPageLoader?.show("Loading...");
+      }, true);
+    })();
+  </script>
 </body>
 </html>

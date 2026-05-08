@@ -14,11 +14,83 @@
       <input type="hidden" id="longitude" name="longitude">
     </div>
 
-    <button type="button" id="btnUseLocation" class="oz-location-btn">
-      Use current location
-    </button>
+<button
+  type="button"
+  class="use-current-location-btn loc-attention js-use-current-location"
+>
+  Use current location
+</button>
   </section>
 
+
+  <style>
+    .loc-attention {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  animation: locPulseGlow 1.8s ease-in-out infinite;
+}
+
+.loc-attention::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.28) 45%,
+    transparent 70%
+  );
+
+  transform: translateX(-120%);
+  animation: locShine 2.4s ease-in-out infinite;
+}
+
+@keyframes locPulseGlow {
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+  }
+
+  50% {
+    transform: translateY(-1px);
+    box-shadow:
+      0 18px 38px rgba(37, 99, 235, 0.32),
+      0 0 0 5px rgba(37, 99, 235, 0.10);
+  }
+
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+  }
+}
+
+@keyframes locShine {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  45% {
+    transform: translateX(120%);
+  }
+
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loc-attention,
+  .loc-attention::after {
+    animation: none;
+  }
+}
+
+
+  </style>
   <style>
     .oz-location-card {
       position: relative;
