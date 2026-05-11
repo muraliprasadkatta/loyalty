@@ -1,387 +1,467 @@
-{% if request.user.is_authenticated %}
-  <section class="oz-location-card" aria-live="polite">
-    <div class="oz-location-copy">
-      <div class="oz-location-title">📍 Nearby branches</div>
-      <div class="oz-location-sub">
-        Use your current location to show branches near you.
+  {% if request.user.is_authenticated %}
+    <div class="oz-location-inline" aria-live="polite">
+      <div class="oz-location-top">
+        <div class="oz-location-icon" aria-hidden="true">📍</div>
+
+        <div class="oz-location-copy">
+          <div class="oz-location-title">Nearby branches</div>
+          <div class="oz-location-sub">
+            Use your current location to show branches near you.
+          </div>
+
+          <div class="oz-location-meta">
+            <span id="locStatus" class="oz-location-status">Ready</span>
+            <span id="locAccuracy" class="oz-location-accuracy">Accuracy: —</span>
+          </div>
+        </div>
       </div>
 
-      <div id="locStatus" class="oz-location-status">Idle</div>
-      <div id="locAccuracy" class="oz-location-accuracy">Accuracy: —</div>
-      <div id="locError" class="oz-location-error"></div>
+      <div id="locError" class="oz-location-message"></div>
+
+      <button
+        type="button"
+        id="btnUseLocation"
+        class="oz-location-btn loc-attention js-use-current-location"
+      >
+        Use current location
+      </button>
 
       <input type="hidden" id="latitude" name="latitude">
       <input type="hidden" id="longitude" name="longitude">
     </div>
 
-<button
-  type="button"
-  class="use-current-location-btn loc-attention js-use-current-location"
->
-  Use current location
-</button>
-  </section>
-
-
-  <style>
-    .loc-attention {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-
-  animation: locPulseGlow 1.8s ease-in-out infinite;
-}
-
-.loc-attention::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-
-  background: linear-gradient(
-    120deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.28) 45%,
-    transparent 70%
-  );
-
-  transform: translateX(-120%);
-  animation: locShine 2.4s ease-in-out infinite;
-}
-
-@keyframes locPulseGlow {
-  0% {
-    transform: translateY(0);
-    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
-  }
-
-  50% {
-    transform: translateY(-1px);
-    box-shadow:
-      0 18px 38px rgba(37, 99, 235, 0.32),
-      0 0 0 5px rgba(37, 99, 235, 0.10);
-  }
-
-  100% {
-    transform: translateY(0);
-    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
-  }
-}
-
-@keyframes locShine {
-  0% {
-    transform: translateX(-120%);
-  }
-
-  45% {
-    transform: translateX(120%);
-  }
-
-  100% {
-    transform: translateX(120%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loc-attention,
-  .loc-attention::after {
-    animation: none;
-  }
-}
-
-
-  </style>
-  <style>
-    .oz-location-card {
-      position: relative;
-      z-index: 1;
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: rgba(255, 255, 255, 0.78);
-      border: 1px solid rgba(15, 23, 42, 0.10);
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-    }
-
-    .oz-location-copy {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .oz-location-title {
-      color: #0f172a;
-      font-size: 14px;
-      font-weight: 900;
-      line-height: 1.2;
-    }
-
-    .oz-location-sub {
-      margin-top: 3px;
-      color: #475569;
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.25;
-    }
-
-    .oz-location-status,
-    .oz-location-accuracy {
-      margin-top: 5px;
-      color: #64748b;
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1.2;
-    }
-
-    .oz-location-error {
-      display: none;
-      margin-top: 7px;
-      padding: 8px 9px;
-      border-radius: 12px;
-      color: #7f1d1d;
-      background: rgba(239, 68, 68, 0.10);
-      border: 1px solid rgba(239, 68, 68, 0.24);
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1.25;
-    }
-
-    .oz-location-error.show {
-      display: block;
-    }
-
-    .oz-location-btn {
-      flex: 0 0 auto;
-      min-height: 38px;
-      padding: 9px 12px;
-      border: 0;
-      border-radius: 999px;
-      color: #ffffff;
-      background: #2563eb;
-      font-size: 12px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 12px 22px rgba(37, 99, 235, 0.18);
-    }
-
-    .oz-location-btn:active {
-      transform: translateY(1px);
-    }
-
-    @media (max-width: 640px) {
-      .oz-location-card {
-        align-items: stretch;
-        flex-direction: column;
-        gap: 10px;
-        padding: 11px;
+    <style>
+      .oz-location-inline {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
       }
+
+      .oz-location-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .oz-location-icon {
+        width: 42px;
+        height: 42px;
+        flex: 0 0 auto;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: rgba(37, 99, 235, 0.10);
+        border: 1px solid rgba(37, 99, 235, 0.14);
+        font-size: 20px;
+      }
+
+      .oz-location-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .oz-location-title {
+        color: #0f172a;
+        font-size: 15px;
+        font-weight: 950;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+      }
+
+      .oz-location-sub {
+        margin-top: 4px;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 750;
+        line-height: 1.35;
+      }
+
+      .oz-location-meta {
+        margin-top: 9px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .oz-location-status,
+      .oz-location-accuracy {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        color: #334155;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .oz-location-message {
+        display: none;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        color: #7f1d1d;
+        background: rgba(239, 68, 68, 0.10);
+        border: 1px solid rgba(239, 68, 68, 0.22);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.35;
+      }
+
+      .oz-location-message.show {
+        display: block;
+      }
+
+      .oz-location-message.info {
+        color: #1e3a8a;
+        background: rgba(37, 99, 235, 0.09);
+        border-color: rgba(37, 99, 235, 0.18);
+        }
 
       .oz-location-btn {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
         width: 100%;
-      }
-    }
-  </style>
-
-<script>
-  (() => {
-    const latEl = document.getElementById("latitude");
-    const lonEl = document.getElementById("longitude");
-    const accEl = document.getElementById("locAccuracy");
-    const statusEl = document.getElementById("locStatus");
-    const errEl = document.getElementById("locError");
-    const btn = document.getElementById("btnUseLocation");
-
-    const GP_OPTS = {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 10000
-    };
-
-    const setStatus = (text) => {
-      if (statusEl) statusEl.textContent = text;
-    };
-
-    const setError = (message) => {
-      if (!errEl) return;
-
-      if (!message) {
-        errEl.classList.remove("show");
-        errEl.textContent = "";
-        return;
+        min-height: 48px;
+        margin-top: 14px;
+        padding: 12px 16px;
+        border: 0;
+        border-radius: 999px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        font-size: 14px;
+        font-weight: 750;
+        cursor: pointer;
+        box-shadow: 0 14px 28px rgba(37, 99, 235, 0.24);
+        transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
       }
 
-      errEl.textContent = message;
-      errEl.classList.add("show");
-    };
-
-    const fmt = (value) => Number(value).toFixed(6);
-
-    const setPosition = (lat, lon, accuracy) => {
-      if (latEl) latEl.value = fmt(lat);
-      if (lonEl) lonEl.value = fmt(lon);
-
-      if (accEl) {
-        accEl.textContent =
-          "Accuracy: ±" + (isFinite(accuracy) ? Math.round(accuracy) : "—") + " m";
+      .oz-location-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 34px rgba(37, 99, 235, 0.30);
       }
-    };
 
-    const isSecure = () =>
-      location.protocol === "https:" ||
-      ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+      .oz-location-btn:active {
+        transform: translateY(1px);
+      }
 
-    function getCookie(name) {
-      return document.cookie
-        .split("; ")
-        .find((row) => row.startsWith(name + "="))
-        ?.split("=")[1] || "";
-    }
+      .oz-location-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.82;
+      }
 
-    async function postLocation(lat, lon, accuracy) {
-      const response = await fetch("{% url 'offers:save_location' %}", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-          "X-Requested-With": "XMLHttpRequest"
-        },
-        body: JSON.stringify({
-          latitude: lat,
-          longitude: lon,
-          accuracy: isFinite(accuracy) ? accuracy : null,
-          source: "browser"
-        })
-      });
+      .loc-attention {
+        animation: locPulseGlow 1.8s ease-in-out infinite;
+      }
 
-      return response.ok;
-    }
+      .loc-attention::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(
+          120deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.28) 45%,
+          transparent 70%
+        );
+        transform: translateX(-120%);
+        animation: locShine 2.4s ease-in-out infinite;
+      }
 
-    function getOnce() {
-      return new Promise((resolve, reject) => {
-        if (!("geolocation" in navigator)) {
-          reject(new Error("Geolocation not supported."));
-          return;
+      @keyframes locPulseGlow {
+        0%, 100% {
+          box-shadow: 0 14px 28px rgba(37, 99, 235, 0.24);
         }
 
-        navigator.geolocation.getCurrentPosition(resolve, reject, GP_OPTS);
-      });
-    }
-
-    async function requestNow() {
-      setError("");
-      setStatus("Locating…");
-
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "Locating...";
+        50% {
+          box-shadow:
+            0 18px 38px rgba(37, 99, 235, 0.34),
+            0 0 0 5px rgba(37, 99, 235, 0.10);
+        }
       }
 
-      if (accEl) accEl.textContent = "Accuracy: —";
-
-      try {
-        if (!isSecure()) {
-          setError("Use https:// or localhost/127.0.0.1 for location access.");
+      @keyframes locShine {
+        0% {
+          transform: translateX(-120%);
         }
 
-        const position = await getOnce();
-        const { latitude, longitude, accuracy } = position.coords || {};
+        45%, 100% {
+          transform: translateX(120%);
+        }
+      }
 
-        if (!isFinite(latitude) || !isFinite(longitude)) {
-          setStatus("Idle");
-          setError("Could not read valid location.");
+      @media (max-width: 480px) {
+        .oz-location-inline {
+          margin-top: 14px;
+          padding-top: 13px;
+        }
 
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = "Use current location";
+        .oz-location-top {
+          gap: 10px;
+        }
+
+        .oz-location-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 14px;
+        }
+
+        .oz-location-title {
+          font-size: 14px;
+        }
+
+        .oz-location-sub {
+          font-size: 11.5px;
+        }
+
+        .oz-location-btn {
+          min-height: 46px;
+          font-size: 13px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .loc-attention,
+        .loc-attention::after {
+          animation: none;
+        }
+
+        .oz-location-btn {
+          transition: none;
+        }
+      }
+    </style>
+
+    <script>
+      (() => {
+        const latEl = document.getElementById("latitude");
+        const lonEl = document.getElementById("longitude");
+        const accEl = document.getElementById("locAccuracy");
+        const statusEl = document.getElementById("locStatus");
+        const errEl = document.getElementById("locError");
+        const btn = document.getElementById("btnUseLocation");
+
+        if (!btn) return;
+
+        const GP_OPTS = {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0
+        };
+
+        const setStatus = (text) => {
+          if (statusEl) statusEl.textContent = text;
+        };
+
+        const setMessage = (message, type = "error") => {
+          if (!errEl) return;
+
+          errEl.classList.remove("show", "info");
+          errEl.textContent = "";
+
+          if (!message) return;
+
+          errEl.textContent = message;
+          errEl.classList.add("show");
+
+          if (type === "info") {
+            errEl.classList.add("info");
+          }
+        };
+
+        const fmt = (value) => Number(value).toFixed(6);
+
+        const setPosition = (lat, lon, accuracy) => {
+          if (latEl) latEl.value = fmt(lat);
+          if (lonEl) lonEl.value = fmt(lon);
+
+          if (accEl) {
+            accEl.textContent =
+              "Accuracy: ±" + (Number.isFinite(accuracy) ? Math.round(accuracy) : "—") + " m";
+          }
+        };
+
+        const isSecure = () =>
+          location.protocol === "https:" ||
+          ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+
+        function getCookie(name) {
+          return document.cookie
+            .split("; ")
+            .find((row) => row.startsWith(name + "="))
+            ?.split("=")[1] || "";
+        }
+
+        async function postLocation(lat, lon, accuracy) {
+          const response = await fetch("{% url 'offers:save_location' %}", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken"),
+              "X-Requested-With": "XMLHttpRequest"
+            },
+            body: JSON.stringify({
+              latitude: lat,
+              longitude: lon,
+              accuracy: Number.isFinite(accuracy) ? accuracy : null,
+              source: "browser"
+            })
+          });
+
+          let data = null;
+
+          try {
+            data = await response.json();
+          } catch {
+            data = null;
           }
 
-          return;
-        }
-
-        setPosition(latitude, longitude, accuracy ?? NaN);
-
-        const saved = await postLocation(latitude, longitude, accuracy ?? null);
-
-        if (saved) {
-          setStatus("Location saved");
-          setError("");
-
-          if (btn) {
-            btn.disabled = true;
-            btn.textContent = "Location saved";
-          }
-        } else {
-          setStatus("Idle");
-          setError("Could not save location. Please try again.");
-
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = "Use current location";
-          }
-        }
-      } catch (error) {
-        setStatus("Idle");
-
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "Use current location";
-        }
-
-        const msg = String(error && (error.message || error)).toLowerCase();
-
-        if (msg.includes("permission") || msg.includes("denied")) {
-          setError("Permission denied. Chrome lock icon → Site settings → Location → Allow.");
-        } else if (msg.includes("secure origin")) {
-          setError("Blocked on this URL. Use https:// or localhost/127.0.0.1.");
-        } else if (msg.includes("position unavailable")) {
-          setError("Position unavailable. Turn ON device Location and try again.");
-        } else {
-          setError(error && error.message ? error.message : "Could not get location.");
-        }
-      }
-    }
-
-    async function init() {
-      setStatus("Ready");
-
-      try {
-        if ("permissions" in navigator && navigator.permissions.query) {
-          const permission = await navigator.permissions.query({ name: "geolocation" });
-
-          if (permission.state === "granted") {
-            setStatus("Location permission allowed");
-            setError("Click “Use current location” to update nearby branches.");
-          } else if (permission.state === "prompt") {
-            setStatus("Waiting for permission");
-            setError("Click “Use current location” to allow access.");
-          } else {
-            setStatus("Blocked");
-            setError("Location is blocked. Chrome lock icon → Site settings → Location → Allow.");
+          if (!response.ok || (data && data.ok === false)) {
+            throw new Error(
+              (data && data.error) || "Could not save location. Please try again."
+            );
           }
 
-          permission.onchange = () => {
-            if (permission.state === "granted") {
-              setStatus("Location permission allowed");
-              setError("Click “Use current location” to update nearby branches.");
-            } else if (permission.state === "prompt") {
-              setStatus("Waiting for permission");
-              setError("Click “Use current location” to allow access.");
-            } else {
-              setStatus("Blocked");
-              setError("Location is blocked. Chrome lock icon → Site settings → Location → Allow.");
+          return true;
+        }
+        function getOnce() {
+          return new Promise((resolve, reject) => {
+            if (!("geolocation" in navigator)) {
+              reject(new Error("Geolocation not supported."));
+              return;
             }
-          };
+
+            navigator.geolocation.getCurrentPosition(resolve, reject, GP_OPTS);
+          });
         }
-      } catch {}
-    }
 
-    btn?.addEventListener("click", requestNow);
-    init();
-  })();
-</script>
+        function setButtonLoading(isLoading) {
+          btn.disabled = isLoading;
+          btn.textContent = isLoading ? "Locating..." : "Use current location";
+        }
 
+        function setButtonCooldown(seconds = 5) {
+          let left = seconds;
+
+          btn.disabled = true;
+          btn.textContent = `Try again in ${left}s`;
+
+          const timer = setInterval(() => {
+            left -= 1;
+
+            if (left <= 0) {
+              clearInterval(timer);
+              btn.disabled = false;
+              btn.textContent = "Use current location";
+              return;
+            }
+
+            btn.textContent = `Try again in ${left}s`;
+          }, 1000);
+        }
+
+        async function requestNow() {
+          setMessage("");
+          setStatus("Locating…");
+          setButtonLoading(true);
+
+          if (accEl) accEl.textContent = "Accuracy: —";
+
+          try {
+            if (!isSecure()) {
+              throw new Error("Use https:// or localhost/127.0.0.1 for location access.");
+            }
+
+            const position = await getOnce();
+            const { latitude, longitude, accuracy } = position.coords || {};
+
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+              throw new Error("Could not read valid location.");
+            }
+
+            setPosition(latitude, longitude, accuracy ?? NaN);
+
+            const saved = await postLocation(latitude, longitude, accuracy ?? null);
+
+            if (!saved) {
+              throw new Error("Could not save location. Please try again.");
+            }
+
+            setStatus("Location saved");
+            setMessage("Nearby branches can now use your latest location.", "info");
+
+            btn.disabled = false;
+            btn.textContent = "Update location";
+            btn.classList.remove("loc-attention");
+
+            window.dispatchEvent(
+              new CustomEvent("oz:location-saved", {
+                detail: { latitude, longitude, accuracy: accuracy ?? null }
+              })
+            );
+          } catch (error) {
+            setStatus("Ready");
+
+            const rawMessage = error && error.message ? error.message : "Could not get location.";
+            const msg = String(rawMessage).toLowerCase();
+
+            if (msg.includes("permission") || msg.includes("denied")) {
+              setButtonLoading(false);
+              setMessage("Permission denied. Chrome lock icon → Site settings → Location → Allow.");
+            } else if (msg.includes("secure origin") || msg.includes("https")) {
+              setButtonLoading(false);
+              setMessage("Blocked on this URL. Use https:// or localhost/127.0.0.1.");
+            } else if (
+              msg.includes("accuracy is too low") ||
+              msg.includes("position unavailable") ||
+              msg.includes("gps")
+            ) {
+              setStatus("Low accuracy");
+              setMessage(rawMessage);
+              setButtonCooldown(5);
+            } else {
+              setStatus("Ready");
+              setMessage(rawMessage);
+              setButtonCooldown(5);
+            }
+          }
+        }
+
+        async function init() {
+          setStatus("Ready");
+
+          try {
+            if ("permissions" in navigator && navigator.permissions.query) {
+              const permission = await navigator.permissions.query({ name: "geolocation" });
+
+              const syncPermission = () => {
+                if (permission.state === "granted") {
+                  setStatus("Allowed");
+                  setMessage("Click “Use current location” to update nearby branches.", "info");
+                } else if (permission.state === "prompt") {
+                  setStatus("Permission needed");
+                  setMessage("Click “Use current location” to allow access.", "info");
+                } else {
+                  setStatus("Blocked");
+                  setMessage("Location is blocked. Chrome lock icon → Site settings → Location → Allow.");
+                }
+              };
+
+              syncPermission();
+              permission.onchange = syncPermission;
+            }
+          } catch {}
+        }
+
+        btn.addEventListener("click", requestNow);
+        init();
+      })();
+    </script>
   {% endif %}

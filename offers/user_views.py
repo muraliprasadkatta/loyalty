@@ -135,6 +135,30 @@ def save_location(request):
     except (TypeError, ValueError):
         acc_f = None
 
+    if acc_f is None:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": "Could not verify location accuracy. Please turn on GPS and try again.",
+                "max_accuracy_m": MAX_LOCATION_ACCURACY_M,
+            },
+            status=400,
+        )
+    
+    if acc_f >= MAX_LOCATION_ACCURACY_M:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": (
+                    f"Location accuracy is too low: ±{round(acc_f)}m. "
+                    "Please turn on GPS / move near a window and try again."
+                ),
+                "accuracy_m": acc_f,
+                "max_accuracy_m": MAX_LOCATION_ACCURACY_M,
+            },
+            status=400,
+        )
+
     # 1) Save history row
     row = UserLocationPing.objects.create(
         user=request.user,
@@ -279,12 +303,14 @@ def user_home_page(request):
 
             "client_ip": client_ip,
             "oz_already_claimed_today": already_claimed_today,
+            "has_user_location": branch_card_data["has_user_location"],
         },
     )
 
 
 
 NEARBY_RADIUS_KM = 50
+MAX_LOCATION_ACCURACY_M = 500
 
 
 def get_bounding_box(lat, lon, radius_km):
@@ -333,7 +359,7 @@ def get_latest_user_location(user):
     ping = (
         UserLocationPing.objects
         .filter(user=user)
-        .only("latitude", "longitude", "created_at")
+        .only("latitude", "longitude", "accuracy_m", "created_at")
         .order_by("-created_at")
         .first()
     )
@@ -342,6 +368,12 @@ def get_latest_user_location(user):
         return None
 
     if ping.latitude is None or ping.longitude is None:
+        return None
+
+    if ping.accuracy_m is None:
+        return None
+
+    if ping.accuracy_m >= MAX_LOCATION_ACCURACY_M:
         return None
 
     return float(ping.latitude), float(ping.longitude)
@@ -536,6 +568,7 @@ def get_home_branch_list_card_data(limit=12, offset=0, q="", location="", user=N
         "is_nearby_mode": is_nearby_mode,
         "nearby_radius_km": NEARBY_RADIUS_KM,
         "nearby_error": nearby_error,
+        "has_user_location": bool(user_coords)
     }
 
 
@@ -571,7 +604,10 @@ def user_all_branches_view(request):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         html = render_to_string(
             "user_interface/user_homepage/partials/all_branch_card_append.html",
-            {"branches": branches},
+            {
+                "branches": branches,
+                "has_user_location": branch_card_data["has_user_location"],
+            },
             request=request,
         )
 
@@ -600,6 +636,8 @@ def user_all_branches_view(request):
             "is_nearby_mode": branch_card_data["is_nearby_mode"],
             "nearby_radius_km": branch_card_data["nearby_radius_km"],
             "nearby_error": branch_card_data["nearby_error"],
+            "has_user_location": branch_card_data["has_user_location"],
+
         },
     )
 

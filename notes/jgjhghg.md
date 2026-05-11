@@ -161,26 +161,6 @@ header .right a {
 }
 
 
-.header-action {
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 12px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  color: rgba(232, 236, 255, 0.92);
-  font-weight: 800;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.header-action--pill {
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
 /* =========================
    BUTTONS
 ========================= */
@@ -373,8 +353,8 @@ header .right a {
 ========================= */
 .scan-hero-shell {
   position: sticky;
-  top: var(--scan-sticky-top, var(--oz-header-height, 0px));
-  z-index: 60; /* header z-index 30 kanna high */
+  top: var(--oz-header-height, 0px); /* header kindha exact 0 gap */
+  z-index: 20;
   margin-top: 0;
   margin-bottom: 10px;
 }
@@ -725,15 +705,10 @@ footer.nav {
     <div class="brand">OfferZone</div>
     <div class="right">
       {% if request.user.is_authenticated %}
-        <a class="header-action" href="{% url 'offers:user_status' %}" data-requires-network="1">
-          Status
-        </a>
+        <!-- <a class="btn outline" href="{% url 'offers:user_status' %}" data-requires-network="1">Profile</a> -->
+        <a href="{% url 'offers:user_status' %}" data-requires-network="1">Status</a>
       {% else %}
-        <a class="header-action header-action--pill"
-          href="{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}"
-          data-requires-network="1">
-          Login
-        </a>
+        <a class="btn outline" href="{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}" data-requires-network="1">Login</a>
       {% endif %}
     </div>
   </header>
@@ -801,12 +776,12 @@ footer.nav {
     if (!shell || !scanHero) return;
 
     const MORPH_DISTANCE = 220;      // bigger = slower height compress
-    const MIN_HEIGHT = 48;           // final thin banner height
+    const MIN_HEIGHT = 64;           // final thin banner height
     const HEADER_GAP = 0;            // header ki gap kavali ante 6/8 pettu
 
     const WIDTH_START_AT = 0.50;     // height half compress ayyaka width start
-    const MIN_WIDTH_RATIO = 0.38;    // final width = 68% of original width
-    const MIN_WIDTH_PX = 190;        // too small avvakunda safety
+    const MIN_WIDTH_RATIO = 0.68;    // final width = 68% of original width
+    const MIN_WIDTH_PX = 260;        // too small avvakunda safety
 
     let base = null;
     let ticking = false;
@@ -907,11 +882,6 @@ footer.nav {
       if (rawProgress <= 0) {
         resetInlineStyles(true);
 
-        document.documentElement.style.setProperty(
-          "--scan-sticky-top",
-          `${headerHeight}px`
-        );
-
         shell.style.height = `${base.height}px`;
         shell.style.minHeight = `${base.height}px`;
 
@@ -928,13 +898,6 @@ footer.nav {
         (rawProgress - WIDTH_START_AT) / (1 - WIDTH_START_AT),
         0,
         1
-      );
-
-      const currentStickyTop = lerp(headerHeight, 0, widthProgress).toFixed(2);
-
-      document.documentElement.style.setProperty(
-        "--scan-sticky-top",
-        `${currentStickyTop}px`
       );
 
       const minWidth = Math.min(

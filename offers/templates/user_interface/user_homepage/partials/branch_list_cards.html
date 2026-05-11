@@ -11,9 +11,13 @@
   </div>
 
   {% if branch_count %}
-    <div class="br-grid">
-      {% include "user_interface/user_homepage/partials/all_branch_card_append.html" with branches=branches %}
-    </div>
+  <div
+    class="br-grid"
+    id="homeBranchGrid"
+    data-refresh-url="{% url 'offers:user_all_branches' %}"
+  >
+    {% include "user_interface/user_homepage/partials/all_branch_card_append.html" with branches=branches has_user_location=has_user_location %}
+  </div>
   {% else %}
     <div class="msg">No branches yet.</div>
   {% endif %}

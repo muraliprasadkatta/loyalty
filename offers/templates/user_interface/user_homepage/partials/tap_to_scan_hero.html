@@ -1,44 +1,58 @@
+{% load static %}
+
 <!-- Tap to Scan -->
-<div
-  class="scan-hero oz-inline-loading"
-  id="tapToScan"
-  role="button"
-  tabindex="0"
-  aria-label="Tap to scan branch QR"
-  data-authenticated="{% if request.user.is_authenticated %}1{% else %}0{% endif %}"
-  data-login-url="{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}"
-  data-requires-network="1"
->
-  <div class="scan-hero__corners">
-    <span class="scan-hero__corner tl"></span>
-    <span class="scan-hero__corner tr"></span>
-    <span class="scan-hero__corner bl"></span>
-    <span class="scan-hero__corner br"></span>
-  </div>
-
-  <div class="scan-hero__inner">
-    <div class="oz-inline-loading__content">
-      <div class="scan-hero__qr">
-        <span class="qr-ic">
-          <svg viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="3" width="7" height="7" rx="1.6" stroke="white" stroke-width="2"/>
-            <rect x="14" y="3" width="7" height="7" rx="1.6" stroke="white" stroke-width="2"/>
-            <rect x="3" y="14" width="7" height="7" rx="1.6" stroke="white" stroke-width="2"/>
-            <path d="M14 14h3v3h-3v-3Zm5 0h2v5h-2v-5Zm-5 5h5v2h-5v-2Z" fill="white"/>
-          </svg>
-        </span>
-      </div>
-
-      <div class="scan-hero__text">Tap to scan</div>
-      <div class="scan-hero__sub">Scan counter QR to open branch offers</div>
+<div class="scan-hero-shell" id="scanHeroShell">
+  <div
+    class="scan-hero oz-inline-loading"
+    id="tapToScan"
+    role="button"
+    tabindex="0"
+    aria-label="Tap to scan branch QR"
+    data-authenticated="{% if request.user.is_authenticated %}1{% else %}0{% endif %}"
+    data-login-url="{% url 'offers:user_login' %}?next={% url 'offers:user_home' %}"
+    data-requires-network="1"
+  >
+    <div class="scan-hero__corners">
+      <span class="scan-hero__corner tl"></span>
+      <span class="scan-hero__corner tr"></span>
+      <span class="scan-hero__corner bl"></span>
+      <span class="scan-hero__corner br"></span>
     </div>
 
-    <div class="oz-inline-loading__state" hidden>
-      {% include "ui_states/spinners/inline_loading.html" %}
-      <span class="oz-inline-loading__text">Opening...</span>
+    <div class="scan-hero__art" aria-hidden="true">
+      <img
+        src="{% static 'offers/user_homepage/top_image/customer_and_staff.webp' %}"
+        alt=""
+        loading="eager"
+        decoding="async"
+      >
+    </div>
+
+    <div class="scan-hero__inner">
+      <div class="oz-inline-loading__content">
+        <div class="scan-hero__qr">
+          <span class="qr-ic">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="7" height="7" rx="1.6" stroke="white" stroke-width="2"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.6" stroke="white" stroke-width="2"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.6" stroke="white" stroke-width="2"/>
+              <path d="M14 14h3v3h-3v-3Zm5 0h2v5h-2v-5Zm-5 5h5v2h-5v-2Z" fill="white"/>
+            </svg>
+          </span>
+        </div>
+
+        <div class="scan-hero__text">Tap to scan</div>
+        <div class="scan-hero__sub">Scan counter QR to open branch offers</div>
+      </div>
+
+      <div class="oz-inline-loading__state" hidden>
+        {% include "ui_states/spinners/inline_loading.html" %}
+        <span class="oz-inline-loading__text">Opening...</span>
+      </div>
     </div>
   </div>
 </div>
+<!-- 👆 idhe important: shell closing div -->
 
 <div id="scanInlineMsg" class="msg scan-inline-error" style="display:none; margin-top:12px"></div>
 
