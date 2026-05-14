@@ -104,23 +104,39 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: clamp(6px, 2vw, 12px);
 
-  padding: 14px 18px;
+  min-width: 0;
+  padding:
+    clamp(10px, 3.2vw, 14px)
+    clamp(10px, 4vw, 18px);
+
   background: linear-gradient(180deg, var(--hdr) 0%, var(--hdr2) 100%);
   border-bottom: 1px solid var(--hdrBorder);
   box-shadow: 0 10px 26px rgba(15, 23, 42, 0.20);
 }
 
 header .brand {
+  min-width: 0;
+  max-width: clamp(72px, 25vw, 126px);
+
   color: var(--hdrText);
+  font-size: clamp(13px, 4vw, 16px);
   font-weight: 800;
-  letter-spacing: 0.3px;
+  letter-spacing: clamp(0px, 0.08vw, 0.3px);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 header .right {
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: clamp(6px, 2vw, 12px);
+  flex-shrink: 0;
 }
 
 header .right a {
@@ -162,15 +178,16 @@ header .right a {
 
 
 .header-action {
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 12px;
+  min-height: clamp(30px, 8vw, 36px);
+  padding: 0 clamp(8px, 2.8vw, 12px);
+  border-radius: clamp(9px, 3vw, 12px);
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   color: rgba(232, 236, 255, 0.92);
+  font-size: clamp(12px, 3.7vw, 14px);
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
@@ -429,8 +446,10 @@ header .right a {
   display: grid;
   place-items: center;
 
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+background: var(--scan-qr-bg, rgba(255, 255, 255, 0.14));
+box-shadow:
+  inset 0 0 0 var(--scan-qr-border-size, 1px) var(--scan-qr-border, rgba(255, 255, 255, 0.25)),
+  0 0 var(--scan-qr-glow-size, 0px) var(--scan-qr-glow, rgba(191, 224, 255, 0));
 }
 
 .qr-ic {
@@ -480,9 +499,9 @@ header .right a {
   content: "";
   position: absolute;
   inset: 0;
-  padding: 10px;
-  border-radius: 14px;
-  border: 2px dashed rgba(255, 255, 255, 0.35);
+  padding: var(--scan-dash-padding, 10px);
+  border-radius: var(--scan-dash-radius, 14px);
+  border: var(--scan-dash-size, 2px) dashed var(--scan-dash-color, rgba(255, 255, 255, 0.35));
 
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -493,45 +512,48 @@ header .right a {
 
 .scan-hero__corner {
   position: absolute;
-  width: 34px;
-  height: 34px;
-  border: 4px solid #bfe0ff;
-  border-radius: 10px;
+  width: var(--scan-corner-size, 34px);
+  height: var(--scan-corner-size, 34px);
+  border: var(--scan-corner-border-size, 4px) solid var(--scan-corner-color, #bfe0ff);
+  filter: drop-shadow(0 0 var(--scan-corner-glow-size, 0px) var(--scan-corner-glow, rgba(191, 224, 255, 0)));
+  border-radius: var(--scan-corner-radius, 10px);
   opacity: var(--scan-corners-opacity, 1);
 }
 
 .scan-hero__corner.tl {
-  top: 18px;
-  left: 18px;
+  top: var(--scan-corner-offset, 18px);
+  left: var(--scan-corner-offset, 18px);
   border-right: none;
   border-bottom: none;
 }
 
 .scan-hero__corner.tr {
-  top: 18px;
-  right: 18px;
+  top: var(--scan-corner-offset, 18px);
+  right: var(--scan-corner-offset, 18px);
   border-left: none;
   border-bottom: none;
 }
 
 .scan-hero__corner.bl {
-  bottom: 18px;
-  left: 18px;
+  bottom: var(--scan-corner-offset, 18px);
+  left: var(--scan-corner-offset, 18px);
   border-right: none;
   border-top: none;
 }
 
 .scan-hero__corner.br {
-  right: 18px;
-  bottom: 18px;
+  right: var(--scan-corner-offset, 18px);
+  bottom: var(--scan-corner-offset, 18px);
   border-left: none;
   border-top: none;
 }
 
+
 .qr-ic svg {
   width: 100%;
   height: 100%;
-  opacity: 0.95;
+  opacity: var(--scan-icon-opacity, 0.95);
+  filter: drop-shadow(0 0 var(--scan-icon-glow-size, 0px) var(--scan-icon-glow, rgba(255,255,255,0)));
 }
 
 .scan-inline-error {
@@ -650,6 +672,27 @@ footer.nav {
 /* =========================
    RESPONSIVE
 ========================= */
+
+@media (max-width: 380px) {
+  header {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  header .brand {
+    max-width: 74px;
+    font-size: 12.5px;
+    letter-spacing: 0;
+  }
+
+  .header-action {
+    min-height: 30px;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 12px;
+  }
+}
+
 
 @media (min-width: 740px) {
   .grid {
@@ -800,13 +843,72 @@ footer.nav {
 
     if (!shell || !scanHero) return;
 
-    const MORPH_DISTANCE = 220;      // bigger = slower height compress
-    const MIN_HEIGHT = 48;           // final thin banner height
-    const HEADER_GAP = 0;            // header ki gap kavali ante 6/8 pettu
+    const MORPH_DISTANCE = 220;
+    const HEADER_GAP = 0;
 
-    const WIDTH_START_AT = 0.50;     // height half compress ayyaka width start
-    const MIN_WIDTH_RATIO = 0.38;    // final width = 68% of original width
-    const MIN_WIDTH_PX = 190;        // too small avvakunda safety
+    const WIDTH_START_AT = 0.50;
+
+    function getStickyScannerConfig() {
+      const vw = window.innerWidth;
+
+      if (vw <= 360) {
+        return {
+          minHeight: 44,
+          minWidthRatio: 0.44,
+          minWidthPx: 170,
+          finalPadding: 6,
+          finalRadius: 16,
+          finalQrSize: 34,
+          finalIconSize: 20
+        };
+      }
+
+      if (vw <= 480) {
+        return {
+          minHeight: 48,
+          minWidthRatio: 0.38,
+          minWidthPx: 190,
+          finalPadding: 8,
+          finalRadius: 18,
+          finalQrSize: 36,
+          finalIconSize: 21
+        };
+      }
+
+      if (vw <= 767) {
+        return {
+          minHeight: 52,
+          minWidthRatio: 0.42,
+          minWidthPx: 220,
+          finalPadding: 8,
+          finalRadius: 18,
+          finalQrSize: 40,
+          finalIconSize: 23
+        };
+      }
+
+      if (vw <= 1100) {
+        return {
+          minHeight: 56,
+          minWidthRatio: 0.48,
+          minWidthPx: 280,
+          finalPadding: 8,
+          finalRadius: 18,
+          finalQrSize: 42,
+          finalIconSize: 24
+        };
+      }
+
+      return {
+        minHeight: 60,
+        minWidthRatio: 0.52,
+        minWidthPx: 340,
+        finalPadding: 9,
+        finalRadius: 18,
+        finalQrSize: 44,
+        finalIconSize: 25
+      };
+    }
 
     let base = null;
     let ticking = false;
@@ -864,6 +966,27 @@ footer.nav {
       scanHero.style.removeProperty("--scan-corners-opacity");
       scanHero.style.removeProperty("--scan-dash-opacity");
       scanHero.style.removeProperty("--scan-content-scale");
+
+      scanHero.style.removeProperty("--scan-qr-bg");
+      scanHero.style.removeProperty("--scan-qr-border");
+      scanHero.style.removeProperty("--scan-qr-border-size");
+      scanHero.style.removeProperty("--scan-qr-glow-size");
+      scanHero.style.removeProperty("--scan-qr-glow");
+      scanHero.style.removeProperty("--scan-dash-color");
+      scanHero.style.removeProperty("--scan-corner-color");
+      scanHero.style.removeProperty("--scan-corner-glow-size");
+      scanHero.style.removeProperty("--scan-corner-glow");
+      scanHero.style.removeProperty("--scan-icon-opacity");
+      scanHero.style.removeProperty("--scan-icon-glow-size");
+      scanHero.style.removeProperty("--scan-icon-glow");
+
+      scanHero.style.removeProperty("--scan-corner-size");
+      scanHero.style.removeProperty("--scan-corner-offset");
+      scanHero.style.removeProperty("--scan-corner-radius");
+      scanHero.style.removeProperty("--scan-corner-border-size");
+      scanHero.style.removeProperty("--scan-dash-padding");
+      scanHero.style.removeProperty("--scan-dash-radius");
+
     }
 
     function measureBase() {
@@ -920,17 +1043,31 @@ footer.nav {
       }
 
       const progress = rawProgress; // smooth easing remove - scroll direct response
+      const scannerCfg = getStickyScannerConfig();
 
-      const currentHeight = lerp(base.height, MIN_HEIGHT, progress).toFixed(2);
-      const currentPadding = lerp(18, 8, progress).toFixed(2);
-      const currentRadius = lerp(22, 18, progress).toFixed(2);
+      const currentHeightNum = lerp(base.height, scannerCfg.minHeight, progress);
+
+      const currentHeight = currentHeightNum.toFixed(2);
+      const currentPadding = lerp(18, scannerCfg.finalPadding, progress).toFixed(2);
+      const currentRadius = lerp(22, scannerCfg.finalRadius, progress).toFixed(2);
+
+
       const widthProgress = clamp(
         (rawProgress - WIDTH_START_AT) / (1 - WIDTH_START_AT),
         0,
         1
       );
 
-      const currentStickyTop = lerp(headerHeight, 0, widthProgress).toFixed(2);
+      const finalStickyTop = Math.max(
+        0,
+        (headerHeight - currentHeightNum) / 2
+      );
+
+      const currentStickyTop = lerp(
+        headerHeight,
+        finalStickyTop,
+        widthProgress
+      ).toFixed(2);
 
       document.documentElement.style.setProperty(
         "--scan-sticky-top",
@@ -939,19 +1076,103 @@ footer.nav {
 
       const minWidth = Math.min(
         base.width,
-        Math.max(MIN_WIDTH_PX, base.width * MIN_WIDTH_RATIO)
+        Math.max(scannerCfg.minWidthPx, base.width * scannerCfg.minWidthRatio)
       );
 
       const currentWidth = lerp(base.width, minWidth, widthProgress).toFixed(2);
-
-      const qrSize = lerp(88, 42, progress).toFixed(2);
-      const iconSize = lerp(34, 24, progress).toFixed(2);
+      const qrSize = lerp(88, scannerCfg.finalQrSize, progress).toFixed(2);
+      const iconSize = lerp(34, scannerCfg.finalIconSize, progress).toFixed(2);
       const contentScale = lerp(1, 0.72, progress).toFixed(3);
+
+      const cornerSize = lerp(34, 18, progress).toFixed(2);
+      const cornerOffset = lerp(18, 6, progress).toFixed(2);
+      const cornerRadius = lerp(10, 7, progress).toFixed(2);
+      const cornerBorderSize = lerp(4, 2, progress).toFixed(2);
+
+      const dashPadding = lerp(10, 4, progress).toFixed(2);
+      const dashRadius = lerp(14, 8, progress).toFixed(2);
 
       const textOpacity = clamp(1 - rawProgress * 1.15, 0.18, 1);
       const subOpacity = clamp(0.92 - rawProgress * 1.8, 0, 0.92);
-      const cornersOpacity = clamp(1 - rawProgress * 0.8, 0.35, 1);
-      const dashOpacity = clamp(1 - rawProgress * 1.2, 0, 1);
+
+      /*
+      Small sticky scanner mode lo border/icon/corners fade avvakudadhu.
+      Width compress start ayyaka scanner indicators stronger avvali.
+      */
+      const highlightProgress = widthProgress;
+
+      const cornersOpacity = lerp(0.75, 1, highlightProgress).toFixed(3);
+      const dashOpacity = lerp(0.55, 1, highlightProgress).toFixed(3);
+
+      scanHero.style.setProperty(
+        "--scan-qr-bg",
+        `rgba(255, 255, 255, ${lerp(0.14, 0.24, highlightProgress).toFixed(3)})`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-qr-border",
+        `rgba(255, 255, 255, ${lerp(0.25, 0.78, highlightProgress).toFixed(3)})`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-qr-border-size",
+        `${lerp(1, 1.8, highlightProgress).toFixed(2)}px`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-qr-glow-size",
+        `${lerp(0, 12, highlightProgress).toFixed(2)}px`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-qr-glow",
+        `rgba(191, 224, 255, ${lerp(0, 0.42, highlightProgress).toFixed(3)})`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-dash-color",
+        `rgba(255, 255, 255, ${lerp(0.35, 0.90, highlightProgress).toFixed(3)})`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-corner-color",
+        `rgba(219, 240, 255, ${lerp(0.85, 1, highlightProgress).toFixed(3)})`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-corner-glow-size",
+        `${lerp(0, 10, highlightProgress).toFixed(2)}px`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-corner-glow",
+        `rgba(191, 224, 255, ${lerp(0, 0.55, highlightProgress).toFixed(3)})`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-icon-opacity",
+        lerp(0.95, 1, highlightProgress).toFixed(3)
+      );
+
+      scanHero.style.setProperty(
+        "--scan-icon-glow-size",
+        `${lerp(0, 7, highlightProgress).toFixed(2)}px`
+      );
+
+      scanHero.style.setProperty(
+        "--scan-icon-glow",
+        `rgba(255, 255, 255, ${lerp(0, 0.65, highlightProgress).toFixed(3)})`
+      );
+
+      scanHero.style.setProperty("--scan-corner-size", `${cornerSize}px`);
+      scanHero.style.setProperty("--scan-corner-offset", `${cornerOffset}px`);
+      scanHero.style.setProperty("--scan-corner-radius", `${cornerRadius}px`);
+      scanHero.style.setProperty("--scan-corner-border-size", `${cornerBorderSize}px`);
+
+      scanHero.style.setProperty("--scan-dash-padding", `${dashPadding}px`);
+      scanHero.style.setProperty("--scan-dash-radius", `${dashRadius}px`);
+
+
 
       scanHero.classList.add("scan-hero--morphing");
 

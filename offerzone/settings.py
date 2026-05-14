@@ -129,13 +129,42 @@ WSGI_APPLICATION = "offerzone.wsgi.application"
 # -------------------------------------------------------------------
 # DATABASE (SQLite for local, Postgres etc. for deploy)
 # -------------------------------------------------------------------
-DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-    )
-}
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+#         conn_max_age=600,
+#     )
+# }
 
+
+# -------------------------------------------------------------------
+# DATABASE (SQLite for local, Postgres etc. for deploy)
+# -------------------------------------------------------------------
+DB_NAME = os.getenv("DB_NAME", "").strip()
+
+if DB_NAME:
+    # Local dev/loadtest lo DB_NAME set chesthe ee PostgreSQL DB use avuthundhi
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": DB_NAME,
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+            "CONN_MAX_AGE": 600,
+        }
+    }
+else:
+    # DB_NAME lekapothe old behavior same:
+    # .env lo DATABASE_URL unte PostgreSQL use avuthundhi,
+    # DATABASE_URL lekapothe SQLite fallback.
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+            conn_max_age=600,
+        )
+    }
 
 # -------------------------------------------------------------------
 # AUTH / PASSWORDS
