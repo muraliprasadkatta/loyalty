@@ -118,6 +118,15 @@ class YashPin(models.Model):
     # store only hash (no raw pin)
     pin_hash = models.CharField(max_length=128, db_index=True)
 
+    # Fast secure lookup for manual PIN verification.
+    # Stores HMAC/fingerprint of normalized PIN, not raw PIN.
+    pin_lookup = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(db_index=True)
 
@@ -146,6 +155,7 @@ class YashPin(models.Model):
             models.Index(fields=["branch", "created_at"]),
             models.Index(fields=["expires_at", "used"]),
             models.Index(fields=["pin_hash", "expires_at"]),
+            models.Index(fields=["pin_lookup", "used", "expires_at"]),
         ]
 
     def is_expired(self, now=None) -> bool:

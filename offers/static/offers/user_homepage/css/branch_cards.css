@@ -461,21 +461,81 @@
   }
 }
 
+/* =========================
+   Fluid auto-compress for very small mobile widths
+   No separate 295px breakpoint needed
+========================= */
+
 @media (max-width: 480px) {
   .card.card-branches {
-    padding: 12px;
+    padding: clamp(9px, 3.2vw, 12px);
+    border-radius: clamp(16px, 5vw, 20px);
+  }
+
+  .br-grid {
+    gap: clamp(7px, 2.4vw, 10px);
   }
 
   .card-branches .branch-tile,
   .card-branches .branch-offer-card {
-    min-height: 128px;
+    min-height: clamp(108px, 38vw, 128px);
+    padding: clamp(7px, 2.6vw, 11px);
+    gap: clamp(5px, 1.8vw, 7px);
+    border-radius: clamp(14px, 4.8vw, 18px);
+  }
+
+  .branch-offer-card .br-toprow {
+    gap: clamp(4px, 1.5vw, 6px);
+    min-height: clamp(18px, 5.8vw, 22px);
+  }
+
+  .br-location-title {
+    gap: clamp(2px, 1vw, 4px);
+  }
+
+  .br-location-title span {
+    font-size: clamp(9px, 3vw, 12px);
+  }
+
+  .br-location-title strong {
+    font-size: clamp(8px, 2.8vw, 10px);
+    line-height: 1.1;
+  }
+
+  .br-pill {
+    max-width: clamp(54px, 20vw, 72px);
+    padding: clamp(3px, 1.1vw, 4px) clamp(5px, 1.8vw, 7px);
+    font-size: clamp(5.8px, 2vw, 7px);
+    letter-spacing: 0;
   }
 
   .br-card-body {
-    gap: 5px;
+    gap: clamp(4px, 1.6vw, 7px);
+  }
+
+  .br-offer-copy {
+    padding-top: clamp(0px, 0.8vw, 2px);
+  }
+
+  .br-offer-title {
+    font-size: clamp(11.5px, 4vw, 15px);
+    line-height: 1.1;
+  }
+
+  .br-distance {
+    margin-top: clamp(2px, 1vw, 4px);
+    font-size: clamp(6.8px, 2.4vw, 8.5px);
+  }
+
+  .br-offer-box {
+    --offer-box-size: clamp(38px, 14vw, 55px);
+    border-radius: clamp(9px, 3vw, 12px);
   }
 
   .br-offer-date {
-    font-size: 8.5px;
+    gap: clamp(3px, 1.2vw, 5px);
+    font-size: clamp(6.8px, 2.35vw, 8.5px);
+    line-height: 1.15;
   }
 }
+

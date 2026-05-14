@@ -16,6 +16,7 @@ from django.contrib.auth.hashers import make_password
 
 from offers.models import Branch, QRToken, YashPin, BranchStaff
 from offers.services.qr.qr_token_utils import mint_qr_token, parse_qr_token
+from offers.services.qr.qr_pin_lookup import make_qr_pin_lookup
 
 
 # ========= code helpers =========
@@ -27,6 +28,28 @@ CODE_LEN = 4
 def _gen_qr_fallback_code() -> str:
     return "".join(choice(CODE_CHARS) for _ in range(CODE_LEN))
 
+
+def _gen_unique_qr_fallback_pin(*, now_ts, max_attempts=30):
+    """
+    Generate active-global-unique manual QR PIN.
+
+    Same active PIN multiple branches lo raakudadhu.
+    Raw PIN DB lo store cheyyamu; pin_lookup HMAC fingerprint tho check chestham.
+    """
+    for _ in range(max_attempts):
+        pin = _gen_qr_fallback_code()
+        pin_lookup = make_qr_pin_lookup(pin)
+
+        already_active = YashPin.objects.filter(
+            pin_lookup=pin_lookup,
+            used=False,
+            expires_at__gt=now_ts,
+        ).exists()
+
+        if not already_active:
+            return pin, pin_lookup
+
+    raise RuntimeError("Could not generate a unique active manual QR PIN.")
 
 # ========= low-level helpers =========
 
@@ -85,6 +108,7 @@ def QRTokenYashPindataSave(
     desk,
     token,
     pin_hash,
+    pin_lookup,
     expires_at,
     staff_name="",
     staff_code="",
@@ -109,6 +133,7 @@ def QRTokenYashPindataSave(
         desk=desk,
         qr_token=qt,
         pin_hash=pin_hash,
+        pin_lookup=pin_lookup,
         expires_at=expires_at,
         used=False,
         staff_name=staff_name,
@@ -195,7 +220,8 @@ def start_counter_qr(request):
     desk = (request.GET.get("desk") or "A1")[:12]
 
     expires_in = int(getattr(settings, "QR_TTL_SECS", 180))
-    expires_at = timezone.now() + timedelta(seconds=expires_in)
+    now_ts = timezone.now()
+    expires_at = now_ts + timedelta(seconds=expires_in)
 
     # Mint signed token.
     token = mint_qr_token(branch.id, desk, expires_in)
@@ -204,8 +230,15 @@ def start_counter_qr(request):
         reverse("qrgen:redeem_land", args=[token])
     )
 
-    # Fallback PIN.
-    pin = _gen_qr_fallback_code()
+    # Fallback manual PIN.
+    try:
+        pin, pin_lookup = _gen_unique_qr_fallback_pin(now_ts=now_ts)
+    except RuntimeError:
+        return JsonResponse(
+            {"ok": False, "error": "Could not generate a unique PIN. Please try again."},
+            status=503,
+        )
+
     pin_hash = make_password(pin)
 
     qr_token = QRTokenYashPindataSave(
@@ -213,6 +246,7 @@ def start_counter_qr(request):
         desk=desk,
         token=token,
         pin_hash=pin_hash,
+        pin_lookup=pin_lookup,
         expires_at=expires_at,
         staff_name=staff_name,
         staff_code=staff_code,

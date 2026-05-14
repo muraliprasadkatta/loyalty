@@ -385,3 +385,10 @@ Pending ⚠️
 
 
 skeltion loading
+
+---------------------------------------------
+
+D:\restarent_application66\offers\services\qr\qr_pin_lookup.py
+
+e file ane qr ki instaed ga pin ni verify chesinappudu slow avutudhi regular ga aithe so ippudala kakunda  avatankie helper ni creat chesam ippudu idi create aina pin ki oka print lanti mark ni create chesistudhi appudu pin verify time lo tokent ni found cheyakunda aa print tho match avutudhi so fast ga find avutduni tokenanedhi 
+inkdadatils kakvalli ante dheniki md fileundhi andhulo untadhi

@@ -28,6 +28,7 @@ from django.views.decorators.http import require_POST
 from offers.services.common.time_helpers import get_local_day_bounds
 from offers.services.offer_claim.claim_issue_service import issue_offer_claim_if_eligible
 from offers.services.qr.qr_token_utils import parse_qr_token as verify_qr_token
+from offers.services.qr.qr_pin_lookup import make_qr_pin_lookup
 from offers.services.offer_eligibility.offer_eligibility_service import build_offer_eligibility_context
 import offers.services.offer_eligibility.offers_progress_modal_helper as progress_helper
 from django.template.loader import render_to_string
@@ -933,27 +934,46 @@ def pin_verify(request):
     now_ts = timezone.now()
     day_start, next_day_start = get_local_day_bounds(now_ts)
     # -----------------------------------------------------
-    # AUTO BRANCH RESOLUTION:
-    # Manual code itself should locate the correct branch/context.
-    # This is safe only when active codes are unique.
-    # -----------------------------------------------------
-    base_qs = (
+
+    # Fast lookup using HMAC pin_lookup.
+    # New YashPin rows save pin_lookup during QR generation.
+    pin_lookup = make_qr_pin_lookup(pin)
+
+    matched = (
         YashPin.objects
         .select_related("qr_token", "branch")
         .filter(
+            pin_lookup=pin_lookup,
             expires_at__gte=now_ts,
             used=False,
         )
         .order_by("-created_at")
+        .first()
     )
 
-    def _find_match(qs, limit=120):
-        for row in qs[:limit]:
-            if check_password(pin, row.pin_hash):
-                return row
-        return None
+    # Final safety check: pin_lookup found row, but verify password hash too.
+    # if matched and not check_password(pin, matched.pin_hash):
+    #     matched = None
 
-    matched = _find_match(base_qs, limit=120)
+    # Temporary legacy fallback:
+    # Old active YashPin rows created before pin_lookup migration have pin_lookup="".
+    # After all old pins expire, this fallback can be removed.
+    if not matched:
+        legacy_qs = (
+            YashPin.objects
+            .select_related("qr_token", "branch")
+            .filter(
+                pin_lookup="",
+                expires_at__gte=now_ts,
+                used=False,
+            )
+            .order_by("-created_at")
+        )
+
+        for row in legacy_qs[:120]:
+            if check_password(pin, row.pin_hash):
+                matched = row
+                break
 
     if not matched:
         return JsonResponse(

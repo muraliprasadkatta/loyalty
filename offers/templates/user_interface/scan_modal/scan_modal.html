@@ -1250,6 +1250,8 @@ window.OZScan = window.OZScan || {};
     const s = ns.state;
     s.modalOpen = true;
     s.isStarting = true;
+    s.redirecting = false;
+    s.scanBlocked = false;
     s.startSeq = (s.startSeq || 0) + 1;
     s.lastStartSeqHandled = s.startSeq;
 
@@ -1302,6 +1304,27 @@ window.OZScan = window.OZScan || {};
 
     if (!s.modalOpen && ns.dom.scanStateText) {
       ns.dom.scanStateText.textContent = '';
+    }
+  };
+
+  ns.markRedirecting = function () {
+    const s = ns.state;
+
+    s.redirecting = true;
+    s.modalOpen = false;
+    s.isStarting = false;
+    s.isVerifying = true;
+    s.scanBlocked = true;
+
+    // pending startScanner ni invalidate cheyyadaniki
+    s.startSeq = (s.startSeq || 0) + 1;
+
+    if (ns.dom.scanStateText) {
+      ns.dom.scanStateText.textContent = 'Opening...';
+    }
+
+    if (ns.dom.scanEdge) {
+      ns.dom.scanEdge.classList.add('scan--verifying');
     }
   };
 
@@ -2107,14 +2130,17 @@ window.OZScan = window.OZScan || {};
       const branch = usp.get("branch") || "";
       const desk = usp.get("desk") || "";
       const url = new URL("/qrg/start", location.origin);
+
       if (branch) url.searchParams.set("branch", branch);
       if (desk) url.searchParams.set("desk", desk);
 
       const res = await fetch(url, { headers: { Accept: "application/json" } });
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok || data.ok === false || !data.payload) {
         throw new Error(data.error || "Could not mint QR");
       }
+
       return data.payload;
     }
 
@@ -2127,7 +2153,35 @@ window.OZScan = window.OZScan || {};
   }
 
   function isModalStillOpen() {
-    return !!ns.state?.modalOpen;
+    return !!ns.state?.modalOpen && !ns.state?.redirecting;
+  }
+
+  /*
+    Redirect mundu call cheyyali.
+    Purpose:
+    - pending startScanner(seq) invalidate avvali
+    - scanner malli open/start avvakudadhu
+    - redirect gap lo duplicate scan handle avvakudadhu
+  */
+  function markRedirectingBeforeLeave() {
+    const s = ns.state || {};
+
+    s.redirecting = true;
+    s.modalOpen = false;
+    s.isStarting = false;
+    s.isVerifying = true;
+    s.scanBlocked = true;
+
+    // important: pending camera start invalidation
+    s.startSeq = (s.startSeq || 0) + 1;
+
+    if (ns.dom?.scanStateText) {
+      ns.dom.scanStateText.textContent = "Opening...";
+    }
+
+    if (ns.dom?.scanEdge) {
+      ns.dom.scanEdge.classList.add("scan--verifying");
+    }
   }
 
   async function onScanSuccess(token) {
@@ -2162,6 +2216,8 @@ window.OZScan = window.OZScan || {};
       const already = !!data.already_claimed_today;
 
       ns.setVerifying?.(true);
+
+      // camera first stop cheyyi
       await Promise.resolve(ns.stopScanner?.());
 
       if (!isModalStillOpen()) return;
@@ -2173,20 +2229,26 @@ window.OZScan = window.OZScan || {};
         );
 
         const d = ns.dom;
+
         const go = () => {
           d.scanPopOkBtn?.removeEventListener("click", go);
+
+          // OK click tarvata redirect mundu pending scanner start cancel
+          markRedirectingBeforeLeave();
+
           window.location.replace(next);
         };
-        d.scanPopOkBtn?.addEventListener("click", go, { once: true });
 
+        d.scanPopOkBtn?.addEventListener("click", go, { once: true });
         return;
       }
 
-      ns.setVerifying?.(false);
+      // direct success redirect mundu pending scanner start cancel
+      markRedirectingBeforeLeave();
 
       setTimeout(() => {
         window.location.replace(next);
-      }, 120);
+      }, 80);
 
     } catch (err) {
       console.error("QR verify error", err);
@@ -2202,6 +2264,7 @@ window.OZScan = window.OZScan || {};
   // public: scanner calls this
   ns.handlePayload = async function (v) {
     if (st.isVerifying) return;
+    if (st.redirecting) return;
     if (ns.isScanBlocked?.()) return;
     if (!isModalStillOpen()) return;
 
@@ -2232,6 +2295,8 @@ window.OZScan = window.OZScan || {};
 
     window.addEventListener("online", () => {
       if (!ns.state?.modalOpen) return;
+      if (ns.state?.redirecting) return;
+
       ns.setScanBlocked?.(false);
       ns.hideStatus?.();
       ns.setVerifying?.(false);
@@ -2252,7 +2317,7 @@ window.OZScan = window.OZScan || {};
     if (!d || !d.pinBtn || !d.pinInput) return;
 
     function isModalStillOpen() {
-      return !!ns.state?.modalOpen;
+      return !!ns.state?.modalOpen && !ns.state?.redirecting;
     }
 
     function getPinLen() {
@@ -2312,6 +2377,7 @@ window.OZScan = window.OZScan || {};
       if (!isModalStillOpen()) return;
 
       if (typeof ns.openPopup !== "function") {
+        ns.markRedirecting?.();
         window.location.replace(nextUrl);
         return;
       }
@@ -2322,6 +2388,7 @@ window.OZScan = window.OZScan || {};
       );
 
       const go = () => {
+        ns.markRedirecting?.();
         window.location.replace(nextUrl);
       };
 
@@ -2385,6 +2452,8 @@ window.OZScan = window.OZScan || {};
 
         const loadingText = d.pinBtn.querySelector(".oz-btn__loading-text");
         if (loadingText) loadingText.textContent = "Opening...";
+
+        ns.markRedirecting?.();
 
         setTimeout(() => {
           window.location.replace(next);

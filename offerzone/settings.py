@@ -228,6 +228,9 @@ QR_TTL_SECONDS = int(os.getenv("QR_TTL_SECONDS", "30"))  # rotate every 30s
 QR_TTL_SECS = 180  # 3 minutes
 OZ_QR_PIN_SALT = "oz.qrpin.salt.v1"
 
+# Manual QR PIN fast lookup HMAC secret
+OZ_QR_PIN_LOOKUP_SECRET = os.getenv("OZ_QR_PIN_LOOKUP_SECRET", SECRET_KEY)
+
 
 # -------------------------------------------------------------------
 # SECURITY / PROXY (Railway / Render / ngrok)
